@@ -40,3 +40,16 @@ export function readCtxCookie(): Ctx {
   try { return m ? JSON.parse(decodeURIComponent(m[1])) : { companyId: 0, yearId: 0 }; }
   catch { return { companyId: 0, yearId: 0 }; }
 }
+
+/* خروجی Excel (CSV با BOM — سازگار با اکسل فارسی) [گزینهٔ Excel در فرم‌های گزارش تراز] */
+export function exportCsv(filename: string, headers: string[], rows: (string | number)[][]) {
+  const esc = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const csv = "\uFEFF" + [headers.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}

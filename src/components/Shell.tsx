@@ -153,6 +153,14 @@ const MENUS: { title: string; items: [string, string][] }[] = [
     ],
   },
   {
+    title: "گزارش‌های تراز",
+    items: [
+      ["/windows/taraz", "گزارش تراز"],
+      ["/windows/taraz-monthly", "گزارش تراز ماهانه"],
+      ["/windows/taraz-six", "گزارش تراز اسناد شش‌سطحی"],
+    ],
+  },
+  {
     title: "عملیات پایه",
     items: [
       ["/windows/companies", "معرفی شرکت‌ها"],
