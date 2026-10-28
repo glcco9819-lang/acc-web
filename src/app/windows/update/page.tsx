@@ -18,10 +18,10 @@ export default function Page() {
   }, []);
   useEffect(() => { check(); api("/api/auth/login").then((j) => setRole(j.user?.role || "")).catch(() => {}); }, [check]);
 
-  const apply = async () => {
+  const apply = async (force = false) => {
     setBusy(true); setMsg(null);
     try {
-      const j = await api("/api/admin/update", { method: "POST", body: JSON.stringify({ action: "apply" }) });
+      const j = await api("/api/admin/update", { method: "POST", body: JSON.stringify({ action: "apply", force }) });
       setMsg({ t: "ok", s: j.message });
       await check();
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
@@ -42,7 +42,8 @@ export default function Page() {
       {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
       <div className="btnrow">
         <button className="btn" onClick={check} disabled={busy}>بررسی نسخهٔ تازه</button>
-        {info?.hasUpdate && role === "admin" && !info.pending && <button className="btn primary" onClick={apply} disabled={busy}>دانلود و آماده‌سازی نسخهٔ {info.latest}</button>}
+        {info?.hasUpdate && role === "admin" && !info.pending && <button className="btn primary" onClick={() => apply()} disabled={busy}>دانلود و آماده‌سازی نسخهٔ {info.latest}</button>}
+        {!info?.hasUpdate && info?.assetReady && role === "admin" && !info.pending && <button className="btn" onClick={() => apply(true)} disabled={busy}>نصب مجدد همین نسخه (بستهٔ تازهٔ مخزن)</button>}
         {info?.pending && <button className="btn green" onClick={restart} disabled={busy}>راه‌اندازی مجدد و نصب</button>}
         {info?.pending && <button className="btn danger" onClick={cancel} disabled={busy}>لغو آپدیت معلق</button>}
       </div>
