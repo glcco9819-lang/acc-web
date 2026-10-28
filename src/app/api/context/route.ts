@@ -17,11 +17,18 @@ export async function GET() {
   let year = null;
   if (ctx.yearId) year = years.find((y) => y.YearId === ctx.yearId) || null;
   if (!year && ctx.companyId) year = years.find((y) => y.CompanyId === ctx.companyId) || null;
-  return NextResponse.json({ ok: true, user: s, companies, years, current: year, can: {
+  const res = NextResponse.json({ ok: true, user: s, companies, years, current: year, can: {
     issue: can(s, "issue"), review: can(s, "review"), finalize: can(s, "finalize"),
     reverse: can(s, "reverse"), master: can(s, "master"),
     logview: can(s, "logview"), logdelete: can(s, "logdelete"),
   }});
+  /* همگام‌سازی کوکی با سالِ انتخاب‌شدهٔ خودکار — تا نمایش UI و خواندن سروری (APIها) همیشه یکی باشند
+     [رفع خطای «شرکت و سال مالی انتخاب نشده» با اینکه در نوار بالا انتخاب‌شده دیده می‌شد] */
+  if (ctx.companyId && year && ctx.yearId !== year.YearId)
+    res.cookies.set("acc_ctx", JSON.stringify({ companyId: ctx.companyId, yearId: year.YearId }), {
+      sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30,
+    });
+  return res;
 }
 
 export async function POST(req: NextRequest) {
@@ -34,8 +41,10 @@ export async function POST(req: NextRequest) {
   const year = yearId ? await one("SELECT YearId FROM pob.FiscalYear WHERE YearId=@y AND CompanyId=@c", { y: yearId, c: companyId }) : null;
   if (yearId && !year) return NextResponse.json({ ok: false, error: "سال مالی متعلق به این شرکت نیست" }, { status: 400 });
   const res = NextResponse.json({ ok: true });
+  /* بدون httpOnly — پنجره‌های برنامه companyId را در سمت کلاینت می‌خوانند
+     [رفع خطای «شرکت و سال مالی انتخاب نشده» و خالی‌ماندن کدهای کل/معین/تفصیلی در صدور سند] */
   res.cookies.set("acc_ctx", JSON.stringify({ companyId, yearId: year ? yearId : 0 }), {
-    httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30,
+    sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30,
   });
   return res;
 }

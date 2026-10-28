@@ -12,9 +12,15 @@ export default function Page() {
   const [mode, setMode] = useState(2);
 
   useEffect(() => {
-    const { companyId } = readCtxCookie();
-    if (!companyId) return;
-    api(`/api/acc/groups`).then((j) => { setGroups(j.rows || []); setMode(j.mode || 2); }).catch(() => {});
+    (async () => {
+      let { companyId } = readCtxCookie();
+      if (!companyId) {
+        /* پشتیبان: خواندن کانتکست از سرور در صورت نبود کوکی در سمت کلاینت */
+        try { const j = await (await fetch("/api/context")).json(); if (j.ok && j.current?.CompanyId) companyId = j.current.CompanyId; } catch { /* - */ }
+      }
+      if (!companyId) return;
+      api(`/api/acc/groups`).then((j) => { setGroups(j.rows || []); setMode(j.mode || 2); }).catch(() => {});
+    })();
   }, []);
 
   useEffect(() => {

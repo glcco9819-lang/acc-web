@@ -41,14 +41,21 @@ export default function Page() {
   const [dls, setDls] = useState<any[]>([]);
 
   useEffect(() => {
-    const { companyId } = readCtxCookie();
-    if (!companyId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); return; }
-    api("/api/vch/types").then((j) => {
-      setTypes(j.rows || []); if (j.rows?.length) setTypeId(String(j.rows[0].VoucherTypeId));
-      setBranches(j.branches || []); setFxList(j.fx || []);
-    }).catch((e) => setMsg({ t: "err", s: e.message }));
-    api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
-    api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
+    (async () => {
+      let { companyId } = readCtxCookie();
+      if (!companyId) {
+        /* پشتیبان: خواندن کانتکست از سرور در صورت نبود کوکی در سمت کلاینت */
+        try { const j = await (await fetch("/api/context")).json(); if (j.ok && j.current?.CompanyId) companyId = j.current.CompanyId; } catch { /* - */ }
+      }
+      if (!companyId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); return; }
+      try {
+        const j = await api("/api/vch/types");
+        setTypes(j.rows || []); if (j.rows?.length) setTypeId(String(j.rows[0].VoucherTypeId));
+        setBranches(j.branches || []); setFxList(j.fx || []);
+      } catch (e: any) { setMsg({ t: "err", s: e.message }); }
+      api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
+      api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
+    })();
   }, []);
 
   const moeinMap = useMemo(() => new Map(moeins.map((m) => [m.Code, m])), [moeins]);
@@ -79,6 +86,12 @@ export default function Page() {
   const save = async () => {
     setBusy(true); setMsg(null);
     try {
+      /* همگام‌سازی سال مالی قبل از ارسال — اگر کوکی هنوز سال ندارد، از سرور گرفته و کوکی آپدیت می‌شود */
+      let ctx = readCtxCookie();
+      if (!ctx.yearId || !ctx.companyId) {
+        try { await (await fetch("/api/context")).json(); ctx = readCtxCookie(); } catch { /* - */ }
+      }
+      if (!ctx.companyId || !ctx.yearId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); setBusy(false); return; }
       const items = rows
         .filter((r) => r.KolCode || r.MoeinCode || Number(r.Dbt) || Number(r.Crt))
         .map((r) => ({
