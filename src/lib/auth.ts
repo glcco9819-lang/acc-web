@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import { cookies } from "next/headers";
-import { one } from "./db";
+import { one, q } from "./db";
+import { verifyToken } from "./logctx";
 
 const SECRET = "accweb-sess-2026";
 
@@ -10,24 +11,17 @@ export interface Session {
   role: string;
 }
 
-function sign(payload: string): string {
-  return createHash("sha256").update(payload + SECRET).digest("hex").slice(0, 24);
-}
-
 export function makeToken(username: string): string {
   const nonce = randomBytes(8).toString("hex");
   const payload = `${username}.${nonce}`;
-  return `${payload}.${sign(payload)}`;
+  return `${payload}.${verifyTokenSign(payload)}`;
 }
 
-export function verifyToken(token?: string | null): string | null {
-  if (!token) return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  const [username, nonce, sig] = parts;
-  if (sign(`${username}.${nonce}`) !== sig) return null;
-  return username;
+function verifyTokenSign(payload: string): string {
+  return createHash("sha256").update(payload + SECRET).digest("hex").slice(0, 24);
 }
+
+export { verifyToken };
 
 export async function getSession(): Promise<Session | null> {
   const store = await cookies();
@@ -47,9 +41,10 @@ export function hashPass(pass: string): string {
 }
 
 /* نقش‌ها:
-   admin     — همه‌چیز
+   admin     — همه‌چیز (شامل لاگ سیستم)
    registrar — صدور سند + تعاریف
-   checker   — بررسی/قطعی/برگشت (نه صدور) */
+   checker   — بررسی/قطعی/برگشت (نه صدور)
+   لاگ سیستم: فقط admin — مشاهده و حذف */
 export function can(user: Session | null, action: string): boolean {
   if (!user) return false;
   if (user.role === "admin") return true;
@@ -60,6 +55,9 @@ export function can(user: Session | null, action: string): boolean {
     /* برگشت سند: ثبت‌کننده می‌تواند سند برگشتی صادر کند؛ زنجیرهٔ بررسی/قطعی طبق روال */
     case "reverse": return user.role === "registrar" || user.role === "checker";
     case "master": return user.role === "registrar" || user.role === "checker";
+    /* لاگ سیستم: فقط مدیر سامانه */
+    case "logview":
+    case "logdelete": return false;
     default: return false;
   }
 }

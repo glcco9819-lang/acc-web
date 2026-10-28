@@ -41,11 +41,18 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
 
   if (!ctx) return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>در حال بارگذاری…</div>;
 
+  const menus = MENUS.map((g) =>
+    /* لاگ سیستم — فقط مدیر سامانه */
+    g.title === "عملیات پایه" && ctx.can?.logview
+      ? { ...g, items: [...g.items, ["/windows/log", "لاگ سیستم"] as [string, string]] }
+      : g
+  );
+
   return (
     <>
       <div className="menubar" ref={ref}>
         <span className="brand">YFG ACC-WEB · ماژول حسابداری</span>
-        {MENUS.map((g) => (
+        {menus.map((g) => (
           <div key={g.title} className={`menu-group ${open === g.title ? "open" : ""}`}>
             <button onClick={() => setOpen(open === g.title ? null : g.title)}>{g.title}</button>
             <div className="menu-drop">

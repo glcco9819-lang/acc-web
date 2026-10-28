@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
   const latin = String(body.LatinTitle || "").trim().slice(0, 100) || null;
   if (!title) return NextResponse.json({ ok: false, error: "نوع سند الزامی است" }, { status: 400 });
   try {
-    const row = await one(`INSERT INTO ACC.AccVoucherType (CompanyId, Title, LatinTitle) OUTPUT INSERTED.* VALUES (@c, @t, @l)`,
+    const row = await one(`INSERT INTO ACC.AccVoucherType (CompanyId, Title, LatinTitle) VALUES (@c, @t, @l);
+      SELECT * FROM ACC.AccVoucherType WHERE VoucherTypeId = CAST(SCOPE_IDENTITY() AS smallint)`,
       { c: companyId, t: title, l: latin });
     return NextResponse.json({ ok: true, row });
   } catch (e: any) {

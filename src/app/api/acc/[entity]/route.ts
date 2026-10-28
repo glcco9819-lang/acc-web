@@ -166,10 +166,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   const cols = Object.keys(vals);
   const names = cols.map((c) => `@${c}`);
   const inp: Record<string, unknown> = { ...vals, c: companyId, u: s.username };
+  /* کلید اصلی هر تعریف — برای بازیابی سطر ایجادشده بدون OUTPUT (جدول‌های دارای تریگر لاگ) */
+  const keyCol = entity === "tafsili" ? "TafsiliId" : entity === "tafsili-types" ? "TafsiliTypeId" : entity === "tafsili-ctgries" ? "CategoryId"
+    : entity === "groups" ? "GroupId" : entity === "kol" ? "KolId" : entity === "moein" ? "MoeinId" : entity === "std-narration" ? "NarrationId" : entity === "vchtypes" ? "VoucherTypeId" : "id";
+  const keyType = keyCol === "MoeinId" || keyCol === "NarrationId" || keyCol === "TafsiliId" || keyCol === "id" ? "int" : "smallint";
   try {
     /* ستون‌های ممیزی — ایجادکننده/تاریخ ایجاد/سیستم مبدأ (دستور کارفرما) */
     const r = await one<{ id: number }>(
-      `INSERT INTO ${sp.table} (CompanyId, CreatedBy, CreatedAt, SourceSystem, ${cols.join(",")}) OUTPUT INSERTED.* VALUES (@c, @u, SYSDATETIME(), 'ACCWEB', ${names.join(",")})`, inp);
+      `INSERT INTO ${sp.table} (CompanyId, CreatedBy, CreatedAt, SourceSystem, ${cols.join(",")}) VALUES (@c, @u, SYSDATETIME(), 'ACCWEB', ${names.join(",")});
+       SELECT * FROM ${sp.table} WHERE ${keyCol} = CAST(SCOPE_IDENTITY() AS ${keyType})`, inp);
     return NextResponse.json({ ok: true, row: r });
   } catch (e: any) {
     const msg = String(e.message || e);

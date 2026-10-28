@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
   }
   /* ممیزی: ایجادکننده + تاریخ ایجاد + سیستم مبدأ (استاندارد همهٔ جدول‌ها) */
   const row = await one(
-    `INSERT INTO ACC.AccOpeningBalance (CompanyId, YearId, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Dbt, Crt, CreatedBy, CreatedAt, SourceSystem) OUTPUT INSERTED.*
-     VALUES (@c, @y, @k, @m, @d1, @d2, @d3, @db, @cr, @u, SYSDATETIME(), 'ACCWEB')`,
+    `INSERT INTO ACC.AccOpeningBalance (CompanyId, YearId, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Dbt, Crt, CreatedBy, CreatedAt, SourceSystem) VALUES (@c, @y, @k, @m, @d1, @d2, @d3, @db, @cr, @u, SYSDATETIME(), 'ACCWEB');
+     SELECT * FROM ACC.AccOpeningBalance WHERE ObId = CAST(SCOPE_IDENTITY() AS int)`,
     { c: companyId, y: yearId, k: KolCode, m: MoeinCode, d1: body.Taf1Id || null, d2: body.Taf2Id || null, d3: body.Taf3Id || null, db: Dbt, cr: Crt, u: s.username });
   return NextResponse.json({ ok: true, row });
 }
@@ -99,16 +99,23 @@ export async function PUT(req: NextRequest) {
       `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM ACC.AccVoucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`, { c: companyId, y: yearId });
     const h = await run(
       `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
-       OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, N'سند افتتاحیه', 1, 'ACC', @u)`,
+       VALUES (@c, @y, @f, @n, @t, @d, N'سند افتتاحیه', 1, 'ACC', @u);
+       SELECT * FROM ACC.AccVoucher WHERE VoucherId = CAST(SCOPE_IDENTITY() AS int)`,
       { c: companyId, y: yearId, f: Number(noRow[0].NF), n: Number(noRow[0].NV), t: t.VoucherTypeId, d: openDate, u: s.username });
     hdr = h[0];
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      await run(
-        `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
-         VALUES (@h, @r, @k, @m, @d1, @d2, @d3, N'انتقال ماندهٔ ابتدای دوره', @db, @cr)`,
-        { h: hdr.VoucherId, r: i + 1, k: r.KolCode, m: r.MoeinCode, d1: r.Taf1Id, d2: r.Taf2Id, d3: r.Taf3Id, db: r.Dbt, cr: r.Crt });
-    }
+    /* یک INSERT برای همهٔ ردیف‌ها — لاگ تجمیعی «N ردیف» برای سند افتتاحیه */
+    const vals: string[] = [];
+    const p: Record<string, unknown> = { h: hdr.VoucherId };
+    rows.forEach((r: any, i: number) => {
+      vals.push(`(@r${i}, @k${i}, @m${i}, @d1_${i}, @d2_${i}, @d3_${i}, @db${i}, @cr${i})`);
+      p[`r${i}`] = i + 1; p[`k${i}`] = r.KolCode; p[`m${i}`] = r.MoeinCode;
+      p[`d1_${i}`] = r.Taf1Id; p[`d2_${i}`] = r.Taf2Id; p[`d3_${i}`] = r.Taf3Id;
+      p[`db${i}`] = r.Dbt; p[`cr${i}`] = r.Crt;
+    });
+    await run(
+      `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+       SELECT @h, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, N'انتقال ماندهٔ ابتدای دوره', Dbt, Crt
+       FROM (VALUES ${vals.join(",")}) v(RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Dbt, Crt)`, p);
     await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند افتتاحیه از مانده‌ها')`, { h: hdr.VoucherId, u: s.username });
   });
   return NextResponse.json({ ok: true, voucher: hdr });

@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
   if (!code || !title) return NextResponse.json({ ok: false, error: "کد و عنوان شرکت الزامی است" }, { status: 400 });
   try {
     const row = await one(
-      `INSERT INTO pob.Companies (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode) OUTPUT INSERTED.*
-       VALUES (@code, @title, @nid, @eco, @mode)`,
+      `INSERT INTO pob.Companies (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode) VALUES (@code, @title, @nid, @eco, @mode);
+       SELECT * FROM pob.Companies WHERE CompanyId = CAST(SCOPE_IDENTITY() AS smallint)`,
       { code, title, nid: String(body.NationalId || "").slice(0, 15) || null, eco: String(body.EconomicCode || "").slice(0, 15) || null, mode });
     return NextResponse.json({ ok: true, row });
   } catch (e: any) {

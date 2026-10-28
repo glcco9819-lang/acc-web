@@ -151,9 +151,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   const names = cols.map((c) => `@${c}`);
   const inp: Record<string, unknown> = { ...vals, u: s.username };
   try {
-    /* ممیزی: ایجادکننده + تاریخ ایجاد + سیستم مبدأ (J شمسی خودکار) */
+    /* ممیزی: ایجادکننده + تاریخ ایجاد + سیستم مبدأ (J شمسی خودکار)
+       بازیابی سطر با SCOPE_IDENTITY — جدول‌های دارای تریگر لاگ از OUTPUT بدون INTO پشتیبانی نمی‌کنند
+       جدول بدون ستون IDENTITY (لینک طبقه/تفصیلی): بازیابی با کلید مرکب */
+    const sel = sp.table === "pob.PartyCategoryLink"
+      ? `SELECT * FROM ${sp.table} WHERE PartyRef = @PartyRef AND CategoryRef = @CategoryRef`
+      : `SELECT * FROM ${sp.table} WHERE ${sp.key} = CAST(SCOPE_IDENTITY() AS int)`;
     const r = await one(
-      `INSERT INTO ${sp.table} (CreatedBy, CreatedAt, SourceSystem, ${cols.join(",")}) OUTPUT INSERTED.* VALUES (@u, SYSDATETIME(), 'ACCWEB', ${names.join(",")})`, inp);
+      `INSERT INTO ${sp.table} (CreatedBy, CreatedAt, SourceSystem, ${cols.join(",")}) VALUES (@u, SYSDATETIME(), 'ACCWEB', ${names.join(",")});
+       ${sel}`, inp);
     return NextResponse.json({ ok: true, row: r });
   } catch (e: any) {
     const msg = String(e.message || e);

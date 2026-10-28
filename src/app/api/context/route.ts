@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, one } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, can } from "@/lib/auth";
 
-/* کانتکست کاربر: شرکت‌ها + سال‌های مالی + انتخاب جاری (کوکی) */
+/* کانتکست کاربر: شرکت‌ها + سال‌های مالی + انتخاب جاری (کوکی) + دسترسی‌ها */
 export async function GET() {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "لاگین نکرده‌اید" }, { status: 401 });
@@ -17,7 +17,11 @@ export async function GET() {
   let year = null;
   if (ctx.yearId) year = years.find((y) => y.YearId === ctx.yearId) || null;
   if (!year && ctx.companyId) year = years.find((y) => y.CompanyId === ctx.companyId) || null;
-  return NextResponse.json({ ok: true, user: s, companies, years, current: year });
+  return NextResponse.json({ ok: true, user: s, companies, years, current: year, can: {
+    issue: can(s, "issue"), review: can(s, "review"), finalize: can(s, "finalize"),
+    reverse: can(s, "reverse"), master: can(s, "master"),
+    logview: can(s, "logview"), logdelete: can(s, "logdelete"),
+  }});
 }
 
 export async function POST(req: NextRequest) {

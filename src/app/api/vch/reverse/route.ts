@@ -30,18 +30,23 @@ export async function POST(req: NextRequest) {
         { c: hdr.CompanyId, y: hdr.YearId });
       const h = await run(
         `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, ReversalOf, SourceModule, CreatedBy, FinalizedBy, FinalizedAt)
-         OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, @rev, 'ACC', @u, NULL, NULL)`,
+         VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, @rev, 'ACC', @u, NULL, NULL);
+         SELECT * FROM ACC.AccVoucher WHERE VoucherId = CAST(SCOPE_IDENTITY() AS int)`,
         { c: hdr.CompanyId, y: hdr.YearId, f: Number(noRow[0].NF), n: Number(noRow[0].NV), t: hdr.VoucherTypeId, d: todayJalali(), ds: descr || `برگشت سند شماره ${hdr.VchNo}`, rev: id, u: s.username });
       rev = h[0];
       const src = await run(`SELECT RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt FROM ACC.AccVoucherItm WHERE VoucherId=@id ORDER BY RowNo`, { id });
-      for (let i = 0; i < src.length; i++) {
-        const it = src[i];
-        await run(
-          `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
-           VALUES (@h, @r, @k, @m, @d1, @d2, @d3, @ds, @db, @cr)`,
-          { h: rev.VoucherId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Taf1Id, d2: it.Taf2Id, d3: it.Taf3Id,
-            ds: it.Descr, db: it.Crt, cr: it.Dbt }); /* معکوس */
-      }
+      /* یک INSERT برای همهٔ ردیف‌ها — لاگ تجمیعی «N ردیف» برای کل سند برگشتی */
+      const vals: string[] = [];
+      const p: Record<string, unknown> = { h: rev.VoucherId };
+      src.forEach((it: any, i: number) => {
+        vals.push(`(@h, @r${i}, @k${i}, @m${i}, @d1_${i}, @d2_${i}, @d3_${i}, @ds${i}, @db${i}, @cr${i})`);
+        p[`r${i}`] = i + 1; p[`k${i}`] = it.KolCode; p[`m${i}`] = it.MoeinCode;
+        p[`d1_${i}`] = it.Taf1Id; p[`d2_${i}`] = it.Taf2Id; p[`d3_${i}`] = it.Taf3Id;
+        p[`ds${i}`] = it.Descr; p[`db${i}`] = it.Crt; p[`cr${i}`] = it.Dbt; /* معکوس */
+      });
+      await run(
+        `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+         VALUES ${vals.join(",")}`, p);
       await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 6, @u, @n)`,
         { h: rev.VoucherId, u: s.username, n: `سند برگشتی برای سند ${hdr.VchNo}` });
       await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@id, 6, @u, @n)`,

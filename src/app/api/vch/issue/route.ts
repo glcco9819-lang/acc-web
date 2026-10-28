@@ -101,16 +101,22 @@ export async function POST(req: NextRequest) {
       const folio = Number(noRow[0].NF), vchNo = Number(noRow[0].NV);
       const h = await run(
         `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
-         OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u)`,
+         VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u);
+         SELECT * FROM ACC.AccVoucher WHERE VoucherId = CAST(SCOPE_IDENTITY() AS int)`,
         { c: companyId, y: yearId, f: folio, n: vchNo, t: typeId, d: vchDate, ds: descr, u: s.username });
       hdr = h[0];
-      for (let i = 0; i < cleaned.length; i++) {
-        const it = cleaned[i];
-        await run(
-          `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
-           VALUES (@h, @r, @k, @m, @d1, @d2, @d3, @ds, @db, @cr)`,
-          { h: hdr.VoucherId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Taf1Id, d2: it.Taf2Id, d3: it.Taf3Id, ds: it.Descr, db: it.Dbt, cr: it.Crt });
-      }
+      /* یک INSERT برای همهٔ ردیف‌ها — لاگ تجمیعی «N ردیف» برای کل سند */
+      const vals: string[] = [];
+      const p: Record<string, unknown> = { h: hdr.VoucherId };
+      cleaned.forEach((it, i) => {
+        vals.push(`(@h, @r${i}, @k${i}, @m${i}, @d1_${i}, @d2_${i}, @d3_${i}, @ds${i}, @db${i}, @cr${i})`);
+        p[`r${i}`] = i + 1; p[`k${i}`] = it.KolCode; p[`m${i}`] = it.MoeinCode;
+        p[`d1_${i}`] = it.Taf1Id; p[`d2_${i}`] = it.Taf2Id; p[`d3_${i}`] = it.Taf3Id;
+        p[`ds${i}`] = it.Descr; p[`db${i}`] = it.Dbt; p[`cr${i}`] = it.Crt;
+      });
+      await run(
+        `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+         VALUES ${vals.join(",")}`, p);
       await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.VoucherId, u: s.username });
     });
     return NextResponse.json({ ok: true, voucher: hdr });

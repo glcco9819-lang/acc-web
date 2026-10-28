@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
   if (exists) return NextResponse.json({ ok: false, error: "این سال مالی قبلاً ایجاد شده" }, { status: 400 });
 
   const row = await one(
-    `INSERT INTO pob.FiscalYear (CompanyId, JalaliYear, Title, StartDate, EndDate) OUTPUT INSERTED.*
-     VALUES (@c, @j, @t, @s, @e)`,
+    `INSERT INTO pob.FiscalYear (CompanyId, JalaliYear, Title, StartDate, EndDate) VALUES (@c, @j, @t, @s, @e);
+     SELECT * FROM pob.FiscalYear WHERE YearId = CAST(SCOPE_IDENTITY() AS smallint)`,
     { c: companyId, j: jalaliYear, t: `سال مالی ${jalaliYear}`, s: `${jalaliYear}/01/01`, e: `${jalaliYear}/12/29` });
   const vals = MONTHS_FA.map((m, i) => `(@y, ${i + 1}, N'${m}')`).join(",");
   await q(`INSERT INTO pob.FiscalPeriod (YearId, MonthNo, Title) VALUES ${vals}`, { y: row.YearId });

@@ -1,6 +1,17 @@
 import sql from "mssql";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { getLogCtx, logCtxPrefix, LogCtx } from "./logctx";
+
+/* کانتکست لاگ: پیشوند هر بچ SQL — تریگرهای pob.UserLog کاربر/IP/PC را از SESSION_CONTEXT می‌خوانند */
+async function prep(text: string, inp?: Record<string, unknown>): Promise<{ text: string; inp: Record<string, unknown> }> {
+  const all: Record<string, unknown> = { ...(inp || {}) };
+  try {
+    const ctx: LogCtx | null = await getLogCtx();
+    if (ctx) return { text: logCtxPrefix(ctx, all) + text, inp: all };
+  } catch { /* بدون کانتکست — تریگر به نام لاگین SQL برمی‌گردد */ }
+  return { text, inp: all };
+}
 
 type Pool = import("mssql").ConnectionPool;
 type Txn = import("mssql").Transaction;
@@ -40,9 +51,10 @@ export async function getPool(): Promise<Pool> {
 
 export async function q<T = any>(text: string, inp?: Record<string, unknown>): Promise<T[]> {
   const p = await getPool();
+  const { text: t2, inp: i2 } = await prep(text, inp);
   const r = p.request();
-  for (const [k, v] of Object.entries(inp || {})) r.input(k, v as any);
-  return (await r.query(text)).recordset as T[];
+  for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
+  return (await r.query(t2)).recordset as T[];
 }
 
 export async function one<T = any>(text: string, inp?: Record<string, unknown>): Promise<T | null> {
@@ -52,9 +64,10 @@ export async function one<T = any>(text: string, inp?: Record<string, unknown>):
 
 export async function scalar(text: string, inp?: Record<string, unknown>): Promise<any> {
   const p = await getPool();
+  const { text: t2, inp: i2 } = await prep(text, inp);
   const r = p.request();
-  for (const [k, v] of Object.entries(inp || {})) r.input(k, v as any);
-  const res = await r.query(text);
+  for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
+  const res = await r.query(t2);
   const first = res.recordset[0];
   return first ? Object.values(first)[0] : null;
 }
@@ -65,9 +78,10 @@ export async function tx(fn: (run: (t: string, inp?: Record<string, unknown>) =>
   await t.begin();
   try {
     const run = async (text: string, inp?: Record<string, unknown>) => {
+      const { text: t2, inp: i2 } = await prep(text, inp);
       const r = new (sql.Request as any)(t);
-      for (const [k, v] of Object.entries(inp || {})) r.input(k, v as any);
-      return (await r.query(text)).recordset;
+      for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
+      return (await r.query(t2)).recordset;
     };
     await fn(run);
     await t.commit();
