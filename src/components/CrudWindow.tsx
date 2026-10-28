@@ -57,16 +57,22 @@ export default function CrudWindow({ entity, title, sub, cols, note }: {
   const edit = (r: any) => {
     const f: Record<string, string> = {};
     cols.forEach((c) => { f[c.key] = r[c.key] === null || r[c.key] === undefined ? "" : String(r[c.key]); });
-    setForm(f); setEditId(r.id);
+    setForm(f); setEditId(rowId(r));
   };
 
-  const del = async (id: number) => {
+  const del = async (id: number | null) => {
+    if (id === null) return;
     if (!confirm("این رکورد حذف شود؟")) return;
     try { await api(`/api/acc/${entity}?id=${id}`, { method: "DELETE" }); await load(); }
     catch (e: any) { setMsg({ t: "err", s: e.message }); }
   };
 
   const gridCols = cols.filter((c) => !c.hideInGrid);
+
+  /* شناسهٔ سطر — API کلید اصلی را با نام id هم برمی‌گرداند؛ پیش از آن هم کلیدها را می‌شناسد */
+  const rowId = (r: any): number | null =>
+    r.id ?? r.GroupId ?? r.KolId ?? r.MoeinId ?? r.TafsiliId ?? r.TafsiliTypeId
+      ?? r.CategoryId ?? r.NarrationId ?? r.VoucherTypeId ?? r.FxId ?? r.BranchId ?? null;
 
   return (
     <>
@@ -104,7 +110,7 @@ export default function CrudWindow({ entity, title, sub, cols, note }: {
           </tr></thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.id ?? i}>
+              <tr key={rowId(r) ?? i}>
                 {gridCols.map((c) => {
                   let v = r[c.key];
                   if (c.type === "select") v = (c.options || []).find((o) => String(o.v) === String(v))?.t ?? v;
@@ -114,7 +120,7 @@ export default function CrudWindow({ entity, title, sub, cols, note }: {
                 })}
                 <td>
                   <button className="btn" onClick={() => edit(r)} style={{ padding: "1px 8px" }}>اصلاح</button>{" "}
-                  <button className="btn danger" onClick={() => del(r.id)} style={{ padding: "1px 8px" }}>حذف</button>
+                  <button className="btn danger" onClick={() => del(rowId(r))} style={{ padding: "1px 8px" }}>حذف</button>
                 </td>
               </tr>
             ))}

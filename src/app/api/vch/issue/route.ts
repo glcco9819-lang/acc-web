@@ -5,18 +5,23 @@ import { isValidJalali } from "@/lib/jalali";
 
 /* صدور سند حسابداري [فرم: صدور سند حسابداري — acGenVch]
    قواعد: تراز بدهکار/بستانکار، معین متعلق به کل، تفصیلی‌های الزامی مطابق ارتباط سطوح ۴/۵/۶ معین،
-   مبدأ سند = ACC (حسابداری)، وضعیت اولیه = موقت (فرایند صدور→بررسی→قطعی) */
+   مبدأ سند = ACC (حسابداری)، وضعیت اولیه = موقت (فرایند صدور→بررسی→قطعی)
+   G-C2 گپ‌آنالیز: سرسند — شعبه/ش روزانه/ش فرعي/شرح لاتین · قلم — ارز/مبلغ ارزی/نرخ + شماره و تاریخ پیگیری + لاتین */
 
 interface ItemIn {
   KolCode: string; MoeinCode: string;
   Taf1Id?: number | null; Taf2Id?: number | null; Taf3Id?: number | null;
   Descr?: string; Dbt?: number | string; Crt?: number | string;
+  FxId?: number | null; FxAmount?: number | string | null; FxRate?: number | string | null;
+  TrackNo?: string; TrackDate?: string; LatinDescr?: string;
 }
 
 interface OutItem {
   KolCode: string; MoeinCode: string;
   Taf1Id: number | null; Taf2Id: number | null; Taf3Id: number | null;
   Descr: string | null; Dbt: number; Crt: number;
+  FxId: number | null; FxAmount: number | null; FxRate: number | null;
+  TrackNo: string | null; TrackDate: string | null; LatinDescr: string | null;
 }
 
 export async function POST(req: NextRequest) {
@@ -34,11 +39,25 @@ export async function POST(req: NextRequest) {
   const descr = String(body.Descr || "").trim().slice(0, 500) || null;
   const typeId = Number(body.VoucherTypeId || 0);
   const items: ItemIn[] = Array.isArray(body.items) ? body.items : [];
+  /* سرسند — فیلدهای فرم اصلی (G-C2) */
+  const branchId = body.BranchId ? Number(body.BranchId) : null;
+  const dayNoIn = body.DayNo === undefined || body.DayNo === null || body.DayNo === "" ? null : Number(body.DayNo);
+  const subNo = body.SubNo === undefined || body.SubNo === null || body.SubNo === "" ? 0 : Number(body.SubNo);
+  const latinDescr = String(body.LatinDescr || "").trim().slice(0, 500) || null;
 
   if (!isValidJalali(vchDate)) return NextResponse.json({ ok: false, error: "تاریخ سند نامعتبر است (جلالی YYYY/MM/DD)" }, { status: 400 });
   const t = await one("SELECT Title FROM ACC.AccVoucherType WHERE VoucherTypeId=@t AND CompanyId=@c", { t: typeId, c: companyId });
   if (!t) return NextResponse.json({ ok: false, error: "نوع سند نامعتبر" }, { status: 400 });
   if (!items.length) return NextResponse.json({ ok: false, error: "سند بدون ردیف نیست" }, { status: 400 });
+  /* شعبه متعلق به شرکت و فعال */
+  if (branchId) {
+    const b = await one("SELECT BranchId FROM ACC.AccBranch WHERE BranchId=@b AND CompanyId=@c AND IsActive=1", { b: branchId, c: companyId });
+    if (!b) return NextResponse.json({ ok: false, error: "شعبهٔ انتخابی نامعتبر است" }, { status: 400 });
+  }
+  if (subNo < 0 || subNo > 9999 || !Number.isInteger(subNo))
+    return NextResponse.json({ ok: false, error: "شمارهٔ فرعی نامعتبر است" }, { status: 400 });
+  if (dayNoIn !== null && (!Number.isInteger(dayNoIn) || dayNoIn < 0))
+    return NextResponse.json({ ok: false, error: "شمارهٔ روزانه نامعتبر است" }, { status: 400 });
 
   /* سال مالی باز؟ */
   const yr = await one("SELECT IsClosed FROM pob.FiscalYear WHERE YearId=@y", { y: yearId });
@@ -82,11 +101,37 @@ export async function POST(req: NextRequest) {
     }
 
     totalDbt += dbt; totalCrt += crt;
+
+    /* ارز قلم — سه‌تایی نوع/مبلغ/نرخ همیشه کامل یا هیچ [accCurrency + CK_Line_Fx] */
+    const fxId = it.FxId ? Number(it.FxId) : null;
+    const fxAmount = it.FxAmount === undefined || it.FxAmount === null || it.FxAmount === "" ? null : Number(it.FxAmount);
+    const fxRate = it.FxRate === undefined || it.FxRate === null || it.FxRate === "" ? null : Number(it.FxRate);
+    if (fxId === null && (fxAmount !== null || fxRate !== null))
+      return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: برای ثبت ارز، نوع ارز الزامی است` }, { status: 400 });
+    if (fxId !== null && (fxAmount === null || fxRate === null))
+      return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: مبلغ ارزی و نرخ ارز با هم کامل وارد شوند` }, { status: 400 });
+    if (fxId !== null) {
+      if (!(fxAmount! > 0)) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: مبلغ ارزی باید بزرگ‌تر از صفر باشد` }, { status: 400 });
+      if (!(fxRate! > 0)) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: نرخ ارز باید بزرگ‌تر از صفر باشد` }, { status: 400 });
+      const f = await one("SELECT FxId FROM ACC.AccFx WHERE FxId=@f AND CompanyId=@c AND IsActive=1", { f: fxId, c: companyId });
+      if (!f) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: ارز انتخابی نامعتبر است` }, { status: 400 });
+    }
+    /* پیگیری — شماره + تاریخ [فرم: تغيير شماره و تاريخ پيگيري] */
+    const trackNo = String(it.TrackNo || "").trim().slice(0, 50) || null;
+    const trackDate = String(it.TrackDate || "").trim() || null;
+    if (trackDate && !isValidJalali(trackDate))
+      return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تاریخ پیگیری نامعتبر است (جلالی YYYY/MM/DD)` }, { status: 400 });
+    if (!trackNo && trackDate)
+      return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تاریخ پیگیری بدون شمارهٔ پیگیری مجاز نیست` }, { status: 400 });
+
     cleaned.push({
       KolCode: kol, MoeinCode: moein,
       Taf1Id: out.Taf1Id, Taf2Id: out.Taf2Id, Taf3Id: out.Taf3Id,
       Descr: String(it.Descr || "").trim().slice(0, 500) || null,
       Dbt: dbt, Crt: crt,
+      FxId: fxId, FxAmount: fxAmount, FxRate: fxRate,
+      TrackNo: trackNo, TrackDate: trackDate,
+      LatinDescr: String(it.LatinDescr || "").trim().slice(0, 500) || null,
     });
   }
 
@@ -99,23 +144,33 @@ export async function POST(req: NextRequest) {
         `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM ACC.AccVoucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
         { c: companyId, y: yearId });
       const folio = Number(noRow[0].NF), vchNo = Number(noRow[0].NV);
+      /* ش روزانه — اگر داده نشده باشد: بزرگ‌ترین شمارهٔ روزانهٔ همان تاریخ + ۱ [فرم: ش روزانه] */
+      let dayNo = dayNoIn;
+      if (dayNo === null) {
+        const d = await run(`SELECT ISNULL(MAX(DayNo),0)+1 DN FROM ACC.AccVoucher WHERE CompanyId=@c AND YearId=@y AND VchDate=@d`,
+          { c: companyId, y: yearId, d: vchDate });
+        dayNo = Number(d[0].DN);
+      }
       const h = await run(
-        `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
-         VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u);
+        `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy, BranchId, DayNo, SubNo, LatinDescr)
+         VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u, @br, @dn, @sn, @ld);
          SELECT * FROM ACC.AccVoucher WHERE VoucherId = CAST(SCOPE_IDENTITY() AS int)`,
-        { c: companyId, y: yearId, f: folio, n: vchNo, t: typeId, d: vchDate, ds: descr, u: s.username });
+        { c: companyId, y: yearId, f: folio, n: vchNo, t: typeId, d: vchDate, ds: descr, u: s.username,
+          br: branchId, dn: dayNo, sn: subNo, ld: latinDescr });
       hdr = h[0];
       /* یک INSERT برای همهٔ ردیف‌ها — لاگ تجمیعی «N ردیف» برای کل سند */
       const vals: string[] = [];
       const p: Record<string, unknown> = { h: hdr.VoucherId };
       cleaned.forEach((it, i) => {
-        vals.push(`(@h, @r${i}, @k${i}, @m${i}, @d1_${i}, @d2_${i}, @d3_${i}, @ds${i}, @db${i}, @cr${i})`);
+        vals.push(`(@h, @r${i}, @k${i}, @m${i}, @d1_${i}, @d2_${i}, @d3_${i}, @ds${i}, @db${i}, @cr${i}, @fx${i}, @fa${i}, @fr${i}, @tn${i}, @td${i}, @ld${i})`);
         p[`r${i}`] = i + 1; p[`k${i}`] = it.KolCode; p[`m${i}`] = it.MoeinCode;
         p[`d1_${i}`] = it.Taf1Id; p[`d2_${i}`] = it.Taf2Id; p[`d3_${i}`] = it.Taf3Id;
         p[`ds${i}`] = it.Descr; p[`db${i}`] = it.Dbt; p[`cr${i}`] = it.Crt;
+        p[`fx${i}`] = it.FxId; p[`fa${i}`] = it.FxAmount; p[`fr${i}`] = it.FxRate;
+        p[`tn${i}`] = it.TrackNo; p[`td${i}`] = it.TrackDate; p[`ld${i}`] = it.LatinDescr;
       });
       await run(
-        `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+        `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt, FxId, FxAmount, FxRate, TrackNo, TrackDate, LatinDescr)
          VALUES ${vals.join(",")}`, p);
       await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.VoucherId, u: s.username });
     });

@@ -8,6 +8,7 @@ const NUM = /^\d+$/;
 
 interface EntSpec {
   table: string;
+  key: string;                /* کلید اصلی — در GET به صورت id به کلاینت برمی‌گردد */
   cols: { name: string; req?: boolean; num?: boolean; len?: number; max?: number; code?: number }[];
   delCheck?: { sql: string; inp: string[]; msg: string }[];
 }
@@ -15,7 +16,7 @@ interface EntSpec {
 function spec(entity: string, mode: number): EntSpec | null {
   switch (entity) {
     case "groups": return {
-      table: "ACC.AccGroup",
+      table: "ACC.AccGroup", key: "GroupId",
       cols: [
         { name: "Code", req: true, code: 2 },
         { name: "Title", req: true, max: 200 },
@@ -24,7 +25,7 @@ function spec(entity: string, mode: number): EntSpec | null {
       delCheck: [{ sql: "SELECT 1 x FROM ACC.AccKol WHERE CompanyId=@c AND GroupCode=@code", inp: ["code"], msg: "گروه دارای حساب کل است — ابتدا کل‌ها را حذف کنید" }],
     };
     case "kol": return {
-      table: "ACC.AccKol",
+      table: "ACC.AccKol", key: "KolId",
       cols: [
         { name: "Code", req: true, code: 4 },
         { name: "GroupCode", code: mode === 2 ? 2 : 0, req: mode === 2 },
@@ -34,7 +35,7 @@ function spec(entity: string, mode: number): EntSpec | null {
       delCheck: [{ sql: "SELECT 1 x FROM ACC.AccMoein WHERE CompanyId=@c AND KolCode=@code", inp: ["code"], msg: "کل دارای معین است" }],
     };
     case "moein": return {
-      table: "ACC.AccMoein",
+      table: "ACC.AccMoein", key: "MoeinId",
       cols: [
         { name: "Code", req: true, code: 6 },
         { name: "KolCode", req: true, code: mode === 2 ? 4 : 2 },
@@ -52,7 +53,7 @@ function spec(entity: string, mode: number): EntSpec | null {
       ],
     };
     case "tafsili": return {
-      table: "ACC.AccTafsili",
+      table: "ACC.AccTafsili", key: "TafsiliId",
       cols: [
         { name: "Code", req: true, code: 8 },
         { name: "TafsiliTypeId", req: true, num: true },
@@ -66,7 +67,7 @@ function spec(entity: string, mode: number): EntSpec | null {
       ],
     };
     case "tafsili-types": return {
-      table: "ACC.AccTafsiliType",
+      table: "ACC.AccTafsiliType", key: "TafsiliTypeId",
       cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }],
       delCheck: [
         { sql: "SELECT 1 x FROM ACC.AccMoein WHERE CompanyId=@c AND (Taf1TypeId=@code OR Taf2TypeId=@code OR Taf3TypeId=@code)", inp: ["code", "int"], msg: "نوع تفصیل به معین متصل است" },
@@ -74,18 +75,36 @@ function spec(entity: string, mode: number): EntSpec | null {
       ],
     };
     case "tafsili-ctgries": return {
-      table: "ACC.AccTafsiliCategory",
+      table: "ACC.AccTafsiliCategory", key: "CategoryId",
       cols: [{ name: "Title", req: true, max: 100 }],
       delCheck: [{ sql: "SELECT 1 x FROM ACC.AccTafsiliCategoryLink WHERE CategoryId=@code", inp: ["code", "int"], msg: "طبقه دارای تفصیلی است" }],
     };
     case "std-narration": return {
-      table: "ACC.AccStdNarration",
+      table: "ACC.AccStdNarration", key: "NarrationId",
       cols: [{ name: "MoeinCode", req: true, code: 6 }, { name: "Seq", req: true, num: true }, { name: "DescText", req: true, max: 300 }],
     };
     case "vchtypes": return {
-      table: "ACC.AccVoucherType",
+      table: "ACC.AccVoucherType", key: "VoucherTypeId",
       cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }],
       delCheck: [{ sql: "SELECT 1 x FROM ACC.AccVoucher WHERE CompanyId=@c AND VoucherTypeId=@code", inp: ["code"], msg: "سندهایی از این نوع ثبت شده است" }],
+    };
+    /* تعریف ارزها [فرم: اطلاعات ارزها — accCurrency] */
+    case "fx": return {
+      table: "ACC.AccFx", key: "FxId",
+      cols: [
+        { name: "Code", req: true, max: 10 }, { name: "Title", req: true, max: 100 },
+        { name: "LatinTitle", max: 100 }, { name: "IsBase", num: true }, { name: "IsActive", num: true },
+      ],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND i.FxId=@code", inp: ["code", "int"], msg: "ارز در اقلام سند استفاده شده است" }],
+    };
+    /* تعریف شعبه [فرم: تعریف شعبه — acVchDef] */
+    case "branch": return {
+      table: "ACC.AccBranch", key: "BranchId",
+      cols: [
+        { name: "Code", req: true, max: 10 }, { name: "Title", req: true, max: 150 },
+        { name: "IsActive", num: true },
+      ],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccVoucher WHERE CompanyId=@c AND BranchId=@code", inp: ["code", "int"], msg: "شعبه در اسناد استفاده شده است" }],
     };
     default: return null;
   }
@@ -124,7 +143,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
-  const rows = await q(`SELECT * FROM ${sp.table} WHERE CompanyId=@c ORDER BY 1`, { c: companyId });
+  /* شناسهٔ یکنواخت id برای کلاینت (CrudWindow) + کل سطر */
+  const rows = await q(`SELECT *, CAST(${sp.key} AS int) AS id FROM ${sp.table} WHERE CompanyId=@c ORDER BY 1`, { c: companyId });
   return NextResponse.json({ ok: true, rows, mode });
 }
 
@@ -163,13 +183,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   }
   if (entity === "kol" && mode === 1) vals.GroupCode = null;
 
+  /* ارز پایه — تنها یک ارز پایه برای هر شرکت (بله/خیر) */
+  if (entity === "fx" && vals.IsBase === 1)
+    await q("UPDATE ACC.AccFx SET IsBase=0 WHERE CompanyId=@c", { c: companyId });
+
   const cols = Object.keys(vals);
   const names = cols.map((c) => `@${c}`);
   const inp: Record<string, unknown> = { ...vals, c: companyId, u: s.username };
   /* کلید اصلی هر تعریف — برای بازیابی سطر ایجادشده بدون OUTPUT (جدول‌های دارای تریگر لاگ) */
-  const keyCol = entity === "tafsili" ? "TafsiliId" : entity === "tafsili-types" ? "TafsiliTypeId" : entity === "tafsili-ctgries" ? "CategoryId"
-    : entity === "groups" ? "GroupId" : entity === "kol" ? "KolId" : entity === "moein" ? "MoeinId" : entity === "std-narration" ? "NarrationId" : entity === "vchtypes" ? "VoucherTypeId" : "id";
-  const keyType = keyCol === "MoeinId" || keyCol === "NarrationId" || keyCol === "TafsiliId" || keyCol === "id" ? "int" : "smallint";
+  const keyCol = sp.key;
+  const keyType = keyCol === "MoeinId" || keyCol === "NarrationId" || keyCol === "TafsiliId" ? "int" : "smallint";
   try {
     /* ستون‌های ممیزی — ایجادکننده/تاریخ ایجاد/سیستم مبدأ (دستور کارفرما) */
     const r = await one<{ id: number }>(
@@ -193,8 +216,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
   const body = await req.json().catch(() => ({}));
   const key = Number(body.id || 0);
   if (!key) return NextResponse.json({ ok: false, error: "شناسه لازم است" }, { status: 400 });
-  const keyCol = entity === "tafsili" ? "TafsiliId" : entity === "tafsili-types" ? "TafsiliTypeId" : entity === "tafsili-ctgries" ? "CategoryId"
-    : entity === "groups" ? "GroupId" : entity === "kol" ? "KolId" : entity === "moein" ? "MoeinId" : entity === "std-narration" ? "NarrationId" : entity === "vchtypes" ? "VoucherTypeId" : "id";
+  const keyCol = sp.key;
 
   /* تغییر کد در صورت استفاده ممنوع (ارجاع سند/زیرمجموعه) */
   if (["groups", "kol", "moein", "tafsili"].includes(entity) && body.Code) {
@@ -226,6 +248,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
     else { sets.push(`${col.name}=@f_${col.name}`); inp[`f_${col.name}`] = col.max ? v.slice(0, col.max) : v; }
   }
   if (!sets.length) return NextResponse.json({ ok: false, error: "چیزی برای تغییر نیست" }, { status: 400 });
+  /* ارز پایه — تنها یک ارز پایه برای هر شرکت (بله/خیر) */
+  if (entity === "fx" && (body.IsBase === 1 || body.IsBase === "1"))
+    await q("UPDATE ACC.AccFx SET IsBase=0 WHERE CompanyId=@c AND FxId<>@id", { c: companyId, id: key });
   /* ستون‌های ممیزی ویرایش — ویرایش‌کننده/تاریخ ویرایش */
   sets.push("UpdatedBy=@u"); inp.u = s.username;
   sets.push("UpdatedAt=SYSDATETIME()");

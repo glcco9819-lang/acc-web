@@ -136,6 +136,8 @@ const MENUS: { title: string; items: [string, string][] }[] = [
     title: "اسناد حسابداری",
     items: [
       ["/windows/vch-types", "تعریف انواع سند"],
+      ["/windows/branch", "تعریف شعبه"],
+      ["/windows/fx", "تعریف ارزها"],
       ["/windows/vch-issue", "صدور سند حسابداری"],
       ["/windows/vch-review", "بررسی اسناد"],
       ["/windows/vch-finalize", "قطعی کردن اسناد"],
@@ -166,6 +168,7 @@ const MENUS: { title: string; items: [string, string][] }[] = [
       ["/windows/companies", "معرفی شرکت‌ها"],
       ["/windows/fiscal-year", "سال مالی"],
       ["/windows/opening", "ماندهٔ ابتدای دوره و سند افتتاحیه"],
+      ["/windows/dictionary", "واژه‌نامهٔ داده"],
       ["/windows/update", "آپدیت آنلاین"],
     ],
   },

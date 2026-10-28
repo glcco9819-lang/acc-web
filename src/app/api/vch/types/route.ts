@@ -11,7 +11,10 @@ export async function GET() {
   try { companyId = JSON.parse(raw || "{}").companyId || 0; } catch { /* - */ }
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده", code: "NO_CTX" }, { status: 400 });
   const rows = await q("SELECT VoucherTypeId, Title, LatinTitle FROM ACC.AccVoucherType WHERE CompanyId=@c ORDER BY VoucherTypeId", { c: companyId });
-  return NextResponse.json({ ok: true, rows });
+  /* شعبه و ارز برای دراپ‌داون سرسند و قلم‌های ارزی (G-C2) */
+  const branches = await q("SELECT BranchId v, Title t FROM ACC.AccBranch WHERE CompanyId=@c AND IsActive=1 ORDER BY BranchId", { c: companyId });
+  const fx = await q("SELECT FxId v, Code + ' — ' + Title t, IsBase FROM ACC.AccFx WHERE CompanyId=@c AND IsActive=1 ORDER BY IsBase DESC, Code", { c: companyId });
+  return NextResponse.json({ ok: true, rows, branches, fx });
 }
 
 export async function POST(req: NextRequest) {
