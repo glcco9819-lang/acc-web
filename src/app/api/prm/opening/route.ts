@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, one, scalar } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
+import { ctxOf } from "@/lib/ctx";
 
 /* ماندهٔ ابتدای دوره + صدور سند افتتاحیه [فرم: صدور سند افتتاحیه — acfidf] */
 export async function GET(req: NextRequest) {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
-  const raw = req.cookies.get("acc_ctx")?.value;
-  let companyId = 0, yearId = 0;
-  try { const j = JSON.parse(raw || "{}"); companyId = j.companyId || 0; yearId = j.yearId || 0; } catch { /* - */ }
+  const { companyId, yearId } = ctxOf(req);
   if (!companyId || !yearId) return NextResponse.json({ ok: false, error: "شرکت و سال مالی انتخاب نشده", code: "NO_CTX" }, { status: 400 });
   const rows = await q(
     `SELECT ob.*, m.Title MoeinTitle, m.AccNature, k.Title KolTitle,
-            d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title
+            d1.Code Taf1Code, d1.Title Taf1Title, d2.Code Taf2Code, d2.Title Taf2Title, d3.Code Taf3Code, d3.Title Taf3Title
      FROM ACC.AccOpeningBalance ob
      JOIN ACC.AccMoein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
      JOIN ACC.AccKol k ON k.CompanyId=ob.CompanyId AND k.Code=ob.KolCode
@@ -27,10 +26,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const s = await getSession();
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز ندارید" }, { status: 403 });
-  const raw = req.cookies.get("acc_ctx")?.value;
-  let companyId = 0, yearId = 0;
-  try { const j = JSON.parse(raw || "{}"); companyId = j.companyId || 0; yearId = j.yearId || 0; } catch { /* - */ }
   const body = await req.json().catch(() => ({}));
+  const { companyId, yearId } = ctxOf(req, body);
   const KolCode = String(body.KolCode || "").trim();
   const MoeinCode = String(body.MoeinCode || "").trim();
   const Dbt = Math.round(Number(body.Dbt || 0));
@@ -70,9 +67,8 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const s = await getSession();
   if (!s || !can(s, "issue")) return NextResponse.json({ ok: false, error: "نقش شما مجاز به صدور سند نیست" }, { status: 403 });
-  const raw = req.cookies.get("acc_ctx")?.value;
-  let companyId = 0, yearId = 0;
-  try { const j = JSON.parse(raw || "{}"); companyId = j.companyId || 0; yearId = j.yearId || 0; } catch { /* - */ }
+  const body = await req.json().catch(() => ({}));
+  const { companyId, yearId } = ctxOf(req, body);
   if (!companyId || !yearId) return NextResponse.json({ ok: false, error: "شرکت و سال مالی انتخاب نشده" }, { status: 400 });
 
   const bal = await scalar(

@@ -60,7 +60,7 @@ export default function Page() {
                 <td className="num">{r.VchDate}</td>
                 <td className="num">{fa(r.VchNo)}{r.ReversalOf ? <span className="badge src" style={{ marginInlineStart: 3 }}>برگشتی</span> : null}</td>
                 <td>{r.ItmDescr || r.VchDescr}</td>
-                <td>{r.Taf1Title || r.Taf2Title || r.Taf3Title || "—"}</td>
+                <td>{r.Taf1Id ? `(${r.Taf1Code}) ${r.Taf1Title}` : r.Taf2Id ? `(${r.Taf2Code}) ${r.Taf2Title}` : r.Taf3Id ? `(${r.Taf3Code}) ${r.Taf3Title}` : "—"}</td>
                 <td className="num">{Number(r.Dbt) ? fa(r.Dbt) : ""}</td>
                 <td className="num">{Number(r.Crt) ? fa(r.Crt) : ""}</td>
                 <td className="num"><b>{fa(r.Balance)}</b></td>

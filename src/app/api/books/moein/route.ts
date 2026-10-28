@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
   const rows = await q(
     `SELECT h.VoucherId, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
             i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle, m.AccNature,
-            d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
+            d1.Code Taf1Code, d1.Title Taf1Title,
+            d2.Code Taf2Code, d2.Title Taf2Title,
+            d3.Code Taf3Code, d3.Title Taf3Title,
             i.Descr ItmDescr, i.Dbt, i.Crt
      FROM ACC.AccVoucher h
      JOIN ACC.AccVoucherItm i ON i.VoucherId=h.VoucherId

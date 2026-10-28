@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, one } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { ctxOf } from "@/lib/ctx";
 
 /* شرط مشترک دفاتر: فقط سند قطعی (State=3) — برگشت‌ها با ReversalOf عیناً محاسبه می‌شوند */
-export function ctxOf(req: NextRequest): { companyId: number; yearId: number } {
-  const raw = req.cookies.get("acc_ctx")?.value;
-  try { const j = JSON.parse(raw || "{}"); return { companyId: j.companyId || 0, yearId: j.yearId || 0 }; }
-  catch { return { companyId: 0, yearId: 0 }; }
-}
+export { ctxOf };
 
 /* اگر سند افتتاحیهٔ قطعی‌شده موجود باشد، ماندهٔ جدول OpeningBalance دیگر در «ماندهٔ ابتدا»
    دفاتر منظور نمی‌شود (وگرنه دوبار شمرده می‌شود) — سند افتتاحیه با تاریخ ابتدای سال خودش
@@ -36,8 +33,10 @@ export async function journal(req: NextRequest) {
 
   const rows = await q(
     `SELECT h.VoucherId, h.FolioNo, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
-            i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle,
-            d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
+            i.LineId, i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle,
+            d1.Code Taf1Code, d1.Title Taf1Title,
+            d2.Code Taf2Code, d2.Title Taf2Title,
+            d3.Code Taf3Code, d3.Title Taf3Title,
             i.Descr ItmDescr, i.Dbt, i.Crt, t.Title TypeTitle
      FROM ACC.AccVoucher h
      JOIN ACC.AccVoucherType t ON t.VoucherTypeId=h.VoucherTypeId

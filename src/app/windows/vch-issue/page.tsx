@@ -2,13 +2,18 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
-import { api, fa, readCtxCookie } from "@/lib/ui";
+import { CtxGate, useApp } from "@/components/App";
+import { api, fa } from "@/lib/ui";
 import { todayJalali } from "@/lib/jalali";
 
-/* [فرم اصلی: صدور سند حسابداري — acGenVch]
-   سرسند: تاریخ/شرح/نوع + شعبه/ش روزانه/ش فرعي/لاتين (G-C2)
-   ردیف: کل/معین/تفصیلی ۴-۶/شرح/بدهکار/بستانکار + ردیف بازشوندهٔ ارز و پیگیری و لاتین
-   تراز زنده + شماره‌گذاری روزانهٔ خودکار */
+/* ============================================================================
+   صدور سند حسابداری (v2.0.0 — بازنویسی از صفر) [فرم اصلی: صدور سند حسابداري — acGenVch]
+   سرسند: تاریخ/شرح/نوع سند + شعبه/ش روزانه/ش فرعي/شرح لاتين
+   ردیف: کد کل و عنوان — کد معین و عنوان — تفصیلی ۴/۵/۶ (کد و عنوان) — شرح — بدهکار — بستانکار
+   ردیف بازشونده: ارز (نوع/مبلغ/نرخ) + پیگیری (شماره/تاریخ) + شرح لاتین
+   کانتکست از AppContext سراسری — اگر شرکت/سال انتخاب نشده باشد همین‌جا راهنما می‌بیند
+   و «پیش از ثبت» مانع می‌شود؛ کوکی همیشه هم‌گام است (رفع ریشه‌ای خطای کانتکست).
+   ============================================================================ */
 
 interface Row {
   KolCode: string; MoeinCode: string; Taf1Id: string; Taf2Id: string; Taf3Id: string;
@@ -22,6 +27,7 @@ const emptyRow = (): Row => ({
 });
 
 export default function Page() {
+  const app = useApp();
   const [types, setTypes] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [fxList, setFxList] = useState<any[]>([]);
@@ -40,41 +46,43 @@ export default function Page() {
   const [moeins, setMoeins] = useState<any[]>([]);
   const [dls, setDls] = useState<any[]>([]);
 
+  /* بارگیری داده‌های کمکی — فقط وقتی کانتکست کامل است (بدون شکست بی‌صدا) */
   useEffect(() => {
+    if (app.ctxMissing) return;
+    setMsg(null);
     (async () => {
-      let { companyId } = readCtxCookie();
-      if (!companyId) {
-        /* پشتیبان: خواندن کانتکست از سرور در صورت نبود کوکی در سمت کلاینت */
-        try { const j = await (await fetch("/api/context")).json(); if (j.ok && j.current?.CompanyId) companyId = j.current.CompanyId; } catch { /* - */ }
-      }
-      if (!companyId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); return; }
       try {
         const j = await api("/api/vch/types");
         setTypes(j.rows || []); if (j.rows?.length) setTypeId(String(j.rows[0].VoucherTypeId));
         setBranches(j.branches || []); setFxList(j.fx || []);
       } catch (e: any) { setMsg({ t: "err", s: e.message }); }
-      api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
-      api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
+      try {
+        const m = await api("/api/acc/moein");
+        setMoeins((m.rows || []).filter((x: any) => x.IsActive !== 0));
+      } catch (e: any) { setMsg({ t: "err", s: e.message }); }
+      try {
+        const d = await api("/api/acc/tafsili");
+        setDls((d.rows || []).filter((x: any) => x.IsActive !== 0));
+      } catch (e: any) { setMsg({ t: "err", s: e.message }); }
     })();
-  }, []);
+  }, [app.companyId, app.yearId, app.ctxMissing]);
 
   const moeinMap = useMemo(() => new Map(moeins.map((m) => [m.Code, m])), [moeins]);
-  const kolTitles = useMemo(() => {
-    const m = new Map<string, string>();
-    moeins.forEach((x: any) => { if (x.KolCode && x.KolTitle && !m.has(x.KolCode)) m.set(x.KolCode, x.KolTitle); });
+  const kolMap = useMemo(() => {
+    const m = new Map<string, { code: string; title: string }>();
+    moeins.forEach((x: any) => { if (x.KolCode && !m.has(x.KolCode)) m.set(x.KolCode, { code: x.KolCode, title: x.KolTitle || "" }); });
     return m;
   }, [moeins]);
-  const kolOptions = useMemo(() => [...new Set(moeins.map((m) => m.KolCode))].sort(), [moeins]);
+  const kolOptions = useMemo(() => [...kolMap.keys()].sort(), [kolMap]);
   const moeinsOf = (kol: string) => moeins.filter((m) => m.KolCode === kol);
   const dlsOfType = (typeId: number) => dls.filter((d) => d.TafsiliTypeId === typeId);
 
-  const upd = (i: number, patch: Partial<Row>) => {
+  const upd = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, k) => (k === i ? { ...r, ...patch } : r)));
-  };
-  const toggleOpen = (i: number) => {
+  const toggleOpen = (i: number) =>
     setOpenRows((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
-  };
 
+  const pickKol = (i: number, kol: string) => upd(i, { KolCode: kol, MoeinCode: "", Taf1Id: "", Taf2Id: "", Taf3Id: "" });
   const pickMoein = (i: number, code: string) => {
     const m = moeinMap.get(code);
     upd(i, { MoeinCode: code, KolCode: m ? m.KolCode : "", Taf1Id: "", Taf2Id: "", Taf3Id: "" });
@@ -84,14 +92,9 @@ export default function Page() {
   const balanced = totals.D === totals.C && totals.D > 0;
 
   const save = async () => {
+    if (app.ctxMissing) { setMsg({ t: "err", s: app.ctxMsg }); return; }
     setBusy(true); setMsg(null);
     try {
-      /* همگام‌سازی سال مالی قبل از ارسال — اگر کوکی هنوز سال ندارد، از سرور گرفته و کوکی آپدیت می‌شود */
-      let ctx = readCtxCookie();
-      if (!ctx.yearId || !ctx.companyId) {
-        try { await (await fetch("/api/context")).json(); ctx = readCtxCookie(); } catch { /* - */ }
-      }
-      if (!ctx.companyId || !ctx.yearId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); setBusy(false); return; }
       const items = rows
         .filter((r) => r.KolCode || r.MoeinCode || Number(r.Dbt) || Number(r.Crt))
         .map((r) => ({
@@ -102,6 +105,7 @@ export default function Page() {
           TrackNo: r.TrackNo || "", TrackDate: r.TrackDate || "", LatinDescr: r.LatinDescr || "",
         }));
       const j = await api("/api/vch/issue", { method: "POST", body: JSON.stringify({
+        companyId: app.companyId, yearId: app.yearId,   /* پشتیبان صریح کنار کوکی */
         VchDate: vchDate, Descr: descr, VoucherTypeId: Number(typeId),
         BranchId: branchId ? Number(branchId) : null,
         DayNo: dayNo === "" ? null : Number(dayNo),
@@ -117,163 +121,172 @@ export default function Page() {
 
   return (
     <Shell title="صدور سند حسابداری" sub="سند صادرشده «موقت» است — فرایند: صدور ← بررسی ← قطعی">
-      {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
+      <CtxGate>
+        {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
 
-      <div className="card">
-        <div className="card-title">سرسند</div>
-        <div className="form-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
-          <div className="field">
-            <label>تاریخ سند (جلالی)</label>
-            <input value={vchDate} onChange={(e) => setVchDate(e.target.value)} style={{ direction: "ltr", textAlign: "left" }} />
-          </div>
-          <div className="field" style={{ gridColumn: "span 2" }}>
-            <label>شرح سند</label>
-            <input value={descr} onChange={(e) => setDescr(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>نوع سند</label>
-            <select value={typeId} onChange={(e) => setTypeId(e.target.value)}>
-              {types.map((t) => <option key={t.VoucherTypeId} value={t.VoucherTypeId}>{t.Title}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>شعبه</label>
-            <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-              <option value="">—</option>
-              {branches.map((b) => <option key={b.v} value={b.v}>{b.t}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>ش روزانه (خالی = خودکار)</label>
-            <input value={dayNo} onChange={(e) => setDayNo(e.target.value.replace(/\D/g, ""))} placeholder="خودکار"
-              style={{ direction: "ltr", textAlign: "left" }} />
-          </div>
-          <div className="field">
-            <label>ش فرعي</label>
-            <input value={subNo} onChange={(e) => setSubNo(e.target.value.replace(/\D/g, ""))}
-              style={{ direction: "ltr", textAlign: "left" }} />
-          </div>
-          <div className="field" style={{ gridColumn: "span 2" }}>
-            <label>لاتين (شرح لاتین سند)</label>
-            <input value={latin} onChange={(e) => setLatin(e.target.value)} dir="ltr"
-              style={{ direction: "ltr", textAlign: "left", fontFamily: "inherit" }} />
+        <div className="card">
+          <div className="card-title">سرسند</div>
+          <div className="form-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
+            <div className="field">
+              <label>تاریخ سند (جلالی)</label>
+              <input value={vchDate} onChange={(e) => setVchDate(e.target.value)} style={{ direction: "ltr", textAlign: "left" }} />
+            </div>
+            <div className="field" style={{ gridColumn: "span 2" }}>
+              <label>شرح سند</label>
+              <input value={descr} onChange={(e) => setDescr(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>نوع سند</label>
+              <select value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+                {types.map((t) => <option key={t.VoucherTypeId} value={t.VoucherTypeId}>{t.Title}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>شعبه</label>
+              <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                <option value="">—</option>
+                {branches.map((b) => <option key={b.v} value={b.v}>{b.t}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>ش روزانه (خالی = خودکار)</label>
+              <input value={dayNo} onChange={(e) => setDayNo(e.target.value.replace(/\D/g, ""))} placeholder="خودکار"
+                style={{ direction: "ltr", textAlign: "left" }} />
+            </div>
+            <div className="field">
+              <label>ش فرعي</label>
+              <input value={subNo} onChange={(e) => setSubNo(e.target.value.replace(/\D/g, ""))}
+                style={{ direction: "ltr", textAlign: "left" }} />
+            </div>
+            <div className="field" style={{ gridColumn: "span 2" }}>
+              <label>لاتين (شرح لاتین سند)</label>
+              <input value={latin} onChange={(e) => setLatin(e.target.value)} dir="ltr"
+                style={{ direction: "ltr", textAlign: "left", fontFamily: "inherit" }} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="scrollbox" style={{ maxHeight: "none" }}>
-        <table className="grid">
-          <thead><tr>
-            <th style={{ width: 34 }}>#</th>
-            <th style={{ width: 150 }}>حساب کل</th>
-            <th style={{ width: 200 }}>حساب معین</th>
-            <th>تفصیلی ۴</th><th>تفصیلی ۵</th><th>تفصیلی ۶</th>
-            <th>شرح ردیف</th>
-            <th style={{ width: 120 }} className="num">بدهکار</th>
-            <th style={{ width: 120 }} className="num">بستانکار</th>
-            <th style={{ width: 64 }}></th>
-          </tr></thead>
-          <tbody>
-            {rows.map((r, i) => {
-              const m = moeinMap.get(r.MoeinCode);
-              const hasFx = !!(r.FxId || r.FxAmount || r.FxRate || r.TrackNo || r.TrackDate || r.LatinDescr);
-              return (
-                <Fragment key={i}>
-                  <tr className={openRows.has(i) ? "row-open" : ""}>
-                    <td>{i + 1}</td>
-                    <td>
-                      <select value={r.KolCode} onChange={(e) => upd(i, { KolCode: e.target.value, MoeinCode: "", Taf1Id: "", Taf2Id: "", Taf3Id: "" })} style={{ width: "100%" }}>
-                        <option value="">—</option>
-                        {kolOptions.map((k) => <option key={k} value={k}>{k} — {kolTitles.get(k) || ""}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      <select value={r.MoeinCode} onChange={(e) => pickMoein(i, e.target.value)} style={{ width: "100%" }}>
-                        <option value="">—</option>
-                        {moeinsOf(r.KolCode).map((m2) => <option key={m2.Code} value={m2.Code}>{m2.Code} — {m2.Title}</option>)}
-                      </select>
-                    </td>
-                    {[["Taf1Id", m?.Taf1TypeId], ["Taf2Id", m?.Taf2TypeId], ["Taf3Id", m?.Taf3TypeId]].map(([f, t]) => (
-                      <td key={String(f)}>
-                        {t ? (
-                          <select value={(r as any)[String(f)]} onChange={(e) => upd(i, { [String(f)]: e.target.value } as Partial<Row>)} style={{ width: "100%" }}>
-                            <option value="">— الزامی —</option>
-                            {dlsOfType(Number(t)).map((d) => <option key={d.TafsiliId} value={d.TafsiliId}>{d.Code} — {d.Title}</option>)}
-                          </select>
-                        ) : <span className="muted">—</span>}
+        <div className="scrollbox" style={{ maxHeight: "none" }}>
+          <table className="grid">
+            <thead><tr>
+              <th style={{ width: 32 }}>#</th>
+              <th style={{ width: 120 }}>کد کل</th>
+              <th style={{ width: 168 }}>حساب کل</th>
+              <th style={{ width: 120 }}>کد معین</th>
+              <th style={{ width: 200 }}>حساب معین</th>
+              <th>تفصیلی ۴</th><th>تفصیلی ۵</th><th>تفصیلی ۶</th>
+              <th style={{ width: 170 }}>شرح ردیف</th>
+              <th style={{ width: 118 }} className="num">بدهکار</th>
+              <th style={{ width: 118 }} className="num">بستانکار</th>
+              <th style={{ width: 62 }}></th>
+            </tr></thead>
+            <tbody>
+              {rows.map((r, i) => {
+                const m = moeinMap.get(r.MoeinCode);
+                const kol = kolMap.get(r.KolCode);
+                const hasFx = !!(r.FxId || r.FxAmount || r.FxRate || r.TrackNo || r.TrackDate || r.LatinDescr);
+                return (
+                  <Fragment key={i}>
+                    <tr className={openRows.has(i) ? "row-open" : ""}>
+                      <td>{i + 1}</td>
+                      {/* کد کل — نمایش صریح کد در ستون مستقل (قابل مشاهده همیشه) */}
+                      <td className="ltr">{r.KolCode ? <b>{r.KolCode}</b> : <span className="muted">—</span>}</td>
+                      <td>
+                        <select value={r.KolCode} onChange={(e) => pickKol(i, e.target.value)} style={{ width: "100%" }} title={kol?.title || ""}>
+                          <option value="">— انتخاب —</option>
+                          {kolOptions.map((k) => <option key={k} value={k}>{k} — {kolMap.get(k)?.title}</option>)}
+                        </select>
                       </td>
-                    ))}
-                    <td><input value={r.Descr} onChange={(e) => upd(i, { Descr: e.target.value })} style={{ width: "95%" }} /></td>
-                    <td><input value={r.Dbt} onChange={(e) => upd(i, { Dbt: e.target.value, Crt: e.target.value ? "" : r.Crt })} className="num" style={{ width: "95%", direction: "ltr", textAlign: "left" }} /></td>
-                    <td><input value={r.Crt} onChange={(e) => upd(i, { Crt: e.target.value, Dbt: e.target.value ? "" : r.Dbt })} className="num" style={{ width: "95%", direction: "ltr", textAlign: "left" }} /></td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <button className={`btn ghost ${hasFx ? "active" : ""}`} title="ارز / پیگیری / لاتین"
-                        onClick={() => toggleOpen(i)} style={{ padding: "1px 7px" }}>▾</button>{" "}
-                      <button className="btn danger" onClick={() => setRows(rows.filter((_, k) => k !== i))} style={{ padding: "1px 7px" }}>×</button>
-                    </td>
-                  </tr>
-                  {openRows.has(i) && (
-                    <tr className="detail-row">
-                      <td></td>
-                      <td colSpan={9}>
-                        <div className="detail-grid">
-                          <div className="field">
-                            <label>نوع ارز</label>
-                            <select value={r.FxId} onChange={(e) => upd(i, { FxId: e.target.value })}>
-                              <option value="">— ریال (بدون ارز) —</option>
-                              {fxList.map((f) => <option key={f.v} value={f.v}>{f.t}{f.IsBase ? " ★" : ""}</option>)}
+                      {/* کد معین — نمایش صریح کد در ستون مستقل */}
+                      <td className="ltr">{r.MoeinCode ? <b>{r.MoeinCode}</b> : <span className="muted">—</span>}</td>
+                      <td>
+                        <select value={r.MoeinCode} onChange={(e) => pickMoein(i, e.target.value)} style={{ width: "100%" }} title={m?.Title || ""}>
+                          <option value="">— انتخاب —</option>
+                          {moeinsOf(r.KolCode).map((m2) => <option key={m2.Code} value={m2.Code}>{m2.Code} — {m2.Title}</option>)}
+                        </select>
+                      </td>
+                      {[["Taf1Id", m?.Taf1TypeId], ["Taf2Id", m?.Taf2TypeId], ["Taf3Id", m?.Taf3TypeId]].map(([f, t]) => (
+                        <td key={String(f)}>
+                          {t ? (
+                            <select value={(r as any)[String(f)]} onChange={(e) => upd(i, { [String(f)]: e.target.value } as Partial<Row>)} style={{ width: "100%" }}>
+                              <option value="">— الزامی —</option>
+                              {dlsOfType(Number(t)).map((d) => <option key={d.TafsiliId} value={d.TafsiliId}>{d.Code} — {d.Title}</option>)}
                             </select>
-                          </div>
-                          <div className="field">
-                            <label>مبلغ ارزی</label>
-                            <input value={r.FxAmount} onChange={(e) => upd(i, { FxAmount: e.target.value })} disabled={!r.FxId}
-                              className="num" style={{ direction: "ltr", textAlign: "left" }} />
-                          </div>
-                          <div className="field">
-                            <label>نرخ ارز</label>
-                            <input value={r.FxRate} onChange={(e) => upd(i, { FxRate: e.target.value })} disabled={!r.FxId}
-                              className="num" style={{ direction: "ltr", textAlign: "left" }} />
-                          </div>
-                          <div className="field">
-                            <label>شمارهٔ پیگیری</label>
-                            <input value={r.TrackNo} onChange={(e) => upd(i, { TrackNo: e.target.value })}
-                              style={{ direction: "ltr", textAlign: "left" }} />
-                          </div>
-                          <div className="field">
-                            <label>تاریخ پیگیری (جلالی)</label>
-                            <input value={r.TrackDate} onChange={(e) => upd(i, { TrackDate: e.target.value })} placeholder="1405/01/01"
-                              style={{ direction: "ltr", textAlign: "left" }} />
-                          </div>
-                          <div className="field" style={{ gridColumn: "span 2" }}>
-                            <label>شرح لاتین ردیف</label>
-                            <input value={r.LatinDescr} onChange={(e) => upd(i, { LatinDescr: e.target.value })} dir="ltr"
-                              style={{ direction: "ltr", textAlign: "left" }} />
-                          </div>
-                        </div>
-                        {r.FxId && r.FxAmount && r.FxRate && (
-                          <p className="muted" style={{ marginTop: 4 }}>
-                            معادل ریالی تقریبی: {fa(Number(r.FxAmount) * Number(r.FxRate))} — مبلغ ریالی قلم باید جداگانه در بدهکار/بستانکار ثبت شود
-                          </p>
-                        )}
+                          ) : <span className="muted">—</span>}
+                        </td>
+                      ))}
+                      <td><input value={r.Descr} onChange={(e) => upd(i, { Descr: e.target.value })} style={{ width: "96%" }} /></td>
+                      <td><input value={r.Dbt} onChange={(e) => upd(i, { Dbt: e.target.value, Crt: e.target.value ? "" : r.Crt })} className="num" style={{ width: "96%", direction: "ltr", textAlign: "left" }} /></td>
+                      <td><input value={r.Crt} onChange={(e) => upd(i, { Crt: e.target.value, Dbt: e.target.value ? "" : r.Dbt })} className="num" style={{ width: "96%", direction: "ltr", textAlign: "left" }} /></td>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <button className={`btn ghost ${hasFx ? "active" : ""}`} title="ارز / پیگیری / لاتین"
+                          onClick={() => toggleOpen(i)} style={{ padding: "1px 7px" }}>▾</button>{" "}
+                        <button className="btn danger" onClick={() => setRows(rows.filter((_, k) => k !== i))} style={{ padding: "1px 7px" }}>×</button>
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div className="totalbar">
-        <span>جمع بدهکار: {fa(totals.D)}</span>
-        <span>جمع بستانکار: {fa(totals.C)}</span>
-        <span style={{ color: balanced ? "var(--green)" : "var(--accent)" }}>{balanced ? "تراز ✓" : "تراز نیست"}</span>
-      </div>
-      <div className="btnrow">
-        <button className="btn" onClick={() => setRows([...rows, emptyRow()])}>افزودن ردیف</button>
-        <button className="btn primary" onClick={save} disabled={busy || !balanced}>صدور سند</button>
-        {lastNo && <span className="muted">آخرین سند صادرشده: {fa(lastNo)}</span>}
-      </div>
+                    {openRows.has(i) && (
+                      <tr className="detail-row">
+                        <td></td>
+                        <td colSpan={11}>
+                          <div className="detail-grid">
+                            <div className="field">
+                              <label>نوع ارز</label>
+                              <select value={r.FxId} onChange={(e) => upd(i, { FxId: e.target.value })}>
+                                <option value="">— ریال (بدون ارز) —</option>
+                                {fxList.map((f) => <option key={f.v} value={f.v}>{f.t}{f.IsBase ? " ★" : ""}</option>)}
+                              </select>
+                            </div>
+                            <div className="field">
+                              <label>مبلغ ارزی</label>
+                              <input value={r.FxAmount} onChange={(e) => upd(i, { FxAmount: e.target.value })} disabled={!r.FxId}
+                                className="num" style={{ direction: "ltr", textAlign: "left" }} />
+                            </div>
+                            <div className="field">
+                              <label>نرخ ارز</label>
+                              <input value={r.FxRate} onChange={(e) => upd(i, { FxRate: e.target.value })} disabled={!r.FxId}
+                                className="num" style={{ direction: "ltr", textAlign: "left" }} />
+                            </div>
+                            <div className="field">
+                              <label>شمارهٔ پیگیری</label>
+                              <input value={r.TrackNo} onChange={(e) => upd(i, { TrackNo: e.target.value })}
+                                style={{ direction: "ltr", textAlign: "left" }} />
+                            </div>
+                            <div className="field">
+                              <label>تاریخ پیگیری (جلالی)</label>
+                              <input value={r.TrackDate} onChange={(e) => upd(i, { TrackDate: e.target.value })} placeholder="1405/01/01"
+                                style={{ direction: "ltr", textAlign: "left" }} />
+                            </div>
+                            <div className="field" style={{ gridColumn: "span 2" }}>
+                              <label>شرح لاتین ردیف</label>
+                              <input value={r.LatinDescr} onChange={(e) => upd(i, { LatinDescr: e.target.value })} dir="ltr"
+                                style={{ direction: "ltr", textAlign: "left" }} />
+                            </div>
+                          </div>
+                          {r.FxId && r.FxAmount && r.FxRate && (
+                            <p className="muted" style={{ marginTop: 4 }}>
+                              معادل ریالی تقریبی: {fa(Number(r.FxAmount) * Number(r.FxRate))} — مبلغ ریالی قلم باید جداگانه در بدهکار/بستانکار ثبت شود
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="totalbar">
+          <span>جمع بدهکار: {fa(totals.D)}</span>
+          <span>جمع بستانکار: {fa(totals.C)}</span>
+          <span style={{ color: balanced ? "var(--green)" : "var(--accent)" }}>{balanced ? "تراز ✓" : "تراز نیست"}</span>
+        </div>
+        <div className="btnrow">
+          <button className="btn" onClick={() => setRows([...rows, emptyRow()])}>افزودن ردیف</button>
+          <button className="btn primary" onClick={save} disabled={busy || !balanced}>صدور سند</button>
+          {lastNo && <span className="muted">آخرین سند صادرشده: {fa(lastNo)}</span>}
+        </div>
+      </CtxGate>
     </Shell>
   );
 }

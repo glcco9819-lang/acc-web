@@ -16,8 +16,17 @@ export async function GET() {
   if (ctx.companyId && !companies.find((c) => c.CompanyId === ctx.companyId)) ctx = {};
   let year = null;
   if (ctx.yearId) year = years.find((y) => y.YearId === ctx.yearId) || null;
-  if (!year && ctx.companyId) year = years.find((y) => y.CompanyId === ctx.companyId) || null;
-  const res = NextResponse.json({ ok: true, user: s, companies, years, current: year, can: {
+  if (!year && ctx.companyId) {
+    /* انتخاب خودکار سال — سال بازِ همین شرکت، جدیدترین اول */
+    const cy = years
+      .filter((y) => y.CompanyId === ctx.companyId && !y.IsClosed)
+      .sort((a, b) => b.JalaliYear - a.JalaliYear)[0];
+    year = cy || years.find((y) => y.CompanyId === ctx.companyId) || null;
+  }
+  const res = NextResponse.json({ ok: true, user: s, companies, years,
+    /* کانتکست صریح — کلاینت (AppContext) همین را نمایش می‌دهد و کوکی را همگام می‌کند */
+    ctx: { companyId: ctx.companyId || 0, yearId: year ? year.YearId : 0 },
+    current: year, can: {
     issue: can(s, "issue"), review: can(s, "review"), finalize: can(s, "finalize"),
     reverse: can(s, "reverse"), master: can(s, "master"),
     logview: can(s, "logview"), logdelete: can(s, "logdelete"),

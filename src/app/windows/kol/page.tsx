@@ -2,26 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Shell from "@/components/Shell";
+import { CtxGate, useApp } from "@/components/App";
 import CrudWindow, { Col } from "@/components/CrudWindow";
-import { api, readCtxCookie } from "@/lib/ui";
+import { api } from "@/lib/ui";
 
 /* [فرم اصلی: معرفي حسابهاي كل — گروه حساب، كد، عنوان، ماهيت حساب] */
 export default function Page() {
+  const app = useApp();
   const [cols, setCols] = useState<Col[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [mode, setMode] = useState(2);
 
   useEffect(() => {
-    (async () => {
-      let { companyId } = readCtxCookie();
-      if (!companyId) {
-        /* پشتیبان: خواندن کانتکست از سرور در صورت نبود کوکی در سمت کلاینت */
-        try { const j = await (await fetch("/api/context")).json(); if (j.ok && j.current?.CompanyId) companyId = j.current.CompanyId; } catch { /* - */ }
-      }
-      if (!companyId) return;
-      api(`/api/acc/groups`).then((j) => { setGroups(j.rows || []); setMode(j.mode || 2); }).catch(() => {});
-    })();
-  }, []);
+    if (app.ctxMissing) return;
+    api(`/api/acc/groups`).then((j) => { setGroups(j.rows || []); setMode(j.mode || 2); }).catch(() => {});
+  }, [app.companyId, app.ctxMissing]);
 
   useEffect(() => {
     setCols([
@@ -36,9 +31,11 @@ export default function Page() {
 
   return (
     <Shell title="معرفی حساب‌های کل" sub="کد کل چهاررقم — دو رقم اول = کد گروه (حالت accdef)">
-      {mode === 2 && !groups.length
-        ? <p className="muted">ابتدا گروه حساب تعریف کنید.</p>
-        : <CrudWindow entity="kol" title="حساب کل" cols={cols} note="تغییر کد کل پس از استفاده در سند مجاز نیست." />}
+      <CtxGate>
+        {mode === 2 && !groups.length
+          ? <p className="muted">ابتدا گروه حساب تعریف کنید.</p>
+          : <CrudWindow entity="kol" title="حساب کل" cols={cols} note="تغییر کد کل پس از استفاده در سند مجاز نیست." />}
+      </CtxGate>
     </Shell>
   );
 }

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { ctxOf } from "@/lib/ctx";
 
 /* فهرست اسناد [فرم: بررسي اسناد — فقط اسناد موقت/بررسی‌شده/… و محدودهٔ سند] */
 export async function GET(req: NextRequest) {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
-  const raw = (await (await import("next/headers")).cookies()).get("acc_ctx")?.value;
-  let companyId = 0, yearId = 0;
-  try { const j = JSON.parse(raw || "{}"); companyId = j.companyId || 0; yearId = j.yearId || 0; } catch { /* - */ }
+  const { companyId, yearId } = ctxOf(req);
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده", code: "NO_CTX" }, { status: 400 });
 
   const sp = new URL(req.url).searchParams;

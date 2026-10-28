@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { one, q, tx } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
+import { ctxOf } from "@/lib/ctx";
 import { isValidJalali } from "@/lib/jalali";
 
 /* صدور سند حسابداري [فرم: صدور سند حسابداري — acGenVch]
@@ -29,12 +30,12 @@ export async function POST(req: NextRequest) {
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
   if (!can(s, "issue")) return NextResponse.json({ ok: false, error: "نقش شما مجاز به صدور سند نیست" }, { status: 403 });
 
-  const raw = (await (await import("next/headers")).cookies()).get("acc_ctx")?.value;
-  let companyId = 0, yearId = 0;
-  try { const j = JSON.parse(raw || "{}"); companyId = j.companyId || 0; yearId = j.yearId || 0; } catch { /* - */ }
+  const body0 = await req.json().catch(() => ({}));
+  /* کانتکست: کوکی acc_ctx + پشتیبان صریح companyId/yearId در body (رفع ریشه‌ای خطای کانتکست) */
+  const { companyId, yearId } = ctxOf(req, body0);
   if (!companyId || !yearId) return NextResponse.json({ ok: false, error: "شرکت و سال مالی انتخاب نشده", code: "NO_CTX" }, { status: 400 });
 
-  const body = await req.json().catch(() => ({}));
+  const body = body0;
   const vchDate = String(body.VchDate || "").trim();
   const descr = String(body.Descr || "").trim().slice(0, 500) || null;
   const typeId = Number(body.VoucherTypeId || 0);
@@ -59,8 +60,8 @@ export async function POST(req: NextRequest) {
   if (dayNoIn !== null && (!Number.isInteger(dayNoIn) || dayNoIn < 0))
     return NextResponse.json({ ok: false, error: "شمارهٔ روزانه نامعتبر است" }, { status: 400 });
 
-  /* سال مالی باز؟ */
-  const yr = await one("SELECT IsClosed FROM pob.FiscalYear WHERE YearId=@y", { y: yearId });
+  /* سال مالی متعلق به شرکتِ کانتکست و باز باشد */
+  const yr = await one("SELECT IsClosed FROM pob.FiscalYear WHERE YearId=@y AND CompanyId=@c", { y: yearId, c: companyId });
   if (!yr) return NextResponse.json({ ok: false, error: "سال مالی یافت نشد" }, { status: 400 });
   if (yr.IsClosed) return NextResponse.json({ ok: false, error: "سال مالی بسته است" }, { status: 400 });
 

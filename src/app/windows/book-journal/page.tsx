@@ -58,7 +58,7 @@ export default function Page() {
                 <td>{i > 0 && rows[i - 1].VchNo === r.VchNo ? "" : (r.ItmDescr || r.VchDescr || "—")}</td>
                 <td>{r.KolCode} — {r.KolTitle}</td>
                 <td>{r.MoeinCode} — {r.MoeinTitle}</td>
-                <td>{r.Taf1Title || r.Taf2Title || r.Taf3Title || "—"}</td>
+                <td>{r.Taf1Id ? `(${r.Taf1Code}) ${r.Taf1Title}` : r.Taf2Id ? `(${r.Taf2Code}) ${r.Taf2Title}` : r.Taf3Id ? `(${r.Taf3Code}) ${r.Taf3Title}` : "—"}</td>
                 <td className="num">{Number(r.Dbt) ? fa(r.Dbt) : ""}</td>
                 <td className="num">{Number(r.Crt) ? fa(r.Crt) : ""}</td>
               </tr>

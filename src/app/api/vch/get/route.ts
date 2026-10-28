@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
 
   const items = await q(
     `SELECT i.*, k.Title KolTitle, m.Title MoeinTitle, m.Taf1TypeId, m.Taf2TypeId, m.Taf3TypeId,
-            d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title
+            d1.Code Taf1Code, d1.Title Taf1Title,
+            d2.Code Taf2Code, d2.Title Taf2Title,
+            d3.Code Taf3Code, d3.Title Taf3Title
      FROM ACC.AccVoucherItm i
      JOIN ACC.AccKol k ON k.CompanyId = (SELECT CompanyId FROM ACC.AccVoucher WHERE VoucherId=i.VoucherId) AND k.Code=i.KolCode
      JOIN ACC.AccMoein m ON m.CompanyId = k.CompanyId AND m.Code=i.MoeinCode

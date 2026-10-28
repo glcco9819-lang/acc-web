@@ -1,110 +1,93 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { api } from "@/lib/ui";
+import { useApp } from "@/components/App";
+
+/* ============================================================================
+   پوستهٔ برنامه (v2.0.0) — منوی اصلی + نوار کانتکست + قاب پنجره
+   منبع شرکت/سال: AppContext سراسری (نه کوکی محلی هر پنجره)
+   ============================================================================ */
 
 export default function Shell({ children, title, sub }: { children: React.ReactNode; title: string; sub?: string }) {
-  const [ctx, setCtx] = useState<any>(null);
+  const app = useApp();
   const [open, setOpen] = useState<string | null>(null);
   const path = usePathname();
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/context").then((r) => r.json()).then((j) => {
-      if (!j.ok) { router.replace("/login"); return; }
-      const cur = j.current || null;
-      setCtx({
-        companyId: cur?.CompanyId || 0,
-        company: cur || undefined,
-        user: j.user, can: j.can,
-      });
-    }).catch(() => router.replace("/login"));
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); };
     document.addEventListener("click", h);
     return () => document.removeEventListener("click", h);
   }, []);
 
-  const setCompany = async (v: string) => {
-    const companyId = Number(v || 0);
-    await api("/api/context", { method: "POST", body: JSON.stringify({ companyId, yearId: 0 }) });
-    location.reload();
+  const logout = async () => {
+    try { await fetch("/api/auth/login", { method: "DELETE" }); } catch { /* - */ }
+    router.replace("/login");
   };
-  const setYear = async (v: string) => {
-    const yearId = Number(v || 0);
-    await api("/api/context", { method: "POST", body: JSON.stringify({ companyId: ctx.companyId, yearId }) });
-    location.reload();
-  };
-  const logout = async () => { await api("/api/auth/login", { method: "DELETE" }); router.replace("/login"); };
 
-  if (!ctx) return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>در حال بارگذاری…</div>;
+  if (!app.ready) return <div className="boot">در حال بارگذاری…</div>;
 
   const menus = MENUS.map((g) =>
-    /* لاگ سیستم — فقط مدیر سامانه */
-    g.title === "عملیات پایه" && ctx.can?.logview
+    g.title === "عملیات پایه" && app.can?.logview
       ? { ...g, items: [...g.items, ["/windows/log", "لاگ سیستم"] as [string, string]] }
       : g
   );
+  const yearsOf = app.years.filter((y) => y.CompanyId === app.companyId);
 
   return (
-    <>
+    <div className="shell">
       <div className="menubar" ref={ref}>
-        <span className="brand">YFG ACC-WEB · ماژول حسابداری</span>
+        <Link href="/windows/chart" className="brand">
+          <span className="brand-mark">YFG</span>
+          <span>حسابداری</span>
+        </Link>
         {menus.map((g) => (
           <div key={g.title} className={`menu-group ${open === g.title ? "open" : ""}`}>
             <button onClick={() => setOpen(open === g.title ? null : g.title)}>{g.title}</button>
             <div className="menu-drop">
               {g.items.map(([href, label]) => (
                 <Link key={href} href={href} onClick={() => setOpen(null)}
-                  style={path === href ? { background: "#e8eef4", fontWeight: "bold" } : undefined}>{label}</Link>
+                  className={path === href ? "active" : ""}>{label}</Link>
               ))}
             </div>
           </div>
         ))}
+        <div className="menubar-user">
+          <span className="user-chip" title={app.user?.username}>
+            <b>{app.user?.display}</b>
+            <i>{app.user?.role === "admin" ? "مدیر سامانه" : app.user?.role === "registrar" ? "ثبت‌کننده" : "بررسی‌کننده"}</i>
+          </span>
+          <button className="btn ghost" onClick={logout}>خروج</button>
+        </div>
       </div>
+
       <div className="ctxbar">
-        <span>شرکت:</span>
-        <CompanySelect value={ctx.company?.CompanyId || 0} onChange={setCompany} />
-        <span>سال مالی:</span>
-        <YearSelect companyId={ctx.companyId} value={ctx.company?.YearId || 0} onChange={setYear} />
-        {ctx.company && <span className="badge src">کدینگ: {ctx.company.CodingMode === 2 ? "مطابق accdef (گروه/کل/معین)" : "پلکانی"}</span>}
-        <span className="user">کاربر: <b>{ctx.user?.display}</b> ({ctx.user?.role === "admin" ? "مدیر" : ctx.user?.role === "registrar" ? "ثبت‌کننده" : "بررسی‌کننده"})</span>
-        <button className="btn" onClick={logout} style={{ padding: "2px 10px" }}>خروج</button>
+        <label>شرکت</label>
+        <select value={app.companyId || ""} onChange={(e) => app.pickCompany(Number(e.target.value))}>
+          <option value="">— انتخاب —</option>
+          {app.companies.map((c) => <option key={c.CompanyId} value={c.CompanyId}>{c.CompanyCode} — {c.TitleFa}</option>)}
+        </select>
+        <label>سال مالی</label>
+        <select value={app.yearId || ""} onChange={(e) => app.pickYear(Number(e.target.value))} disabled={!app.companyId}>
+          <option value="">— انتخاب —</option>
+          {yearsOf.map((y) => <option key={y.YearId} value={y.YearId}>{y.Title}{y.IsClosed ? " (بسته)" : ""}</option>)}
+        </select>
+        {app.company && (
+          <span className="ctx-badge">کدینگ: {app.company.CodingMode === 2 ? "گروه/کل/معین" : "پلکانی"}</span>
+        )}
+        {app.year && <span className="ctx-badge">از {app.year.Title}</span>}
       </div>
+
       <div className="main">
         <div className="window">
           <div className="window-title"><span>{title}</span>{sub && <span className="sub">{sub}</span>}</div>
           <div className="window-body">{children}</div>
         </div>
       </div>
-    </>
-  );
-}
-
-function CompanySelect({ value, onChange }: { value: number; onChange: (v: string) => void }) {
-  const [rows, setRows] = useState<any[]>([]);
-  useEffect(() => { fetch("/api/prm/company").then((r) => r.json()).then((j) => j.ok && setRows(j.rows)).catch(() => {}); }, []);
-  return (
-    <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
-      <option value="">— انتخاب شرکت —</option>
-      {rows.map((r) => <option key={r.CompanyId} value={r.CompanyId}>{r.CompanyCode} — {r.TitleFa}</option>)}
-    </select>
-  );
-}
-
-function YearSelect({ companyId, value, onChange }: { companyId: number; value: number; onChange: (v: string) => void }) {
-  const [rows, setRows] = useState<any[]>([]);
-  useEffect(() => {
-    if (!companyId) return;
-    fetch(`/api/prm/year?companyId=${companyId}`).then((r) => r.json()).then((j) => j.ok && setRows(j.rows)).catch(() => {});
-  }, [companyId]);
-  return (
-    <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
-      <option value="">— انتخاب سال —</option>
-      {rows.map((r) => <option key={r.YearId} value={r.YearId}>{r.Title}{r.IsClosed ? " (بسته)" : ""}</option>)}
-    </select>
+    </div>
   );
 }
 

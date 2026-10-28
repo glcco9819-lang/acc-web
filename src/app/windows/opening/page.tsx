@@ -2,30 +2,33 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
+import { CtxGate, useApp } from "@/components/App";
 import { api, fa } from "@/lib/ui";
 
 /* [ماندهٔ ابتدای دوره + صدور سند افتتاحیه — acfidf] */
 export default function Page() {
+  const app = useApp();
   const [rows, setRows] = useState<any[]>([]);
   const [totals, setTotals] = useState<any>({ D: 0, C: 0 });
   const [moeins, setMoeins] = useState<any[]>([]);
   const [dls, setDls] = useState<any[]>([]);
   const [form, setForm] = useState({ KolCode: "", MoeinCode: "", Taf1Id: "", Dbt: "", Crt: "" });
   const [msg, setMsg] = useState<{ t: "err" | "ok"; s: string } | null>(null);
-  const [can, setCan] = useState<any>({});
+  const can = app.can || ({} as any);
 
   const load = useCallback(async () => {
+    if (app.ctxMissing) return;
     try {
       const j = await api("/api/prm/opening");
       setRows(j.rows || []); setTotals(j.totals || { D: 0, C: 0 });
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
-  }, []);
+  }, [app.companyId, app.ctxMissing]);
   useEffect(() => {
+    if (app.ctxMissing) return;
     load();
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
     api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
-    api("/api/auth/login").then((j) => setCan(j.can || {})).catch(() => {});
-  }, [load]);
+  }, [load, app.ctxMissing]);
 
   const save = async () => {
     setMsg(null);
@@ -52,6 +55,7 @@ export default function Page() {
 
   return (
     <Shell title="ماندهٔ ابتدای دوره و سند افتتاحیه" sub="مانده‌ها → سند افتتاحیه (موقت → بررسی → قطعی طبق روال)">
+      <CtxGate>
       {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
       <div className="form-grid" style={{ gridTemplateColumns: "220px 130px 130px 130px" }}>
         <div className="field"><label>حساب معین *</label>
@@ -82,7 +86,7 @@ export default function Page() {
               <tr key={r.ObId}>
                 <td>{r.KolCode} — {r.KolTitle}</td>
                 <td>{r.MoeinCode} — {r.MoeinTitle}</td>
-                <td>{r.Taf1Title || "—"}</td>
+                <td>{r.Taf1Id ? <>{r.Taf1Code} — {r.Taf1Title}</> : "—"}</td>
                 <td className="num">{Number(r.Dbt) ? fa(r.Dbt) : ""}</td>
                 <td className="num">{Number(r.Crt) ? fa(r.Crt) : ""}</td>
                 <td><button className="btn danger" onClick={() => del(r.ObId)} style={{ padding: "1px 8px" }}>حذف</button></td>
@@ -92,6 +96,7 @@ export default function Page() {
           </tbody>
         </table>
       </div>
+      </CtxGate>
     </Shell>
   );
 }

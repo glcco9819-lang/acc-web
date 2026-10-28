@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, one, scalar } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
+import { ctxOf } from "@/lib/ctx";
 
 /* پنجره‌های تعاریف حساب‌ها (مطابق acCDef) — یک مسیر عمومی برای هفت تعریف + شجره */
 
@@ -110,9 +111,9 @@ function spec(entity: string, mode: number): EntSpec | null {
   }
 }
 
-function ctxOf(req: NextRequest) {
-  const raw = req.cookies.get("acc_ctx")?.value;
-  try { return raw ? JSON.parse(raw) : {}; } catch { return {}; }
+function ctxFromBody(body: unknown) {
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  return { companyId: Number(b.companyId || 0), yearId: Number(b.yearId || 0) };
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ entity: string }> }) {
@@ -120,7 +121,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
   const { entity } = await params;
   const { companyId } = ctxOf(req);
-  if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده است", code: "NO_CTX" }, { status: 400 });
+  if (!companyId) return NextResponse.json({ ok: false, error: "ابتدا از نوار بالا شرکت را انتخاب کنید", code: "NO_CTX" }, { status: 400 });
 
   if (entity === "chart") {
     const rows = await q(
@@ -152,12 +153,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   const s = await getSession();
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز تعریف ندارید" }, { status: 403 });
   const { entity } = await params;
-  const { companyId } = ctxOf(req);
+  const body = await req.json().catch(() => ({}));
+  const { companyId } = { ...ctxOf(req), ...ctxFromBody(body) };
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده" }, { status: 400 });
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
-  const body = await req.json().catch(() => ({}));
 
   const vals: Record<string, unknown> = {};
   for (const col of sp.cols) {
@@ -209,11 +210,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
   const s = await getSession();
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز ندارید" }, { status: 403 });
   const { entity } = await params;
-  const { companyId } = ctxOf(req);
+  const body = await req.json().catch(() => ({}));
+  const { companyId } = { ...ctxOf(req), ...ctxFromBody(body) };
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
-  const body = await req.json().catch(() => ({}));
   const key = Number(body.id || 0);
   if (!key) return NextResponse.json({ ok: false, error: "شناسه لازم است" }, { status: 400 });
   const keyCol = sp.key;
