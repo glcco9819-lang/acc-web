@@ -1,0 +1,5 @@
+node_modules/
+.next/
+pkg/
+ACCWeb.zip
+*.log
