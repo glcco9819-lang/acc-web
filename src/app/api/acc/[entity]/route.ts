@@ -165,10 +165,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
 
   const cols = Object.keys(vals);
   const names = cols.map((c) => `@${c}`);
-  const inp: Record<string, unknown> = { ...vals, c: companyId };
+  const inp: Record<string, unknown> = { ...vals, c: companyId, u: s.username };
   try {
+    /* ستون‌های ممیزی — ایجادکننده/تاریخ ایجاد/سیستم مبدأ (دستور کارفرما) */
     const r = await one<{ id: number }>(
-      `INSERT INTO ${sp.table} (CompanyId, ${cols.join(",")}) OUTPUT INSERTED.* VALUES (@c, ${names.join(",")})`, inp);
+      `INSERT INTO ${sp.table} (CompanyId, CreatedBy, CreatedAt, SourceSystem, ${cols.join(",")}) OUTPUT INSERTED.* VALUES (@c, @u, SYSDATETIME(), 'ACCWEB', ${names.join(",")})`, inp);
     return NextResponse.json({ ok: true, row: r });
   } catch (e: any) {
     const msg = String(e.message || e);
@@ -220,6 +221,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
     else { sets.push(`${col.name}=@f_${col.name}`); inp[`f_${col.name}`] = col.max ? v.slice(0, col.max) : v; }
   }
   if (!sets.length) return NextResponse.json({ ok: false, error: "چیزی برای تغییر نیست" }, { status: 400 });
+  /* ستون‌های ممیزی ویرایش — ویرایش‌کننده/تاریخ ویرایش */
+  sets.push("UpdatedBy=@u"); inp.u = s.username;
+  sets.push("UpdatedAt=SYSDATETIME()");
   try {
     await q(`UPDATE ${sp.table} SET ${sets.join(",")} WHERE ${keyCol}=@id AND CompanyId=@c`, inp);
     return NextResponse.json({ ok: true });

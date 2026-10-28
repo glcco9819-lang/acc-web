@@ -67,6 +67,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, message: "آپدیت معلق لغو شد" });
   }
 
+  if (action === "restart") {
+    /* راه‌اندازی مجدد برای نصب آپدیت معلق — خروج تمیز سرور؛ راه‌انداز (START-ACC.bat)
+       پس از خروج UPDATE.flag را می‌بیند، update.ps1 بسته را نصب و سرویس را دوباره بالا می‌آورد */
+    const flag = join(cwd, "UPDATE.flag");
+    if (!existsSync(flag)) return NextResponse.json({ ok: false, error: "آپدیت معلق نیست" }, { status: 400 });
+    setTimeout(() => { try { process.exit(0); } catch { /* - */ } }, 800);
+    return NextResponse.json({ ok: true, message: "سرور تا چند ثانیه دیگر برای نصب آپدیت ری‌استارت می‌شود" });
+  }
+
   if (action !== "apply") return NextResponse.json({ ok: false, error: "action نامعتبر" }, { status: 400 });
 
   try {

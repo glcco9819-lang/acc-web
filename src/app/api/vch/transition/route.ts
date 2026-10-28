@@ -50,11 +50,11 @@ export async function POST(req: NextRequest) {
   try {
     await tx(async (run) => {
       if (action === "review") {
-        await run(`UPDATE Vch.Hdr SET State=@to, CheckedBy=@u, CheckedAt=SYSUTCDATETIME() WHERE HdrId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
+        await run(`UPDATE Vch.Hdr SET State=@to, CheckedBy=@u, CheckedAt=SYSDATETIME() WHERE HdrId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
       } else if (action === "unreview") {
         await run(`UPDATE Vch.Hdr SET State=@to, CheckedBy=NULL, CheckedAt=NULL WHERE HdrId=@id AND State=@from`, { to: cfg.to, id, from: cfg.from });
       } else if (action === "finalize") {
-        await run(`UPDATE Vch.Hdr SET State=@to, FinalizedBy=@u, FinalizedAt=SYSUTCDATETIME() WHERE HdrId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
+        await run(`UPDATE Vch.Hdr SET State=@to, FinalizedBy=@u, FinalizedAt=SYSDATETIME() WHERE HdrId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
       }
       await run(`INSERT INTO Vch.WfLog (HdrId, Action, ByUser, Note) VALUES (@id, @a, @u, @n)`,
         { id, a: cfg.log, u: s.username, n: action === "review" ? "بررسی شد" : action === "unreview" ? "لغو بررسی" : "قطعی شد" });

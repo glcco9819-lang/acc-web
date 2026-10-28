@@ -103,6 +103,16 @@ function YearSelect({ companyId, value, onChange }: { companyId: number; value: 
 
 const MENUS: { title: string; items: [string, string][] }[] = [
   {
+    title: "اطلاعات پایه",
+    items: [
+      ["/windows/crspnd", "اشخاص و شرکت‌های طرف مکاتبه"],
+      ["/windows/crspnd-ctgry", "تعریف طبقه‌بندی اشخاص"],
+      ["/windows/geopos", "موقعیت‌های جغرافیایی"],
+      ["/windows/mis-setup", "تنظیمات عمومی"],
+      ["/windows/holidays", "تعطیلات و تقویم"],
+    ],
+  },
+  {
     title: "حساب‌ها",
     items: [
       ["/windows/groups", "معرفی گروه حساب‌ها"],
