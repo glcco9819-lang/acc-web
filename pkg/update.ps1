@@ -24,6 +24,13 @@ if (Test-Path $inner) { $tmp = $inner }
 
 Move-Item (Join-Path $root "app") $old -Force
 Move-Item $tmp (Join-Path $root "app") -Force
+# حفظ پیکربندی دیتابیس سرور مشتری — بستهٔ تازه نباید db-config.json محلی را بازنویسی کند
+$oldCfg = Join-Path $old "db-config.json"
+$newCfg = Join-Path $root "app\db-config.json"
+if ((Test-Path $oldCfg) -and (Test-Path $newCfg)) {
+  Copy-Item $oldCfg $newCfg -Force
+  Write-Output "db-config.json preserved from previous app"
+}
 Remove-Item $old -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item $flagPath -Force -ErrorAction SilentlyContinue
 Write-Output "UPDATE DONE — restarting..."

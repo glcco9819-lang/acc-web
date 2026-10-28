@@ -54,7 +54,9 @@ export async function q<T = any>(text: string, inp?: Record<string, unknown>): P
   const { text: t2, inp: i2 } = await prep(text, inp);
   const r = p.request();
   for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
-  return (await r.query(t2)).recordset as T[];
+  const res = await r.query(t2);
+  /* دستورهای DML/DDL بدون recordset برمی‌گردند — همیشه آرایهٔ معتبر بده */
+  return ((res && res.recordset) || []) as T[];
 }
 
 export async function one<T = any>(text: string, inp?: Record<string, unknown>): Promise<T | null> {
@@ -68,7 +70,8 @@ export async function scalar(text: string, inp?: Record<string, unknown>): Promi
   const r = p.request();
   for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
   const res = await r.query(t2);
-  const first = res.recordset[0];
+  const rs = (res && res.recordset) || [];
+  const first = rs[0];
   return first ? Object.values(first)[0] : null;
 }
 
@@ -81,7 +84,8 @@ export async function tx(fn: (run: (t: string, inp?: Record<string, unknown>) =>
       const { text: t2, inp: i2 } = await prep(text, inp);
       const r = new (sql.Request as any)(t);
       for (const [k, v] of Object.entries(i2)) r.input(k, v as any);
-      return (await r.query(t2)).recordset;
+      const res = await r.query(t2);
+      return (res && res.recordset) || [];
     };
     await fn(run);
     await t.commit();

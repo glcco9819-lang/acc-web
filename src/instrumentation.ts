@@ -10,6 +10,16 @@ const FIRST_DELAY_MS = 90 * 1000;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+
+  /* مهاجرت‌های دیتابیس هنگام بوت — v2.1.0
+     تا پیش از این، آپدیت آنلاین فقط بستهٔ برنامه را عوض می‌کرد و فایل‌های sql/
+     هرگز روی دیتابیس مشتری اجرا نمی‌شدند. اکنون پس از هر آپدیت/راه‌اندازی،
+     فایل‌های مهاجرتِ هنوز اعمال‌نشده (به‌ترتیب شماره) اجرا و ثبت می‌شوند. */
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { scheduleMigrations } = await import("./instrumentation-migrate");
+    scheduleMigrations();
+  }
+
   if (process.env.AUTO_UPDATE === "off") return;
 
   const run = async () => {

@@ -130,7 +130,8 @@ const MENUS: { title: string; items: [string, string][] }[] = [
   {
     title: "مرور و دفاتر",
     items: [
-      ["/windows/browse", "مرور حساب‌ها"],
+      ["/windows/review", "مرور حساب‌ها (کامل — AcVwDef)"],
+      ["/windows/notes", "نمایش اعلامیه‌ها"],
       ["/windows/book-journal", "دفتر روزنامه"],
       ["/windows/book-kol", "دفتر کل"],
       ["/windows/book-moein", "دفتر معین"],

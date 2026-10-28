@@ -17,6 +17,8 @@ const SQL_FILES = [
   "04_userlog.sql",
   "05_vch_fields.sql",
   "06_meta_dictionary.sql",
+  "07_sample_data.sql",
+  "08_review.sql",
 ];
 
 function batches(file) {
