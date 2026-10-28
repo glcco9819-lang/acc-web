@@ -9,6 +9,7 @@ const INTERVAL_MS = 15 * 60 * 1000;
 const FIRST_DELAY_MS = 90 * 1000;
 
 export async function register() {
+  console.log("[instrumentation] register() — runtime:", process.env.NEXT_RUNTIME);
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
   /* مهاجرت‌های دیتابیس هنگام بوت — v2.1.0

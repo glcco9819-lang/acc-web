@@ -8,7 +8,12 @@ async function prep(text: string, inp?: Record<string, unknown>): Promise<{ text
   const all: Record<string, unknown> = { ...(inp || {}) };
   try {
     const ctx: LogCtx | null = await getLogCtx();
-    if (ctx) return { text: logCtxPrefix(ctx, all) + text, inp: all };
+    if (ctx) {
+      /* دستورهای DDL که «اولین دستورِ دسته» بودنشان شرط است (CREATE TRIGGER/PROCEDURE/…)
+         نباید پیشوند sp_set_session_context بگیرند — همان‌جا رد می‌شویم */
+      if (!/^\s*(CREATE|ALTER)\s+(OR\s+ALTER\s+)?(TRIGGER|PROCEDURE|FUNCTION|VIEW|SCHEMA|TABLE)\b/i.test(text))
+        return { text: logCtxPrefix(ctx, all) + text, inp: all };
+    }
   } catch { /* بدون کانتکست — تریگر به نام لاگین SQL برمی‌گردد */ }
   return { text, inp: all };
 }

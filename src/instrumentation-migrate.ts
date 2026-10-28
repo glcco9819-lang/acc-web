@@ -15,10 +15,11 @@ const MIGRATION_EXCLUDE = new Set([
 ]);
 
 export function scheduleMigrations() {
-  setTimeout(() => { runMigrations().catch(() => {}); }, 10_000);
+  setTimeout(() => { runMigrations().catch((e) => console.log("[migrate] خطای غیرمنتظره:", String(e?.message || e).slice(0, 200))); }, 10_000);
 }
 
 async function runMigrations(): Promise<void> {
+  console.log("[migrate] شروع بررسی مهاجرت‌ها…");
   const fs = await import("fs");
   const path = await import("path");
   const cwd = process.cwd();
@@ -32,16 +33,21 @@ async function runMigrations(): Promise<void> {
   if (!files.length) return;
 
   try {
-    const { q } = await import("./lib/db");
-    await q(`IF OBJECT_ID('pob.AppliedMigration') IS NULL
+    const { getPool } = await import("./lib/db");
+    const pool = await getPool();
+    /* جدول ثبت — با اتصال خام بدون پیشوند کانتکست (DDL) */
+    {
+      const r = pool.request();
+      await r.query(`IF OBJECT_ID('pob.AppliedMigration') IS NULL
              CREATE TABLE pob.AppliedMigration (
                Name varchar(100) NOT NULL CONSTRAINT PK_AppliedMigration PRIMARY KEY,
                AppliedAt datetime2(0) NOT NULL CONSTRAINT DF_AppliedMigration_At DEFAULT(SYSUTCDATETIME())
              )`);
-
-    const done = new Set(
-      (await q(`SELECT Name FROM pob.AppliedMigration`)).map((r: any) => String(r.Name))
-    );
+    }
+    const doneRows = await new Promise<any[]>((resolve, reject) => {
+      pool.request().query(`SELECT Name FROM pob.AppliedMigration`).then((x: any) => resolve(x.recordset || [])).catch(reject);
+    });
+    const done = new Set(doneRows.map((r: any) => String(r.Name)));
 
     for (const f of files) {
       if (done.has(f)) continue;
@@ -50,15 +56,21 @@ async function runMigrations(): Promise<void> {
       const batches = raw.split("\nGO")
         .map((b) => b.split("\n").filter((l) => !/^\s*USE\s/i.test(l)).join("\n").trim())
         .filter(Boolean);
-      let ok = 0;
+      let ok = 0, bad = 0;
       for (const b of batches) {
-        try { await q(b); ok += 1; }
+        try { await pool.request().query(b); ok += 1; }
         catch (e: any) {
+          bad += 1;
           console.log(`[migrate] ${f} — خطا در یک دسته: ${String(e?.message || e).slice(0, 200)}`);
         }
       }
-      await q(`INSERT INTO pob.AppliedMigration (Name) VALUES (@n)`, { n: f });
-      console.log(`[migrate] ${f} اجرا شد (${ok}/${batches.length} دسته)`);
+      /* فقط وقتی همهٔ دسته‌ها سالم بود ثبت می‌شود تا بار بعد دوباره تلاش شود (فایل‌ها Idempotent اند) */
+      if (bad === 0) {
+        await pool.request().input("n", f).query(`INSERT INTO pob.AppliedMigration (Name) VALUES (@n)`);
+        console.log(`[migrate] ${f} اجرا شد (${ok}/${batches.length} دسته)`);
+      } else {
+        console.log(`[migrate] ${f} ناقص — ${ok}/${batches.length} دسته موفق، ${bad} خطا؛ در راه‌اندازی بعدی دوباره تلاش می‌شود`);
+      }
     }
   } catch (e: any) {
     console.log(`[migrate] اجرای مهاجرت‌ها ناموفق: ${String(e?.message || e).slice(0, 200)}`);
