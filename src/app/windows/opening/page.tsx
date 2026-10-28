@@ -10,7 +10,7 @@ export default function Page() {
   const [totals, setTotals] = useState<any>({ D: 0, C: 0 });
   const [moeins, setMoeins] = useState<any[]>([]);
   const [dls, setDls] = useState<any[]>([]);
-  const [form, setForm] = useState({ KolCode: "", MoeinCode: "", Dl1Id: "", Dbt: "", Crt: "" });
+  const [form, setForm] = useState({ KolCode: "", MoeinCode: "", Taf1Id: "", Dbt: "", Crt: "" });
   const [msg, setMsg] = useState<{ t: "err" | "ok"; s: string } | null>(null);
   const [can, setCan] = useState<any>({});
 
@@ -23,7 +23,7 @@ export default function Page() {
   useEffect(() => {
     load();
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
-    api("/api/acc/dl").then((j) => setDls(j.rows || [])).catch(() => {});
+    api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
     api("/api/auth/login").then((j) => setCan(j.can || {})).catch(() => {});
   }, [load]);
 
@@ -31,7 +31,7 @@ export default function Page() {
     setMsg(null);
     try {
       await api("/api/prm/opening", { method: "POST", body: JSON.stringify(form) });
-      setForm({ KolCode: "", MoeinCode: "", Dl1Id: "", Dbt: "", Crt: "" });
+      setForm({ KolCode: "", MoeinCode: "", Taf1Id: "", Dbt: "", Crt: "" });
       await load();
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
   };
@@ -55,15 +55,15 @@ export default function Page() {
       {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
       <div className="form-grid" style={{ gridTemplateColumns: "220px 130px 130px 130px" }}>
         <div className="field"><label>حساب معین *</label>
-          <select value={form.MoeinCode} onChange={(e) => setForm({ ...form, MoeinCode: e.target.value, KolCode: moeins.find((m) => m.Code === e.target.value)?.KolCode || "", Dl1Id: "" })}>
+          <select value={form.MoeinCode} onChange={(e) => setForm({ ...form, MoeinCode: e.target.value, KolCode: moeins.find((m) => m.Code === e.target.value)?.KolCode || "", Taf1Id: "" })}>
             <option value="">—</option>
             {moeins.map((m) => <option key={m.Code} value={m.Code}>{m.Code} — {m.Title}</option>)}
           </select>
         </div>
-        <div className="field"><label>تفصیلی{selM?.Dl1TypeId ? ` (${moeins.find((t) => t.Dl1TypeId === selM.Dl1TypeId) ? "الزامی" : ""})` : ""}</label>
-          <select value={form.Dl1Id} disabled={!selM?.Dl1TypeId} onChange={(e) => setForm({ ...form, Dl1Id: e.target.value })}>
-            <option value="">{selM?.Dl1TypeId ? "— الزامی —" : "—"}</option>
-            {dls.filter((d) => d.DlTypeId === selM?.Dl1TypeId).map((d) => <option key={d.DlId} value={d.DlId}>{d.Code} — {d.Title}</option>)}
+        <div className="field"><label>تفصیلی{selM?.Taf1TypeId ? ` (${moeins.find((t) => t.Taf1TypeId === selM.Taf1TypeId) ? "الزامی" : ""})` : ""}</label>
+          <select value={form.Taf1Id} disabled={!selM?.Taf1TypeId} onChange={(e) => setForm({ ...form, Taf1Id: e.target.value })}>
+            <option value="">{selM?.Taf1TypeId ? "— الزامی —" : "—"}</option>
+            {dls.filter((d) => d.TafsiliTypeId === selM?.Taf1TypeId).map((d) => <option key={d.TafsiliId} value={d.TafsiliId}>{d.Code} — {d.Title}</option>)}
           </select>
         </div>
         <div className="field"><label>بدهکار</label><input value={form.Dbt} onChange={(e) => setForm({ ...form, Dbt: e.target.value, Crt: e.target.value ? "" : form.Crt })} className="num" style={{ direction: "ltr" }} /></div>
@@ -82,7 +82,7 @@ export default function Page() {
               <tr key={r.ObId}>
                 <td>{r.KolCode} — {r.KolTitle}</td>
                 <td>{r.MoeinCode} — {r.MoeinTitle}</td>
-                <td>{r.Dl1Title || "—"}</td>
+                <td>{r.Taf1Title || "—"}</td>
                 <td className="num">{Number(r.Dbt) ? fa(r.Dbt) : ""}</td>
                 <td className="num">{Number(r.Crt) ? fa(r.Crt) : ""}</td>
                 <td><button className="btn danger" onClick={() => del(r.ObId)} style={{ padding: "1px 8px" }}>حذف</button></td>

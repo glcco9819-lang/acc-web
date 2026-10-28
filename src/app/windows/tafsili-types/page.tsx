@@ -12,7 +12,7 @@ const cols: Col[] = [
 export default function Page() {
   return (
     <Shell title="انواع تفصیل" sub="نوع تفصیلی که معین‌ها به سطوح ۴/۵/۶ به آن متصل می‌شوند">
-      <CrudWindow entity="dltypes" title="انواع تفصیل" cols={cols}
+      <CrudWindow entity="tafsili-types" title="انواع تفصیل" cols={cols}
         note="انواع تفصیل مثال: مشتری، تأمین‌کننده، بانک، شعبه، پروژه. حذف نوعی که به معین متصل است مجاز نیست." />
     </Shell>
   );

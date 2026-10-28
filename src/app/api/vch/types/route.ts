@@ -10,7 +10,7 @@ export async function GET() {
   let companyId = 0;
   try { companyId = JSON.parse(raw || "{}").companyId || 0; } catch { /* - */ }
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده", code: "NO_CTX" }, { status: 400 });
-  const rows = await q("SELECT TypeId, Title, LatinTitle FROM Vch.[Type] WHERE CompanyId=@c ORDER BY TypeId", { c: companyId });
+  const rows = await q("SELECT VoucherTypeId, Title, LatinTitle FROM YfgVch.VoucherType WHERE CompanyId=@c ORDER BY VoucherTypeId", { c: companyId });
   return NextResponse.json({ ok: true, rows });
 }
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const latin = String(body.LatinTitle || "").trim().slice(0, 100) || null;
   if (!title) return NextResponse.json({ ok: false, error: "نوع سند الزامی است" }, { status: 400 });
   try {
-    const row = await one(`INSERT INTO Vch.[Type] (CompanyId, Title, LatinTitle) OUTPUT INSERTED.* VALUES (@c, @t, @l)`,
+    const row = await one(`INSERT INTO YfgVch.VoucherType (CompanyId, Title, LatinTitle) OUTPUT INSERTED.* VALUES (@c, @t, @l)`,
       { c: companyId, t: title, l: latin });
     return NextResponse.json({ ok: true, row });
   } catch (e: any) {

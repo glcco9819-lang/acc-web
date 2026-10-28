@@ -26,12 +26,12 @@ export async function GET(req: NextRequest) {
   if (qtext) { conds.push("(h.Descr LIKE @q OR CAST(h.VchNo AS varchar) LIKE @q)"); inp.q = `%${qtext}%`; }
 
   const rows = await q(
-    `SELECT h.HdrId, h.FolioNo, h.VchNo, h.VchDate, h.Descr, h.State, h.SourceModule, h.ReversalOf,
+    `SELECT h.VoucherId, h.FolioNo, h.VchNo, h.VchDate, h.Descr, h.State, h.SourceModule, h.ReversalOf,
             h.CreatedBy, h.CheckedBy, h.FinalizedBy,
             t.Title TypeTitle,
-            (SELECT COUNT(*) FROM Vch.Itm i WHERE i.HdrId = h.HdrId) ItemCount,
-            (SELECT SUM(i.Dbt) FROM Vch.Itm i WHERE i.HdrId = h.HdrId) TotalDbt
-     FROM Vch.Hdr h JOIN Vch.[Type] t ON t.TypeId = h.TypeId
+            (SELECT COUNT(*) FROM YfgVch.VoucherLine i WHERE i.VoucherId = h.VoucherId) ItemCount,
+            (SELECT SUM(i.Dbt) FROM YfgVch.VoucherLine i WHERE i.VoucherId = h.VoucherId) TotalDbt
+     FROM YfgVch.Voucher h JOIN YfgVch.VoucherType t ON t.VoucherTypeId = h.VoucherTypeId
      WHERE ${conds.join(" AND ")}
      ORDER BY h.VchNo DESC`, inp);
   return NextResponse.json({ ok: true, rows });

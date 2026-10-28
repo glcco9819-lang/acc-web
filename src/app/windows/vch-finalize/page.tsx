@@ -49,7 +49,7 @@ export default function Page() {
           </tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.HdrId}>
+              <tr key={r.VoucherId}>
                 <td className="num">{fa(r.FolioNo)}</td>
                 <td className="num"><b>{fa(r.VchNo)}</b>{r.ReversalOf ? <span className="badge src" style={{ marginInlineStart: 4 }}>برگشتی</span> : null}</td>
                 <td className="num">{r.VchDate}</td>
@@ -61,7 +61,7 @@ export default function Page() {
                 <td>{r.CreatedBy} / {r.CheckedBy || "—"} / {r.FinalizedBy || "—"}</td>
                 <td>
                   {r.State === 2 && can.finalize
-                    ? <button className="btn green" onClick={() => finalize(r.HdrId)} style={{ padding: "1px 10px" }}>قطعی شود</button>
+                    ? <button className="btn green" onClick={() => finalize(r.VoucherId)} style={{ padding: "1px 10px" }}>قطعی شود</button>
                     : <span className="muted">قطعی {r.FinalizedBy ? `توسط ${r.FinalizedBy}` : ""}</span>}
                 </td>
               </tr>

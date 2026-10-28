@@ -9,7 +9,7 @@ const cols: Col[] = [{ key: "Title", label: "عنوان طبقه", required: tru
 export default function Page() {
   return (
     <Shell title="طبقه‌بندی تفصیلی" sub="گروه‌بندی تفصیلی‌ها در طبقات گزارش‌گیری">
-      <CrudWindow entity="dlctgries" title="طبقه‌بندی تفصیلی" cols={cols}
+      <CrudWindow entity="tafsili-ctgries" title="طبقه‌بندی تفصیلی" cols={cols}
         note="تفصیلی‌های هر طبقه از پنجرهٔ معرفی حساب‌های تفصیلی به طبقه متصل می‌شوند." />
     </Shell>
   );

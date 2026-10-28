@@ -69,7 +69,7 @@ def main():
                    WHERE TABLE_SCHEMA IN ('Prm','Acc','Vch') ORDER BY 1""")
     tables = [r[0] for r in cur.fetchall()]
     print("tables:", tables)
-    cur.execute("SELECT name FROM sys.triggers WHERE name LIKE 'TrAccWeb%' ORDER BY name")
+    cur.execute("SELECT name FROM sys.triggers WHERE name LIKE 'Tr_Yfg%' ORDER BY name")
     print("guards:", [r[0] for r in cur.fetchall()])
     cur.execute("SELECT name FROM sys.views WHERE name='VwChart'")
     print("view VwChart:", cur.fetchone())

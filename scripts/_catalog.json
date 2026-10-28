@@ -1,0 +1,2815 @@
+{
+ "tables": {
+  "Acc.DL": [
+   {
+    "col": "DlId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "DlTypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Code",
+    "type": "char",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LatinTitle",
+    "type": "varchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CrspndRef",
+    "type": "bigint",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.DlCtgry": [
+   {
+    "col": "CtgryId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.DlCtgryLink": [
+   {
+    "col": "CtgryId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "DlId",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.DlType": [
+   {
+    "col": "DlTypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LatinTitle",
+    "type": "varchar",
+    "len": 100,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LookupType",
+    "type": "varchar",
+    "len": 40,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.Group": [
+   {
+    "col": "GroupId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Code",
+    "type": "char",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "AccNature",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.Kol": [
+   {
+    "col": "KolId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Code",
+    "type": "char",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "GroupCode",
+    "type": "char",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "AccNature",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.Moein": [
+   {
+    "col": "MoeinId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Code",
+    "type": "char",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "KolCode",
+    "type": "char",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "AccNature",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl1TypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl2TypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl3TypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Trackable",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Countable",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsFx",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FxConvertible",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.OpeningBalance": [
+   {
+    "col": "ObId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "YearId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "KolCode",
+    "type": "char",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "MoeinCode",
+    "type": "char",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl1Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl2Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl3Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dbt",
+    "type": "decimal",
+    "len": 9,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Crt",
+    "type": "decimal",
+    "len": 9,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Acc.StdDesc": [
+   {
+    "col": "StdDescId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "MoeinCode",
+    "type": "char",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Seq",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "DescText",
+    "type": "nvarchar",
+    "len": 600,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.Address": [
+   {
+    "col": "Serial",
+    "type": "bigint",
+    "len": 8,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CrspndRef",
+    "type": "bigint",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Address",
+    "type": "nvarchar",
+    "len": 2000,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Address_En",
+    "type": "varchar",
+    "len": 1000,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "ZipCode",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "PostBox",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Phone",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Fax",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EMail",
+    "type": "varchar",
+    "len": 120,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Modem",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Mobile",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "GeoPosRef",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.Crspnd": [
+   {
+    "col": "Serial",
+    "type": "bigint",
+    "len": 8,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "RecType",
+    "type": "char",
+    "len": 3,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CompType",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CompName",
+    "type": "nvarchar",
+    "len": 800,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 800,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FName",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LName",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "NickName",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title_En",
+    "type": "varchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FName_En",
+    "type": "varchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LName_En",
+    "type": "varchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CompName_En",
+    "type": "varchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EconCode",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "NationalCode",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FatherName",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IDNo",
+    "type": "varchar",
+    "len": 30,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "MainAddrRef",
+    "type": "bigint",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.CrspndCtgry": [
+   {
+    "col": "CtgryId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "ParentRef",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.GeoPos": [
+   {
+    "col": "GeoPosId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "ParentRef",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "GeoType",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LatinTitle",
+    "type": "varchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.gnrCrspndCat": [
+   {
+    "col": "CrspndRef",
+    "type": "bigint",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CtgryRef",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.gnrHolidays": [
+   {
+    "col": "HolidayId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "JDate",
+    "type": "char",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "GDate",
+    "type": "date",
+    "len": 3,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "HolidayTypeRef",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Descr",
+    "type": "nvarchar",
+    "len": 800,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.gnrHolidayTypes": [
+   {
+    "col": "HolidayTypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.gnrNonWorkingTimes": [
+   {
+    "col": "NonWorkId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "JDate",
+    "type": "char",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FromTime",
+    "type": "char",
+    "len": 5,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "ToTime",
+    "type": "char",
+    "len": 5,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Descr",
+    "type": "nvarchar",
+    "len": 800,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   }
+  ],
+  "gnr.Lookup": [
+   {
+    "col": "LookupId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "Type",
+    "type": "varchar",
+    "len": 40,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Code",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Aux",
+    "type": "varchar",
+    "len": 100,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SystemName",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.MisSetup": [
+   {
+    "col": "MisSetupId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "KeyValue",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "DataValue",
+    "type": "nvarchar",
+    "len": 800,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SystemName",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Descr",
+    "type": "nvarchar",
+    "len": 1200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.Systems": [
+   {
+    "col": "SystemCode",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "TitleFa",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LatinTitle",
+    "type": "varchar",
+    "len": 100,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "gnr.TableIdGen": [
+   {
+    "col": "TableName",
+    "type": "varchar",
+    "len": 60,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LastId",
+    "type": "bigint",
+    "len": 8,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   }
+  ],
+  "Prm.AppUser": [
+   {
+    "col": "UserId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "Username",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "DisplayName",
+    "type": "nvarchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "RoleCode",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "PassHash",
+    "type": "varchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Prm.Company": [
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyCode",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "TitleFa",
+    "type": "nvarchar",
+    "len": 400,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "NationalId",
+    "type": "varchar",
+    "len": 15,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EconomicCode",
+    "type": "varchar",
+    "len": 15,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CodingMode",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsActive",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Prm.FiscalPeriod": [
+   {
+    "col": "PeriodId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "YearId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "MonthNo",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 40,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsClosed",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Prm.FiscalYear": [
+   {
+    "col": "YearId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "JalaliYear",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 100,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "StartDate",
+    "type": "char",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EndDate",
+    "type": "char",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "IsClosed",
+    "type": "bit",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Vch.Hdr": [
+   {
+    "col": "HdrId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "YearId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FolioNo",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "VchNo",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "TypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "VchDate",
+    "type": "char",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Descr",
+    "type": "nvarchar",
+    "len": 1000,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "State",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "ReversalOf",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceModule",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CheckedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CheckedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FinalizedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "FinalizedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EditedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "EditedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "CheckedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "FinalizedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "EditedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   }
+  ],
+  "Vch.Itm": [
+   {
+    "col": "ItmId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "HdrId",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "RowNo",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "KolCode",
+    "type": "char",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "MoeinCode",
+    "type": "char",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl1Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl2Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dl3Id",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Descr",
+    "type": "nvarchar",
+    "len": 1000,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Dbt",
+    "type": "decimal",
+    "len": 9,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Crt",
+    "type": "decimal",
+    "len": 9,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Vch.Type": [
+   {
+    "col": "TypeId",
+    "type": "smallint",
+    "len": 2,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "CompanyId",
+    "type": "smallint",
+    "len": 2,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Title",
+    "type": "nvarchar",
+    "len": 200,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "LatinTitle",
+    "type": "varchar",
+    "len": 100,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedBy",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "UpdatedAt",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "SourceSystem",
+    "type": "varchar",
+    "len": 20,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "CreatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   },
+   {
+    "col": "UpdatedAtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ],
+  "Vch.WfLog": [
+   {
+    "col": "LogId",
+    "type": "int",
+    "len": 4,
+    "id": true,
+    "comp": false
+   },
+   {
+    "col": "HdrId",
+    "type": "int",
+    "len": 4,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Action",
+    "type": "tinyint",
+    "len": 1,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "ByUser",
+    "type": "varchar",
+    "len": 50,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "At",
+    "type": "datetime2",
+    "len": 6,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "Note",
+    "type": "nvarchar",
+    "len": 600,
+    "id": false,
+    "comp": false
+   },
+   {
+    "col": "AtJ",
+    "type": "varchar",
+    "len": 10,
+    "id": false,
+    "comp": true
+   }
+  ]
+ },
+ "views": [
+  "Acc.VwChart"
+ ],
+ "triggers": [
+  "Vch.TrAccWeb_Hdr_NoDeleteFinal ON Hdr",
+  "Vch.TrAccWeb_Hdr_StateGuard ON Hdr",
+  "Vch.TrAccWeb_Itm_EditGuard ON Itm",
+  "Acc.TrAccWeb_Kol_Prefix ON Kol",
+  "Acc.TrAccWeb_Moein_Prefix ON Moein"
+ ],
+ "functions": [
+  "gnr._Grg2Jdn",
+  "gnr._JalBreak",
+  "gnr._JalMarch",
+  "gnr._JalLeap",
+  "gnr.Grg2Jal",
+  "gnr._Jal2Jdn",
+  "gnr._Jdn2Grg",
+  "gnr.Jal2Grg"
+ ],
+ "counts": {
+  "Acc.DL": 4,
+  "Acc.DlCtgry": 2,
+  "Acc.DlCtgryLink": 3,
+  "Acc.DlType": 5,
+  "Acc.Group": 5,
+  "Acc.Kol": 6,
+  "Acc.Moein": 6,
+  "Acc.OpeningBalance": 2,
+  "Acc.StdDesc": 0,
+  "gnr.Address": 0,
+  "gnr.Crspnd": 0,
+  "gnr.CrspndCtgry": 0,
+  "gnr.GeoPos": 6,
+  "gnr.gnrCrspndCat": 0,
+  "gnr.gnrHolidays": 0,
+  "gnr.gnrHolidayTypes": 3,
+  "gnr.gnrNonWorkingTimes": 0,
+  "gnr.Lookup": 3,
+  "gnr.MisSetup": 7,
+  "gnr.Systems": 2,
+  "gnr.TableIdGen": 0,
+  "Prm.AppUser": 3,
+  "Prm.Company": 1,
+  "Prm.FiscalPeriod": 12,
+  "Prm.FiscalYear": 1,
+  "Vch.Hdr": 5,
+  "Vch.Itm": 10,
+  "Vch.Type": 6,
+  "Vch.WfLog": 16
+ }
+}

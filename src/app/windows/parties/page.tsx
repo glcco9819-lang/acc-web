@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
-import GnrWindow, { GCol } from "@/components/GnrWindow";
+import GenWindow, { GCol } from "@/components/GenWindow";
 import { api } from "@/lib/ui";
 
 /* معرفی اشخاص و شرکت‌های طرف مکاتبه — OF0001/0002/0005/0006 (HumCmp.bpl)
-   ساختار وفادار gnr.Crspnd + gnr.Address + gnr.gnrCrspndCat اصل */
+   ساختار وفادار YfgGen.Party + YfgGen.PartyAddress + YfgGen.PartyCategoryLink اصل */
 
 const COMP_TYPES = [
   { v: 1, t: "شخص حقیقی" }, { v: 2, t: "شخص حقوقی" }, { v: 3, t: "موسسه دولتی" },
@@ -19,7 +19,7 @@ const cols: GCol[] = [
   { key: "LName", label: "نام خانوادگی", width: 150 },
   { key: "NationalCode", label: "کد/شناسه ملی", width: 130 },
   { key: "EconCode", label: "کد اقتصادی", width: 120 },
-  { key: "CompType", label: "نوع شخص", type: "select", options: COMP_TYPES, width: 110 },
+  { key: "PartyKind", label: "نوع شخص", type: "select", options: COMP_TYPES, width: 110 },
   { key: "FatherName", label: "نام پدر", width: 120, hideInGrid: true },
   { key: "IDNo", label: "شماره شناسنامه", width: 120, hideInGrid: true },
   { key: "NickName", label: "لقب", width: 120, hideInGrid: true },
@@ -36,7 +36,7 @@ export default function Page() {
   const [ctgries, setCtgries] = useState<{ v: number; t: string }[]>([]);
 
   useEffect(() => {
-    api("/api/gnr/ctgry").then((j) => setCtgries((j.rows || []).map((r: any) => ({ v: r.CtgryId, t: r.Title })))).catch(() => {});
+    api("/api/gen/party-ctgry").then((j) => setCtgries((j.rows || []).map((r: any) => ({ v: r.CategoryId, t: r.Title })))).catch(() => {});
   }, []);
 
   const selTitle = sel ? (sel.Title || [sel.FName, sel.LName].filter(Boolean).join(" ") || `#${sel.Serial}`) : "";
@@ -56,7 +56,7 @@ export default function Page() {
   return (
     <Shell title="معرفی اشخاص و شرکت‌های طرف مکاتبه" sub="اطلاعات عمومی — عیناً مطابق پنجره‌های اصل (OF0001/0002/0005/0006)">
       <div style={{ display: "grid", gridTemplateColumns: "minmax(320px,1fr) 380px", gap: 16, alignItems: "start" }}>
-        <GnrWindow entity="crspnd" cols={cols} note="پس از ثبت، با دکمهٔ «اصلاح» هر ردیف، پنل نشانی/طبقه‌بندی همان شخص باز می‌شود" />
+        <GenWindow entity="party" cols={cols} note="پس از ثبت، با دکمهٔ «اصلاح» هر ردیف، پنل نشانی/طبقه‌بندی همان شخص باز می‌شود" />
         <div className="scrollbox" style={{ position: "sticky", top: 12 }}>
           <div style={{ borderBottom: "1px solid var(--line)", display: "flex", gap: 4, padding: "8px 8px 0" }}>
             <button className={`btn ${tab === "addr" ? "primary" : ""}`} style={{ padding: "2px 10px" }} onClick={() => setTab("addr")}>نشانی‌ها</button>
@@ -65,11 +65,11 @@ export default function Page() {
           {!sel ? (
             <p className="muted" style={{ padding: 14 }}>یک شخص/شرکت را از جدول انتخاب کنید — دکمهٔ «اصلاح» آن ردیف را بزنید</p>
           ) : tab === "addr" ? (
-            <GnrWindow key={`addr-${sel.Serial}`} entity="address" cols={addrCols}
-              parent={{ key: "CrspndRef", label: "شخص/شرکت", load: pickerLoader }} />
+            <GenWindow key={`addr-${sel.Serial}`} entity="address" cols={addrCols}
+              parent={{ key: "PartyRef", label: "شخص/شرکت", load: pickerLoader }} />
           ) : (
-            <GnrWindow key={`cat-${sel.Serial}`} entity="crspndcat" cols={[{ key: "CtgryRef", label: "طبقه‌بندی", type: "select", required: true, options: ctgries }]}
-              parent={{ key: "CrspndRef", label: "شخص/شرکت", load: pickerLoader }} />
+            <GenWindow key={`cat-${sel.Serial}`} entity="party-cat" cols={[{ key: "CategoryRef", label: "طبقه‌بندی", type: "select", required: true, options: ctgries }]}
+              parent={{ key: "PartyRef", label: "شخص/شرکت", load: pickerLoader }} />
           )}
         </div>
       </div>
@@ -82,10 +82,10 @@ function SelBridge({ onPick }: { onPick: (r: any) => void }) {
   useEffect(() => {
     const h = (e: Event) => {
       const d = (e as CustomEvent).detail;
-      if (d?.entity === "crspnd") onPick(d.row);
+      if (d?.entity === "party") onPick(d.row);
     };
-    window.addEventListener("gnr-row-edit", h);
-    return () => window.removeEventListener("gnr-row-edit", h);
+    window.addEventListener("gen-row-edit", h);
+    return () => window.removeEventListener("gen-row-edit", h);
   }, [onPick]);
   return null;
 }

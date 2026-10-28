@@ -6,7 +6,7 @@ import { getSession, can } from "@/lib/auth";
 export async function GET() {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
-  const rows = await q("SELECT CompanyId, CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode, IsActive FROM Prm.Company ORDER BY CompanyCode");
+  const rows = await q("SELECT CompanyId, CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode, IsActive FROM YfgPrm.Company ORDER BY CompanyCode");
   return NextResponse.json({ ok: true, rows });
 }
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!code || !title) return NextResponse.json({ ok: false, error: "کد و عنوان شرکت الزامی است" }, { status: 400 });
   try {
     const row = await one(
-      `INSERT INTO Prm.Company (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode) OUTPUT INSERTED.*
+      `INSERT INTO YfgPrm.Company (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode) OUTPUT INSERTED.*
        VALUES (@code, @title, @nid, @eco, @mode)`,
       { code, title, nid: String(body.NationalId || "").slice(0, 15) || null, eco: String(body.EconomicCode || "").slice(0, 15) || null, mode });
     return NextResponse.json({ ok: true, row });

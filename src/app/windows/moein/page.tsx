@@ -9,13 +9,13 @@ import { api } from "@/lib/ui";
    ماهيت حساب، ويژگيها (پيگيري/تعدادي/ارزي/تسعيرپذير)، وضعيت حساب] */
 export default function Page() {
   const [kols, setKols] = useState<any[]>([]);
-  const [dltypes, setDltypes] = useState<any[]>([]);
+  const [tfsTypes, setTfsTypes] = useState<any[]>([]);
   const [mode, setMode] = useState(2);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    Promise.all([api("/api/acc/kol"), api("/api/acc/dltypes")])
-      .then(([a, b]) => { setKols(a.rows || []); setMode(a.mode || 2); setDltypes(b.rows || []); setReady(true); })
+    Promise.all([api("/api/acc/kol"), api("/api/acc/tafsili-types")])
+      .then(([a, b]) => { setKols(a.rows || []); setMode(a.mode || 2); setTfsTypes(b.rows || []); setReady(true); })
       .catch(() => setReady(true));
   }, []);
 
@@ -26,12 +26,12 @@ export default function Page() {
     { key: "Title", label: "عنوان معین", required: true },
     { key: "AccNature", label: "ماهیت", type: "select", required: true, width: 95, default: "3",
       options: [{ v: 1, t: "بدهکار" }, { v: 2, t: "بستانکار" }, { v: 3, t: "دوطرفه" }] },
-    { key: "Dl1TypeId", label: "تفصیلی سطح ۴ (الزامی)", type: "select", width: 140,
-      options: dltypes.map((t) => ({ v: t.DlTypeId, t: t.Title })) },
-    { key: "Dl2TypeId", label: "تفصیلی سطح ۵", type: "select", width: 130,
-      options: dltypes.map((t) => ({ v: t.DlTypeId, t: t.Title })) },
-    { key: "Dl3TypeId", label: "تفصیلی سطح ۶", type: "select", width: 130,
-      options: dltypes.map((t) => ({ v: t.DlTypeId, t: t.Title })) },
+    { key: "Taf1TypeId", label: "تفصیلی سطح ۴ (الزامی)", type: "select", width: 140,
+      options: tfsTypes.map((t) => ({ v: t.TafsiliTypeId, t: t.Title })) },
+    { key: "Taf2TypeId", label: "تفصیلی سطح ۵", type: "select", width: 130,
+      options: tfsTypes.map((t) => ({ v: t.TafsiliTypeId, t: t.Title })) },
+    { key: "Taf3TypeId", label: "تفصیلی سطح ۶", type: "select", width: 130,
+      options: tfsTypes.map((t) => ({ v: t.TafsiliTypeId, t: t.Title })) },
     { key: "Trackable", label: "پیگیری", type: "bool", width: 70, default: "0", options: [{ v: 1, t: "بله" }, { v: 0, t: "خیر" }] },
     { key: "Countable", label: "تعدادی", type: "bool", width: 65, default: "0", options: [{ v: 1, t: "بله" }, { v: 0, t: "خیر" }] },
     { key: "IsFx", label: "ارزی", type: "bool", width: 60, default: "0", options: [{ v: 1, t: "بله" }, { v: 0, t: "خیر" }] },

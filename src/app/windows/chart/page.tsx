@@ -43,10 +43,10 @@ export default function Page() {
                         معین {m.MoeinCode} — {m.MoeinTitle}
                         {m.IsActive ? "" : <span className="badge s1" style={{ marginInlineStart: 6 }}>غیرفعال</span>}
                         {" "}
-                        <span className="dl">
-                          {m.Dl1TypeId ? `سطح ۴: ${m.Dl1Title}` : "بدون تفصیلی"}
-                          {m.Dl2TypeId ? ` · سطح ۵: ${m.Dl2Title}` : ""}
-                          {m.Dl3TypeId ? ` · سطح ۶: ${m.Dl3Title}` : ""}
+                        <span className="tafsili">
+                          {m.Taf1TypeId ? `سطح ۴: ${m.Taf1Title}` : "بدون تفصیلی"}
+                          {m.Taf2TypeId ? ` · سطح ۵: ${m.Taf2Title}` : ""}
+                          {m.Taf3TypeId ? ` · سطح ۶: ${m.Taf3Title}` : ""}
                         </span>
                       </div>
                     ))}

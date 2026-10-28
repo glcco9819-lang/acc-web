@@ -1,36 +1,36 @@
 /* دادهٔ پایهٔ نمونه — Idempotent */
-IF NOT EXISTS (SELECT 1 FROM Prm.Company WHERE CompanyCode = N'A')
-INSERT INTO Prm.Company (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode)
+IF NOT EXISTS (SELECT 1 FROM YfgPrm.Company WHERE CompanyCode = N'A')
+INSERT INTO YfgPrm.Company (CompanyCode, TitleFa, NationalId, EconomicCode, CodingMode)
 VALUES (N'A', N'شرکت نمونه الف', N'14001234567', N'411567890', 2);
 GO
 
-DECLARE @co smallint = (SELECT CompanyId FROM Prm.Company WHERE CompanyCode = N'A');
+DECLARE @co smallint = (SELECT CompanyId FROM YfgPrm.Company WHERE CompanyCode = N'A');
 
 /* کاربران — رمز 1234 */
-IF NOT EXISTS (SELECT 1 FROM Prm.AppUser WHERE Username = 'admin')
-INSERT INTO Prm.AppUser (Username, DisplayName, RoleCode, PassHash) VALUES
+IF NOT EXISTS (SELECT 1 FROM YfgPrm.AppUser WHERE Username = 'admin')
+INSERT INTO YfgPrm.AppUser (Username, DisplayName, RoleCode, PassHash) VALUES
  ('admin',   N'مدیر سامانه',        'admin',     '77fb18dbce3d3b61420e44449c11e3214988914789922213d2049096a9d6754a'),
  ('karbar1', N'ثبت‌کننده اسناد',    'registrar', '77fb18dbce3d3b61420e44449c11e3214988914789922213d2049096a9d6754a'),
  ('karbar2', N'بررسی‌کننده اسناد',  'checker',   '77fb18dbce3d3b61420e44449c11e3214988914789922213d2049096a9d6754a');
 GO
 
-DECLARE @co2 smallint = (SELECT CompanyId FROM Prm.Company WHERE CompanyCode = N'A');
-IF NOT EXISTS (SELECT 1 FROM Prm.FiscalYear WHERE CompanyId = @co2 AND JalaliYear = 1405)
+DECLARE @co2 smallint = (SELECT CompanyId FROM YfgPrm.Company WHERE CompanyCode = N'A');
+IF NOT EXISTS (SELECT 1 FROM YfgPrm.FiscalYear WHERE CompanyId = @co2 AND JalaliYear = 1405)
 BEGIN
   DECLARE @y smallint;
-  INSERT INTO Prm.FiscalYear (CompanyId, JalaliYear, Title, StartDate, EndDate)
+  INSERT INTO YfgPrm.FiscalYear (CompanyId, JalaliYear, Title, StartDate, EndDate)
   VALUES (@co2, 1405, N'سال مالی ۱۴۰۵', '1405/01/01', '1405/12/29');
   SET @y = SCOPE_IDENTITY();
-  INSERT INTO Prm.FiscalPeriod (YearId, MonthNo, Title) VALUES
+  INSERT INTO YfgPrm.FiscalPeriod (YearId, MonthNo, Title) VALUES
    (@y,1,N'فروردین'),(@y,2,N'اردیبهشت'),(@y,3,N'خرداد'),(@y,4,N'تیر'),(@y,5,N'مرداد'),(@y,6,N'شهریور'),
    (@y,7,N'مهر'),(@y,8,N'آبان'),(@y,9,N'آذر'),(@y,10,N'دی'),(@y,11,N'بهمن'),(@y,12,N'اسفند');
 END
 GO
 
 /* انواع تفصیل [فرم: انواع تفصيل] */
-DECLARE @co3 smallint = (SELECT CompanyId FROM Prm.Company WHERE CompanyCode = N'A');
-IF NOT EXISTS (SELECT 1 FROM Acc.DlType WHERE CompanyId = @co3)
-INSERT INTO Acc.DlType (CompanyId, Title, LatinTitle) VALUES
+DECLARE @co3 smallint = (SELECT CompanyId FROM YfgPrm.Company WHERE CompanyCode = N'A');
+IF NOT EXISTS (SELECT 1 FROM YfgAcc.TafsiliType WHERE CompanyId = @co3)
+INSERT INTO YfgAcc.TafsiliType (CompanyId, Title, LatinTitle) VALUES
  (@co3, N'مشتری',        'Customer'),
  (@co3, N'تأمین‌کننده',  'Supplier'),
  (@co3, N'بانک',         'Bank'),
@@ -39,17 +39,17 @@ INSERT INTO Acc.DlType (CompanyId, Title, LatinTitle) VALUES
 GO
 
 /* شجرهٔ حساب‌ها — حالت ۲ مطابق accdef (گروه ۲/کل ۴/معین ۶) */
-DECLARE @co4 smallint = (SELECT CompanyId FROM Prm.Company WHERE CompanyCode = N'A');
-IF NOT EXISTS (SELECT 1 FROM Acc.[Group] WHERE CompanyId = @co4)
+DECLARE @co4 smallint = (SELECT CompanyId FROM YfgPrm.Company WHERE CompanyCode = N'A');
+IF NOT EXISTS (SELECT 1 FROM YfgAcc.AccGroup WHERE CompanyId = @co4)
 BEGIN
-  INSERT INTO Acc.[Group] (CompanyId, Code, Title, AccNature) VALUES
+  INSERT INTO YfgAcc.AccGroup (CompanyId, Code, Title, AccNature) VALUES
    (@co4, '01', N'دارایی‌ها',        1),
    (@co4, '02', N'بدهی‌ها',          2),
    (@co4, '03', N'سرمایه',           2),
    (@co4, '04', N'درآمدها',          2),
    (@co4, '05', N'هزینه‌ها',         1);
 
-  INSERT INTO Acc.Kol (CompanyId, Code, GroupCode, Title, AccNature) VALUES
+  INSERT INTO YfgAcc.Kol (CompanyId, Code, GroupCode, Title, AccNature) VALUES
    (@co4, '0101', '01', N'صندوق و بانک',              1),
    (@co4, '0102', '01', N'حساب‌های دریافتنی',          1),
    (@co4, '0201', '02', N'حساب‌های پرداختنی',          2),
@@ -58,10 +58,10 @@ BEGIN
    (@co4, '0501', '05', N'هزینه‌های عمومی',           1);
 
   /* معین‌ها با ارتباط سطوح تفصیلی چهارم/پنجم/ششم */
-  DECLARE @tCust smallint = (SELECT DlTypeId FROM Acc.DlType WHERE CompanyId=@co4 AND Title=N'مشتری');
-  DECLARE @tSup  smallint = (SELECT DlTypeId FROM Acc.DlType WHERE CompanyId=@co4 AND Title=N'تأمین‌کننده');
-  DECLARE @tBank smallint = (SELECT DlTypeId FROM Acc.DlType WHERE CompanyId=@co4 AND Title=N'بانک');
-  INSERT INTO Acc.Moein (CompanyId, Code, KolCode, Title, AccNature, Dl1TypeId, Dl2TypeId, Trackable) VALUES
+  DECLARE @tCust smallint = (SELECT TafsiliTypeId FROM YfgAcc.TafsiliType WHERE CompanyId=@co4 AND Title=N'مشتری');
+  DECLARE @tSup  smallint = (SELECT TafsiliTypeId FROM YfgAcc.TafsiliType WHERE CompanyId=@co4 AND Title=N'تأمین‌کننده');
+  DECLARE @tBank smallint = (SELECT TafsiliTypeId FROM YfgAcc.TafsiliType WHERE CompanyId=@co4 AND Title=N'بانک');
+  INSERT INTO YfgAcc.Moein (CompanyId, Code, KolCode, Title, AccNature, Taf1TypeId, Taf2TypeId, Trackable) VALUES
    (@co4, '010101', '0101', N'صندوق عملیاتی',      1, @tBank, NULL, 0),
    (@co4, '010201', '0102', N'دریافتنی از مشتریان', 1, @tCust, NULL, 1),
    (@co4, '020101', '0201', N'پرداختنی به تأمین‌کنندگان', 2, @tSup, NULL, 1),
@@ -70,7 +70,7 @@ BEGIN
    (@co4, '050101', '0501', N'هزینه‌های اداری',     1, @tSup, NULL, 0);
 
   /* انواع سند [فرم: تعريف انواع سند] */
-  INSERT INTO Vch.[Type] (CompanyId, Title, LatinTitle) VALUES
+  INSERT INTO YfgVch.VoucherType (CompanyId, Title, LatinTitle) VALUES
    (@co4, N'سند افتتاحیه',  'Opening'),
    (@co4, N'سند فروش',      'Sale'),
    (@co4, N'سند خرید',      'Purchase'),
@@ -79,7 +79,7 @@ BEGIN
    (@co4, N'سند عمومی',     'General');
 
   /* تفصیلی‌ها — کد ۸ رقمی، والد ندارند */
-  INSERT INTO Acc.DL (CompanyId, DlTypeId, Code, Title, LatinTitle) VALUES
+  INSERT INTO YfgAcc.Tafsili (CompanyId, TafsiliTypeId, Code, Title, LatinTitle) VALUES
    (@co4, @tCust, '00000001', N'مشتری الف', 'Customer-A'),
    (@co4, @tCust, '00000002', N'مشتری ب',   'Customer-B'),
    (@co4, @tSup,  '00000003', N'تأمین‌کننده ج', 'Supplier-C'),
@@ -87,11 +87,11 @@ BEGIN
 
   /* طبقه‌بندی تفصیلی */
   DECLARE @ct1 smallint, @ct2 smallint;
-  INSERT INTO Acc.DlCtgry (CompanyId, Title) VALUES (@co4, N'مشتریان داخلی'); SET @ct1 = SCOPE_IDENTITY();
-  INSERT INTO Acc.DlCtgry (CompanyId, Title) VALUES (@co4, N'تأمین‌کنندگان رسمی'); SET @ct2 = SCOPE_IDENTITY();
-  INSERT INTO Acc.DlCtgryLink (CtgryId, DlId)
-  SELECT @ct1, DlId FROM Acc.DL WHERE CompanyId=@co4 AND Code IN ('00000001','00000002');
-  INSERT INTO Acc.DlCtgryLink (CtgryId, DlId)
-  SELECT @ct2, DlId FROM Acc.DL WHERE CompanyId=@co4 AND Code = '00000003';
+  INSERT INTO YfgAcc.TafsiliCategory (CompanyId, Title) VALUES (@co4, N'مشتریان داخلی'); SET @ct1 = SCOPE_IDENTITY();
+  INSERT INTO YfgAcc.TafsiliCategory (CompanyId, Title) VALUES (@co4, N'تأمین‌کنندگان رسمی'); SET @ct2 = SCOPE_IDENTITY();
+  INSERT INTO YfgAcc.TafsiliCategoryLink (CategoryId, TafsiliId)
+  SELECT @ct1, TafsiliId FROM YfgAcc.Tafsili WHERE CompanyId=@co4 AND Code IN ('00000001','00000002');
+  INSERT INTO YfgAcc.TafsiliCategoryLink (CategoryId, TafsiliId)
+  SELECT @ct2, TafsiliId FROM YfgAcc.Tafsili WHERE CompanyId=@co4 AND Code = '00000003';
 END
 GO

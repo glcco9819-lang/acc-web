@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, fa } from "@/lib/ui";
 
-/* پنجرهٔ عمومی اطلاعات عمومی (شمای gnr) — با ستون‌های ممیزی و تاریخ شمسی
+/* پنجرهٔ عمومی اطلاعات عمومی (شمای YfgGen) — با ستون‌های ممیزی و تاریخ شمسی
    ممیزی: ایجادکننده/تاریخ ایجاد(شمسی)/ویرایش‌کننده/تاریخ ویرایش(شمسی)/سیستم مبدأ
    مقادیر منطقی: بله/خیر (دستور کارفرما) */
 
@@ -15,7 +15,7 @@ export interface GCol {
   placeholder?: string;
 }
 
-export default function GnrWindow({ entity, title, sub, cols, note, parent }: {
+export default function GenWindow({ entity, title, sub, cols, note, parent }: {
   entity: string; title?: string; sub?: string; cols: GCol[]; note?: string;
   parent?: { key: string; label: string; load: () => Promise<{ v: number; t: string }[]>; };
 }) {
@@ -29,7 +29,7 @@ export default function GnrWindow({ entity, title, sub, cols, note, parent }: {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const qs = parent && pval ? `?p=${pval}` : "";
-  const url = `/api/gnr/${entity}${qs}`;
+  const url = `/api/gen/${entity}${qs}`;
 
   const load = useCallback(async () => {
     if (parent && !pval) { setRows([]); return; }
@@ -64,19 +64,19 @@ export default function GnrWindow({ entity, title, sub, cols, note, parent }: {
     const f: Record<string, string> = {};
     cols.forEach((c) => { f[c.key] = r[c.key] === null || r[c.key] === undefined ? "" : String(r[c.key]); });
     setForm(f);
-    setEditId(r.id ?? r.Serial ?? r.CtgryId ?? r.GeoPosId ?? r.LookupId ?? r.MisSetupId ?? r.HolidayId ?? r.CrspndRef);
+    setEditId(r.id ?? r.Serial ?? r.CategoryId ?? r.GeoPlaceId ?? r.CodeId ?? r.SettingId ?? r.HolidayId ?? r.PartyRef);
     /* اطلاع به صفحهٔ میزبان برای پنل‌های وابسته (نشانی/طبقه‌بندی) */
-    try { window.dispatchEvent(new CustomEvent("gnr-row-edit", { detail: { entity, row: r } })); } catch { /* noop */ }
+    try { window.dispatchEvent(new CustomEvent("gen-row-edit", { detail: { entity, row: r } })); } catch { /* noop */ }
   };
 
   const del = async (id: number) => {
     if (!confirm("این رکورد حذف شود؟")) return;
-    try { await api(`/api/gnr/${entity}?id=${id}`, { method: "DELETE" }); await load(); }
+    try { await api(`/api/gen/${entity}?id=${id}`, { method: "DELETE" }); await load(); }
     catch (e: any) { setMsg({ t: "err", s: e.message }); }
   };
 
   const gridCols = cols.filter((c) => !c.hideInGrid);
-  const showAudit = !["crspndcat"].includes(entity);
+  const showAudit = !["party-cat"].includes(entity);
 
   return (
     <>
@@ -136,7 +136,7 @@ export default function GnrWindow({ entity, title, sub, cols, note, parent }: {
               </tr></thead>
               <tbody>
                 {rows.map((r, i) => {
-                  const rid = r.id ?? r.Serial ?? r.CtgryId ?? r.GeoPosId ?? r.LookupId ?? r.MisSetupId ?? r.HolidayId ?? r.CrspndRef;
+                  const rid = r.id ?? r.Serial ?? r.CategoryId ?? r.GeoPlaceId ?? r.CodeId ?? r.SettingId ?? r.HolidayId ?? r.PartyRef;
                   return (
                     <tr key={rid ?? i}>
                       {gridCols.map((c) => {

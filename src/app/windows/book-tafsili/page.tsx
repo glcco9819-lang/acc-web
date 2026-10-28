@@ -7,7 +7,7 @@ import { api, fa } from "@/lib/ui";
 /* [دفتر تفصیلی — کارت تفصیلی از سه اسلات سند + برچسب سطح] */
 export default function Page() {
   const [rows, setRows] = useState<any[]>([]);
-  const [dl, setDl] = useState<any>(null);
+  const [tfs, setTfs] = useState<any>(null);
   const [opening, setOpening] = useState(0);
   const [dls, setDls] = useState<any[]>([]);
   const [moeins, setMoeins] = useState<any[]>([]);
@@ -21,11 +21,11 @@ export default function Page() {
     try {
       const p = new URLSearchParams({ dlId, moein }); if (from) p.set("from", from); if (to) p.set("to", to);
       const j = await api(`/api/books/tafsili?${p}`);
-      setRows(j.rows || []); setDl(j.dl); setOpening(j.opening || 0); setErr("");
+      setRows(j.rows || []); setTfs(j.tfs); setOpening(j.opening || 0); setErr("");
     } catch (e: any) { setErr(e.message); }
   }, [dlId, moein, from, to]);
   useEffect(() => {
-    api("/api/acc/dl").then((j) => setDls(j.rows || [])).catch(() => {});
+    api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
   }, []);
 
@@ -42,17 +42,17 @@ export default function Page() {
         <div className="field"><label>تفصیلی</label>
           <select value={dlId} onChange={(e) => setDlId(e.target.value)}>
             <option value="">— انتخاب تفصیلی —</option>
-            {dls.map((d) => <option key={d.DlId} value={d.DlId}>{d.Code} — {d.Title}</option>)}
+            {dls.map((d) => <option key={d.TafsiliId} value={d.TafsiliId}>{d.Code} — {d.Title}</option>)}
           </select>
         </div>
         <div className="field"><label>از تاریخ</label><input value={from} onChange={(e) => setFrom(e.target.value)} style={{ direction: "ltr" }} /></div>
         <div className="field"><label>تا تاریخ</label><input value={to} onChange={(e) => setTo(e.target.value)} style={{ direction: "ltr" }} /></div>
         <div className="field"><label>&nbsp;</label><button className="btn" onClick={load}>نمایش</button>{" "}<button className="btn" onClick={() => window.print()}>چاپ</button></div>
       </div>
-      {dl && (
+      {tfs && (
         <>
           <p style={{ margin: "6px 0" }}>
-            کارت <b>{dl.Code} — {dl.Title}</b> <span className="muted">({dl.TypeTitle})</span>
+            کارت <b>{tfs.Code} — {tfs.Title}</b> <span className="muted">({tfs.TypeTitle})</span>
             {" "}· مانده ابتدا: <b>{fa(opening)}</b>
           </p>
           <div className="scrollbox">

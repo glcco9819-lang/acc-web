@@ -25,7 +25,7 @@ export default function Page() {
   return (
     <Shell title="شرح‌های استاندارد" sub="شرح‌های آماده برای انتخاب در ردیف‌های سند">
       {moeins.length
-        ? <CrudWindow entity="stddesc" title="شرح استاندارد" cols={cols} />
+        ? <CrudWindow entity="std-narration" title="شرح استاندارد" cols={cols} />
         : <p className="muted">ابتدا معین تعریف کنید.</p>}
     </Shell>
   );

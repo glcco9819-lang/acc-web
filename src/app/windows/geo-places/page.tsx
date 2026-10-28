@@ -1,9 +1,9 @@
 "use client";
 
 import Shell from "@/components/Shell";
-import GnrWindow, { GCol } from "@/components/GnrWindow";
+import GenWindow, { GCol } from "@/components/GenWindow";
 
-/* معرفی موقعیت‌های جغرافیایی — OF0004 (TFrmGeoPos در GnrGeneral.bpl) — gnr.GeoPos
+/* معرفی موقعیت‌های جغرافیایی — OF0004 (TFrmGeoPos در GnrGeneral.bpl) — YfgGen.GeoPlace
    1=کشور 2=استان 3=شهرستان 4=شهر */
 
 const cols: GCol[] = [
@@ -18,7 +18,7 @@ const cols: GCol[] = [
 export default function Page() {
   return (
     <Shell title="معرفی موقعیت‌های جغرافیایی" sub="اطلاعات عمومی — OF0004؛ کشور/استان/شهرستان/شهر — ایران به‌صورت پیش‌فرض ثبت شده است">
-      <GnrWindow entity="geopos" cols={cols} />
+      <GenWindow entity="geo-place" cols={cols} />
     </Shell>
   );
 }

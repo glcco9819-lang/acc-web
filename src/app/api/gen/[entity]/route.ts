@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { q, one } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
 
-/* اطلاعات عمومی (شمای gnr — مطابق دیتابیس اصل: HumCmp/GnrGeneral/ConfigCommon/gnCalndr)
+/* اطلاعات عمومی (شمای YfgGen — همتاسازی اطلاعات عمومی فایل‌های اصلی: HumCmp/GnrGeneral/ConfigCommon/gnCalndr)
    اشخاص و شرکت‌ها / نشانی‌ها / طبقه‌بندی / موقعیت‌های جغرافیایی /
    تنظیمات عمومی / مرجع کدها / تعطیلات
    همهٔ جدول‌ها ستون‌های ممیزی دارند: CreatedBy/CreatedAt(+J)/UpdatedBy/UpdatedAt(+J)/SourceSystem
-   تاریخ شمسی ملاک است (ستون‌های J خودکار از توابع gnr.Grg2Jal پر می‌شوند) */
+   تاریخ شمسی ملاک است (ستون‌های J خودکار از توابع YfgGen.GrgToJalali پر می‌شوند) */
 
 const NUM = /^\d+$/;
 const JDATE = /^\d{4}\/\d{2}\/\d{2}$/;
@@ -21,11 +21,11 @@ interface Spec {
 
 function spec(entity: string): Spec | null {
   switch (entity) {
-    case "crspnd": return {
-      table: "gnr.Crspnd", key: "Serial", orderBy: "Serial DESC",
+    case "party": return {
+      table: "YfgGen.Party", key: "Serial", orderBy: "Serial DESC",
       cols: [
         { name: "RecType", req: true },
-        { name: "CompType", num: true },
+        { name: "PartyKind", num: true },
         { name: "Title", max: 400 }, { name: "FName", max: 200 }, { name: "LName", max: 200 },
         { name: "NickName", max: 200 },
         { name: "Title_En", max: 400 }, { name: "FName_En", max: 200 }, { name: "LName_En", max: 200 },
@@ -36,24 +36,24 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "address": return {
-      table: "gnr.Address", key: "Serial", orderBy: "Serial", scope: "CrspndRef=@p",
+      table: "YfgGen.PartyAddress", key: "Serial", orderBy: "Serial", scope: "PartyRef=@p",
       cols: [
         { name: "Title", max: 200 }, { name: "Address", max: 1000 }, { name: "Address_En", max: 1000 },
         { name: "ZipCode", max: 20 }, { name: "PostBox", max: 20 },
         { name: "Phone", max: 60 }, { name: "Fax", max: 60 }, { name: "EMail", max: 120 },
-        { name: "Mobile", max: 60 }, { name: "GeoPosRef", num: true },
+        { name: "Mobile", max: 60 }, { name: "GeoPlaceRef", num: true },
       ],
     };
-    case "ctgry": return {
-      table: "gnr.CrspndCtgry", key: "CtgryId", orderBy: "CtgryId",
+    case "party-ctgry": return {
+      table: "YfgGen.PartyCategory", key: "CategoryId", orderBy: "CategoryId",
       cols: [{ name: "Title", req: true, max: 200 }, { name: "ParentRef", num: true }],
     };
-    case "crspndcat": return {
-      table: "gnr.gnrCrspndCat", key: "CrspndRef", orderBy: "CtgryRef", scope: "CrspndRef=@p",
-      cols: [{ name: "CtgryRef", req: true, num: true }],
+    case "party-cat": return {
+      table: "YfgGen.PartyCategoryLink", key: "PartyRef", orderBy: "CategoryRef", scope: "PartyRef=@p",
+      cols: [{ name: "CategoryRef", req: true, num: true }],
     };
-    case "geopos": return {
-      table: "gnr.GeoPos", key: "GeoPosId", orderBy: "GeoPosId",
+    case "geo-place": return {
+      table: "YfgGen.GeoPlace", key: "GeoPlaceId", orderBy: "GeoPlaceId",
       cols: [
         { name: "Title", req: true, max: 200 },
         { name: "ParentRef", num: true },
@@ -62,7 +62,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "lookup": return {
-      table: "gnr.Lookup", key: "LookupId", orderBy: "[Type], Code",
+      table: "YfgGen.CodeList", key: "CodeId", orderBy: "[Type], Code",
       cols: [
         { name: "Type", req: true, max: 40 },
         { name: "Code", req: true, num: true },
@@ -70,8 +70,8 @@ function spec(entity: string): Spec | null {
         { name: "Aux", max: 100 }, { name: "SystemName", max: 10 },
       ],
     };
-    case "missetup": return {
-      table: "gnr.MisSetup", key: "MisSetupId", orderBy: "MisSetupId",
+    case "app-setting": return {
+      table: "YfgGen.AppSetting", key: "SettingId", orderBy: "SettingId",
       cols: [
         { name: "KeyValue", req: true, max: 60 },
         { name: "DataValue", req: true, max: 400 },
@@ -80,7 +80,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "holidays": return {
-      table: "gnr.gnrHolidays", key: "HolidayId", orderBy: "JDate DESC",
+      table: "YfgGen.Holiday", key: "HolidayId", orderBy: "JDate DESC",
       cols: [
         { name: "JDate", req: true, jdate: true },
         { name: "HolidayTypeRef", num: true },
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
     sp.scope && p ? { p } : {});
   /* انواع تعطیلی برای دراپ‌داون پنجرهٔ تعطیلات */
   if (entity === "holidays") {
-    const types = await q(`SELECT HolidayTypeId v, Title t FROM gnr.gnrHolidayTypes WHERE IsActive=1 ORDER BY HolidayTypeId`);
+    const types = await q(`SELECT HolidayTypeId v, Title t FROM YfgGen.HolidayType WHERE IsActive=1 ORDER BY HolidayTypeId`);
     return NextResponse.json({ ok: true, rows, types });
   }
   return NextResponse.json({ ok: true, rows });
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   const body = await req.json().catch(() => ({}));
 
   /* قاعده: عنوان برای شرکت لازم است؛ نام برای شخص */
-  if (entity === "crspnd") {
+  if (entity === "party") {
     const rt = String(body.RecType || "").trim();
     if (rt === "CMP" && !String(body.Title || "").trim() && !String(body.CompName || "").trim())
       return NextResponse.json({ ok: false, error: "عنوان شرکت الزامی است" }, { status: 400 });
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   /* کلید والد از پارامتر نشستِ فرم */
   const url = new URL(req.url);
   const p = url.searchParams.get("p");
-  if (sp.scope && p) vals["CrspndRef"] = Number(p);
+  if (sp.scope && p) vals["PartyRef"] = Number(p);
 
   const cols = Object.keys(vals);
   if (!cols.length) return NextResponse.json({ ok: false, error: "داده‌ای ارسال نشده" }, { status: 400 });
@@ -210,21 +210,21 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ e
 
   /* کنترل ارجاع قبل از حذف (الگوی اصل) */
   const refs: Record<string, { sql: string; msg: string }[]> = {
-    crspnd: [
-      { sql: "SELECT 1 x FROM Acc.DL WHERE CrspndRef=@id", msg: "شخص/شرکت در تفصیلی‌های حسابداری استفاده شده است" },
-      { sql: "SELECT 1 x FROM gnr.Address WHERE CrspndRef=@id", msg: "ابتدا نشانی‌های این شخص را حذف کنید" },
+    party: [
+      { sql: "SELECT 1 x FROM YfgAcc.Tafsili WHERE PartyRef=@id", msg: "شخص/شرکت در تفصیلی‌های حسابداری استفاده شده است" },
+      { sql: "SELECT 1 x FROM YfgGen.PartyAddress WHERE PartyRef=@id", msg: "ابتدا نشانی‌های این شخص را حذف کنید" },
     ],
-    ctgry: [
-      { sql: "SELECT 1 x FROM gnr.gnrCrspndCat WHERE CtgryRef=@id", msg: "طبقه‌بندی به اشخاص اختصاص داده شده است" },
-      { sql: "SELECT 1 x FROM gnr.CrspndCtgry WHERE ParentRef=@id", msg: "طبقه‌بندی دارای زیرمجموعه است" },
+    "party-ctgry": [
+      { sql: "SELECT 1 x FROM YfgGen.PartyCategoryLink WHERE CategoryRef=@id", msg: "طبقه‌بندی به اشخاص اختصاص داده شده است" },
+      { sql: "SELECT 1 x FROM YfgGen.PartyCategory WHERE ParentRef=@id", msg: "طبقه‌بندی دارای زیرمجموعه است" },
     ],
-    geopos: [
-      { sql: "SELECT 1 x FROM gnr.GeoPos WHERE ParentRef=@id", msg: "موقعیت دارای زیرمجموعه است" },
-      { sql: "SELECT 1 x FROM gnr.Address WHERE GeoPosRef=@id", msg: "موقعیت در نشانی‌ها استفاده شده است" },
+    "geo-place": [
+      { sql: "SELECT 1 x FROM YfgGen.GeoPlace WHERE ParentRef=@id", msg: "موقعیت دارای زیرمجموعه است" },
+      { sql: "SELECT 1 x FROM YfgGen.PartyAddress WHERE GeoPlaceRef=@id", msg: "موقعیت در نشانی‌ها استفاده شده است" },
     ],
     holidays: [],
     lookup: [],
-    missetup: [],
+    "app-setting": [],
   };
   for (const chk of (refs[entity] || [])) {
     const hit = await one(chk.sql, { id });

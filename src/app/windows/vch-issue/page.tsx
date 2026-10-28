@@ -9,10 +9,10 @@ import { todayJalali } from "@/lib/jalali";
    ردیف‌ها: کل / معین / تفصیلی ۴ / تفصیلی ۵ / تفصیلی ۶ / شرح / بدهکار / بستانکار — با تراز زنده */
 
 interface Row {
-  KolCode: string; MoeinCode: string; Dl1Id: string; Dl2Id: string; Dl3Id: string;
+  KolCode: string; MoeinCode: string; Taf1Id: string; Taf2Id: string; Taf3Id: string;
   Descr: string; Dbt: string; Crt: string;
 }
-const emptyRow = (): Row => ({ KolCode: "", MoeinCode: "", Dl1Id: "", Dl2Id: "", Dl3Id: "", Descr: "", Dbt: "", Crt: "" });
+const emptyRow = (): Row => ({ KolCode: "", MoeinCode: "", Taf1Id: "", Taf2Id: "", Taf3Id: "", Descr: "", Dbt: "", Crt: "" });
 
 export default function Page() {
   const [types, setTypes] = useState<any[]>([]);
@@ -29,15 +29,15 @@ export default function Page() {
   useEffect(() => {
     const { companyId } = readCtxCookie();
     if (!companyId) { setMsg({ t: "err", s: "ابتدا شرکت و سال مالی را از نوار بالا انتخاب کنید" }); return; }
-    api("/api/vch/types").then((j) => { setTypes(j.rows || []); if (j.rows?.length) setTypeId(String(j.rows[0].TypeId)); }).catch((e) => setMsg({ t: "err", s: e.message }));
+    api("/api/vch/types").then((j) => { setTypes(j.rows || []); if (j.rows?.length) setTypeId(String(j.rows[0].VoucherTypeId)); }).catch((e) => setMsg({ t: "err", s: e.message }));
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
-    api("/api/acc/dl").then((j) => setDls(j.rows || [])).catch(() => {});
+    api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
   }, []);
 
   const moeinMap = useMemo(() => new Map(moeins.map((m) => [m.Code, m])), [moeins]);
   const kolOptions = useMemo(() => [...new Set(moeins.map((m) => m.KolCode))].sort(), [moeins]);
   const moeinsOf = (kol: string) => moeins.filter((m) => m.KolCode === kol);
-  const dlsOfType = (typeId: number) => dls.filter((d) => d.DlTypeId === typeId);
+  const dlsOfType = (typeId: number) => dls.filter((d) => d.TafsiliTypeId === typeId);
 
   const upd = (i: number, patch: Partial<Row>) => {
     setRows((rs) => rs.map((r, k) => (k === i ? { ...r, ...patch } : r)));
@@ -45,7 +45,7 @@ export default function Page() {
 
   const pickMoein = (i: number, code: string) => {
     const m = moeinMap.get(code);
-    upd(i, { MoeinCode: code, KolCode: m ? m.KolCode : "", Dl1Id: "", Dl2Id: "", Dl3Id: "" });
+    upd(i, { MoeinCode: code, KolCode: m ? m.KolCode : "", Taf1Id: "", Taf2Id: "", Taf3Id: "" });
   };
 
   const totals = rows.reduce((a, r) => ({ D: a.D + (Number(r.Dbt) || 0), C: a.C + (Number(r.Crt) || 0) }), { D: 0, C: 0 });
@@ -58,10 +58,10 @@ export default function Page() {
         .filter((r) => r.KolCode || r.MoeinCode || Number(r.Dbt) || Number(r.Crt))
         .map((r) => ({
           KolCode: r.KolCode, MoeinCode: r.MoeinCode,
-          Dl1Id: r.Dl1Id ? Number(r.Dl1Id) : null, Dl2Id: r.Dl2Id ? Number(r.Dl2Id) : null, Dl3Id: r.Dl3Id ? Number(r.Dl3Id) : null,
+          Taf1Id: r.Taf1Id ? Number(r.Taf1Id) : null, Taf2Id: r.Taf2Id ? Number(r.Taf2Id) : null, Taf3Id: r.Taf3Id ? Number(r.Taf3Id) : null,
           Descr: r.Descr, Dbt: Number(r.Dbt) || 0, Crt: Number(r.Crt) || 0,
         }));
-      const j = await api("/api/vch/issue", { method: "POST", body: JSON.stringify({ VchDate: vchDate, Descr: descr, TypeId: Number(typeId), items }) });
+      const j = await api("/api/vch/issue", { method: "POST", body: JSON.stringify({ VchDate: vchDate, Descr: descr, VoucherTypeId: Number(typeId), items }) });
       setLastNo(j.voucher.VchNo);
       setRows([emptyRow(), emptyRow()]); setDescr("");
       setMsg({ t: "ok", s: `سند شماره ${j.voucher.VchNo} (عطف ${j.voucher.FolioNo}) به‌صورت «موقت» صادر شد — در پنجرهٔ بررسی اسناد قابل بررسی است` });
@@ -84,7 +84,7 @@ export default function Page() {
         <div className="field">
           <label>نوع سند</label>
           <select value={typeId} onChange={(e) => setTypeId(e.target.value)}>
-            {types.map((t) => <option key={t.TypeId} value={t.TypeId}>{t.Title}</option>)}
+            {types.map((t) => <option key={t.VoucherTypeId} value={t.VoucherTypeId}>{t.Title}</option>)}
           </select>
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function Page() {
                 <tr key={i}>
                   <td>{i + 1}</td>
                   <td>
-                    <select value={r.KolCode} onChange={(e) => upd(i, { KolCode: e.target.value, MoeinCode: "", Dl1Id: "", Dl2Id: "", Dl3Id: "" })} style={{ width: "100%" }}>
+                    <select value={r.KolCode} onChange={(e) => upd(i, { KolCode: e.target.value, MoeinCode: "", Taf1Id: "", Taf2Id: "", Taf3Id: "" })} style={{ width: "100%" }}>
                       <option value="">—</option>
                       {kolOptions.map((k) => <option key={k} value={k}>{k} — {moeinMap.get(k) ? moeins.find((x) => x.KolCode === k)?.KolCode && (moeins.find((x) => x.KolCode === k) as any).KolTitle : ""}</option>)}
                     </select>
@@ -119,12 +119,12 @@ export default function Page() {
                       {moeinsOf(r.KolCode).map((m2) => <option key={m2.Code} value={m2.Code}>{m2.Code} — {m2.Title}</option>)}
                     </select>
                   </td>
-                  {[["Dl1Id", m?.Dl1TypeId, "۴"], ["Dl2Id", m?.Dl2TypeId, "۵"], ["Dl3Id", m?.Dl3TypeId, "۶"]].map(([f, t]) => (
+                  {[["Taf1Id", m?.Taf1TypeId, "۴"], ["Taf2Id", m?.Taf2TypeId, "۵"], ["Taf3Id", m?.Taf3TypeId, "۶"]].map(([f, t]) => (
                     <td key={String(f)}>
                       {t ? (
                         <select value={(r as any)[String(f)]} onChange={(e) => upd(i, { [String(f)]: e.target.value } as Partial<Row>)} style={{ width: "100%" }}>
                           <option value="">— الزامی —</option>
-                          {dlsOfType(Number(t)).map((d) => <option key={d.DlId} value={d.DlId}>{d.Code} — {d.Title}</option>)}
+                          {dlsOfType(Number(t)).map((d) => <option key={d.TafsiliId} value={d.TafsiliId}>{d.Code} — {d.Title}</option>)}
                         </select>
                       ) : <span className="muted">—</span>}
                     </td>

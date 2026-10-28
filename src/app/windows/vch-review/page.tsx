@@ -61,7 +61,7 @@ export default function Page() {
           </tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.HdrId}>
+              <tr key={r.VoucherId}>
                 <td className="num">{fa(r.FolioNo)}</td>
                 <td className="num"><b>{fa(r.VchNo)}</b>{r.ReversalOf ? <span className="badge src" style={{ marginInlineStart: 4 }}>برگشتی</span> : null}</td>
                 <td className="num">{r.VchDate}</td>
@@ -73,9 +73,9 @@ export default function Page() {
                 <td><span className={`badge ${STATE_CLS[r.State]}`}>{STATE_FA[r.State]}</span></td>
                 <td>{r.CreatedBy} / {r.CheckedBy || "—"}</td>
                 <td>
-                  <button className="btn" onClick={() => openDetail(r.HdrId)} style={{ padding: "1px 8px" }}>مشاهده</button>{" "}
-                  {r.State === 1 && can.review && <button className="btn green" onClick={() => doAct(r.HdrId, "review")} style={{ padding: "1px 8px" }}>بررسی شد</button>}
-                  {r.State === 2 && can.review && <button className="btn" onClick={() => doAct(r.HdrId, "unreview")} style={{ padding: "1px 8px" }}>لغو بررسی</button>}
+                  <button className="btn" onClick={() => openDetail(r.VoucherId)} style={{ padding: "1px 8px" }}>مشاهده</button>{" "}
+                  {r.State === 1 && can.review && <button className="btn green" onClick={() => doAct(r.VoucherId, "review")} style={{ padding: "1px 8px" }}>بررسی شد</button>}
+                  {r.State === 2 && can.review && <button className="btn" onClick={() => doAct(r.VoucherId, "unreview")} style={{ padding: "1px 8px" }}>لغو بررسی</button>}
                 </td>
               </tr>
             ))}
@@ -97,11 +97,11 @@ export default function Page() {
               <thead><tr><th>#</th><th>کل</th><th>معین</th><th>تفصیلی ۴</th><th>تفصیلی ۵</th><th>تفصیلی ۶</th><th>شرح</th><th className="num">بدهکار</th><th className="num">بستانکار</th></tr></thead>
               <tbody>
                 {detail.items.map((it: any) => (
-                  <tr key={it.ItmId}>
+                  <tr key={it.LineId}>
                     <td>{it.RowNo}</td>
                     <td>{it.KolCode} — {it.KolTitle}</td>
                     <td>{it.MoeinCode} — {it.MoeinTitle}</td>
-                    <td>{it.Dl1Title || "—"}</td><td>{it.Dl2Title || "—"}</td><td>{it.Dl3Title || "—"}</td>
+                    <td>{it.Taf1Title || "—"}</td><td>{it.Taf2Title || "—"}</td><td>{it.Taf3Title || "—"}</td>
                     <td>{it.Descr || "—"}</td>
                     <td className="num">{fa(it.Dbt)}</td><td className="num">{fa(it.Crt)}</td>
                   </tr>

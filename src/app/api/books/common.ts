@@ -14,7 +14,7 @@ export function ctxOf(req: NextRequest): { companyId: number; yearId: number } {
    داخل هر بازه‌ای به‌درستی حساب می‌شود */
 export async function openingDone(companyId: number, yearId: number): Promise<boolean> {
   const r = await one(
-    `SELECT COUNT(*) N FROM Vch.Hdr h JOIN Vch.[Type] t ON t.TypeId=h.TypeId
+    `SELECT COUNT(*) N FROM YfgVch.Voucher h JOIN YfgVch.VoucherType t ON t.VoucherTypeId=h.VoucherTypeId
      WHERE h.CompanyId=@c AND h.YearId=@y AND h.State=3 AND t.LatinTitle='Opening'`,
     { c: companyId, y: yearId });
   return Number(r?.N || 0) > 0;
@@ -35,21 +35,21 @@ export async function journal(req: NextRequest) {
   if (to) { conds.push("h.VchDate <= @to"); inp.to = to; }
 
   const rows = await q(
-    `SELECT h.HdrId, h.FolioNo, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
+    `SELECT h.VoucherId, h.FolioNo, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
             i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle,
-            d1.Title Dl1Title, d2.Title Dl2Title, d3.Title Dl3Title,
+            d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
             i.Descr ItmDescr, i.Dbt, i.Crt, t.Title TypeTitle
-     FROM Vch.Hdr h
-     JOIN Vch.[Type] t ON t.TypeId=h.TypeId
-     JOIN Vch.Itm i ON i.HdrId=h.HdrId
-     JOIN Acc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
-     JOIN Acc.Moein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
-     LEFT JOIN Acc.DL d1 ON d1.DlId=i.Dl1Id
-     LEFT JOIN Acc.DL d2 ON d2.DlId=i.Dl2Id
-     LEFT JOIN Acc.DL d3 ON d3.DlId=i.Dl3Id
+     FROM YfgVch.Voucher h
+     JOIN YfgVch.VoucherType t ON t.VoucherTypeId=h.VoucherTypeId
+     JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
+     JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+     JOIN YfgAcc.Moein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
+     LEFT JOIN YfgAcc.Tafsili d1 ON d1.TafsiliId=i.Taf1Id
+     LEFT JOIN YfgAcc.Tafsili d2 ON d2.TafsiliId=i.Taf2Id
+     LEFT JOIN YfgAcc.Tafsili d3 ON d3.TafsiliId=i.Taf3Id
      WHERE ${conds.join(" AND ")}
      ORDER BY h.VchDate, h.VchNo, i.RowNo`, inp);
   const totals = await one(`SELECT ISNULL(SUM(i.Dbt),0) TDbt, ISNULL(SUM(i.Crt),0) TCrt
-    FROM Vch.Hdr h JOIN Vch.Itm i ON i.HdrId=h.HdrId WHERE ${conds.join(" AND ")}`, inp);
-  return { status: 200, body: { ok: true, rows, totals, count: (await one(`SELECT COUNT(DISTINCT h.HdrId) N FROM Vch.Hdr h WHERE ${conds.join(" AND ")}`, inp)).N } };
+    FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId WHERE ${conds.join(" AND ")}`, inp);
+  return { status: 200, body: { ok: true, rows, totals, count: (await one(`SELECT COUNT(DISTINCT h.VoucherId) N FROM YfgVch.Voucher h WHERE ${conds.join(" AND ")}`, inp)).N } };
 }

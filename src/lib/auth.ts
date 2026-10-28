@@ -35,7 +35,7 @@ export async function getSession(): Promise<Session | null> {
   const username = verifyToken(token);
   if (!username) return null;
   const u = await one<{ Username: string; DisplayName: string; RoleCode: string }>(
-    "SELECT Username, DisplayName, RoleCode FROM Prm.AppUser WHERE Username=@u AND IsActive=1",
+    "SELECT Username, DisplayName, RoleCode FROM YfgPrm.AppUser WHERE Username=@u AND IsActive=1",
     { u: username }
   );
   if (!u) return null;

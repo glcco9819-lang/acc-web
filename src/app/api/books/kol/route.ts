@@ -23,14 +23,14 @@ export async function GET(req: NextRequest) {
   const opDone = await openingDone(companyId, yearId);
   const opening = opDone ? [] : await q(
     `SELECT ob.KolCode, SUM(ob.Dbt) Dbt, SUM(ob.Crt) Crt
-     FROM Acc.OpeningBalance ob WHERE ob.CompanyId=@c AND ob.YearId=@y ${kol ? "AND ob.KolCode=@kol" : ""}
+     FROM YfgAcc.OpeningBalance ob WHERE ob.CompanyId=@c AND ob.YearId=@y ${kol ? "AND ob.KolCode=@kol" : ""}
      GROUP BY ob.KolCode`, inp);
 
   const rows = await q(
     `SELECT i.KolCode, k.Title KolTitle, k.AccNature,
-            ISNULL(SUM(i.Dbt),0) Dbt, ISNULL(SUM(i.Crt),0) Crt, COUNT(DISTINCT h.HdrId) VchCount
-     FROM Vch.Hdr h JOIN Vch.Itm i ON i.HdrId=h.HdrId
-     JOIN Acc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+            ISNULL(SUM(i.Dbt),0) Dbt, ISNULL(SUM(i.Crt),0) Crt, COUNT(DISTINCT h.VoucherId) VchCount
+     FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
+     JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
      WHERE ${conds.join(" AND ")}
      GROUP BY i.KolCode, k.Title, k.AccNature
      ORDER BY i.KolCode`, inp);

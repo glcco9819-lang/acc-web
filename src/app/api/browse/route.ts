@@ -18,16 +18,16 @@ export async function GET(req: NextRequest) {
       `SELECT g.Code GroupCode, g.Title GroupTitle, g.AccNature GroupNature,
               k.Code KolCode, k.Title KolTitle,
               m.Code MoeinCode, m.Title MoeinTitle, m.AccNature, m.IsActive,
-              t1.Title Dl1Title, t2.Title Dl2Title, t3.Title Dl3Title,
+              t1.Title Taf1Title, t2.Title Taf2Title, t3.Title Taf3Title,
               ISNULL(bal.D,0) Dbt, ISNULL(bal.C,0) Crt
-       FROM Acc.[Group] g
-       LEFT JOIN Acc.Kol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
-       LEFT JOIN Acc.Moein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
-       LEFT JOIN Acc.DlType t1 ON t1.DlTypeId=m.Dl1TypeId
-       LEFT JOIN Acc.DlType t2 ON t2.DlTypeId=m.Dl2TypeId
-       LEFT JOIN Acc.DlType t3 ON t3.DlTypeId=m.Dl3TypeId
+       FROM YfgAcc.AccGroup g
+       LEFT JOIN YfgAcc.Kol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
+       LEFT JOIN YfgAcc.Moein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
+       LEFT JOIN YfgAcc.TafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
+       LEFT JOIN YfgAcc.TafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
+       LEFT JOIN YfgAcc.TafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
        LEFT JOIN (SELECT i.MoeinCode, SUM(i.Dbt) D, SUM(i.Crt) C
-                  FROM Vch.Hdr h JOIN Vch.Itm i ON i.HdrId=h.HdrId
+                  FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
                   WHERE h.CompanyId=@c AND h.YearId=@y AND h.State=3
                   GROUP BY i.MoeinCode) bal ON bal.MoeinCode=m.Code
        WHERE g.CompanyId=@c
@@ -43,39 +43,39 @@ export async function GET(req: NextRequest) {
     if (!moein) return NextResponse.json({ ok: false, error: "معین انتخاب نشده" }, { status: 400 });
 
     const head = await one<any>(
-      `SELECT m.Code, m.Title, m.AccNature, m.Dl1TypeId, m.Dl2TypeId, m.Dl3TypeId, k.Title KolTitle,
+      `SELECT m.Code, m.Title, m.AccNature, m.Taf1TypeId, m.Taf2TypeId, m.Taf3TypeId, k.Title KolTitle,
               t1.Title Dl1TypeTitle, t2.Title Dl2TypeTitle, t3.Title Dl3TypeTitle
-       FROM Acc.Moein m JOIN Acc.Kol k ON k.CompanyId=m.CompanyId AND k.Code=m.KolCode
-       LEFT JOIN Acc.DlType t1 ON t1.DlTypeId=m.Dl1TypeId
-       LEFT JOIN Acc.DlType t2 ON t2.DlTypeId=m.Dl2TypeId
-       LEFT JOIN Acc.DlType t3 ON t3.DlTypeId=m.Dl3TypeId
+       FROM YfgAcc.Moein m JOIN YfgAcc.Kol k ON k.CompanyId=m.CompanyId AND k.Code=m.KolCode
+       LEFT JOIN YfgAcc.TafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
+       LEFT JOIN YfgAcc.TafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
+       LEFT JOIN YfgAcc.TafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
        WHERE m.CompanyId=@c AND m.Code=@m`, { c: companyId, m: moein });
     if (!head) return NextResponse.json({ ok: false, error: "معین یافت نشد" }, { status: 404 });
 
     const conds = ["h.CompanyId=@c", "h.YearId=@y", "h.State=3", "i.MoeinCode=@m"];
     const inp: Record<string, unknown> = { c: companyId, y: yearId, m: moein };
-    if (dlId) { conds.push("(i.Dl1Id=@d OR i.Dl2Id=@d OR i.Dl3Id=@d)"); inp.d = dlId; }
+    if (dlId) { conds.push("(i.Taf1Id=@d OR i.Taf2Id=@d OR i.Taf3Id=@d)"); inp.d = dlId; }
     if (from) { conds.push("h.VchDate >= @from"); inp.from = from; }
     if (to) { conds.push("h.VchDate <= @to"); inp.to = to; }
 
     const rows = await q(
-      `SELECT h.HdrId, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
+      `SELECT h.VoucherId, h.VchNo, h.VchDate, h.Descr VchDescr, h.SourceModule, h.ReversalOf,
               i.RowNo, i.KolCode, k.Title KolTitle,
-              d1.Title Dl1Title, d2.Title Dl2Title, d3.Title Dl3Title,
+              d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
               i.Descr ItmDescr, i.Dbt, i.Crt
-       FROM Vch.Hdr h JOIN Vch.Itm i ON i.HdrId=h.HdrId
-       JOIN Acc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
-       LEFT JOIN Acc.DL d1 ON d1.DlId=i.Dl1Id
-       LEFT JOIN Acc.DL d2 ON d2.DlId=i.Dl2Id
-       LEFT JOIN Acc.DL d3 ON d3.DlId=i.Dl3Id
+       FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
+       JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+       LEFT JOIN YfgAcc.Tafsili d1 ON d1.TafsiliId=i.Taf1Id
+       LEFT JOIN YfgAcc.Tafsili d2 ON d2.TafsiliId=i.Taf2Id
+       LEFT JOIN YfgAcc.Tafsili d3 ON d3.TafsiliId=i.Taf3Id
        WHERE ${conds.join(" AND ")}
        ORDER BY h.VchDate, h.VchNo, i.RowNo`, inp);
 
     const opDone = await openingDone(companyId, yearId);
     const op = opDone ? null : await one(
       `SELECT SUM(CASE WHEN m.AccNature=2 THEN ob.Crt-ob.Dbt ELSE ob.Dbt-ob.Crt END) Bal
-       FROM Acc.OpeningBalance ob JOIN Acc.Moein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
-       WHERE ob.CompanyId=@c AND ob.YearId=@y AND ob.MoeinCode=@m ${dlId ? "AND (ob.Dl1Id=@d OR ob.Dl2Id=@d OR ob.Dl3Id=@d)" : ""}`, inp);
+       FROM YfgAcc.OpeningBalance ob JOIN YfgAcc.Moein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
+       WHERE ob.CompanyId=@c AND ob.YearId=@y AND ob.MoeinCode=@m ${dlId ? "AND (ob.Taf1Id=@d OR ob.Taf2Id=@d OR ob.Taf3Id=@d)" : ""}`, inp);
 
     let running = Number(op?.Bal || 0);
     const lines = rows.map((r) => {

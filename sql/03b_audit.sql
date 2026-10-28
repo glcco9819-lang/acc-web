@@ -2,307 +2,364 @@
    YFG ACC-WEB 1.1.0 - Part B: audit columns on existing tables
    Directive: audit fields on ALL tables (issuer/approver/editor/source-system/
    created-at/updated-at) + Jalali J companions. ASCII comments only (TDS safe).
-   Sources: employer directive 2026-10-28 + Vch.Hdr original pattern.
+   Sources: employer directive 2026-10-28 + YfgVch.Voucher original pattern.
    ============================================================================ */
 
--- Prm.Company
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.Company') AND name='CreatedBy')
-  ALTER TABLE Prm.Company ADD CreatedBy varchar(50) NULL;
+-- YfgPrm.Company
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='CreatedBy')
+  ALTER TABLE YfgPrm.Company ADD CreatedBy varchar(50) NULL;
 GO
-UPDATE Prm.Company SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
+UPDATE YfgPrm.Company SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.Company') AND name='CreatedBy')
-  ALTER TABLE Prm.Company ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='CreatedBy')
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgPrm.Company ALTER COLUMN CreatedBy varchar(50) NOT NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.Company') AND name='UpdatedAt')
-  ALTER TABLE Prm.Company ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='UpdatedAt')
+  ALTER TABLE YfgPrm.Company ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.Company') AND name='SourceSystem')
-  ALTER TABLE Prm.Company ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_Company_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='SourceSystem')
+  ALTER TABLE YfgPrm.Company ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_Company_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.Company') AND name='CreatedAtJ')
-  ALTER TABLE Prm.Company ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.Company') AND name='CreatedAtJ')
+  ALTER TABLE YfgPrm.Company ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Prm.AppUser
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.AppUser') AND name='CreatedBy')
-  ALTER TABLE Prm.AppUser ADD CreatedBy varchar(50) NULL;
+-- YfgPrm.AppUser
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='CreatedBy')
+  ALTER TABLE YfgPrm.AppUser ADD CreatedBy varchar(50) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.AppUser') AND name='CreatedBy')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='CreatedBy')
 BEGIN
-  UPDATE Prm.AppUser SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
-  ALTER TABLE Prm.AppUser ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  UPDATE YfgPrm.AppUser SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgPrm.AppUser ALTER COLUMN CreatedBy varchar(50) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.AppUser') AND name='UpdatedAt')
-  ALTER TABLE Prm.AppUser ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='UpdatedAt')
+  ALTER TABLE YfgPrm.AppUser ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.AppUser') AND name='SourceSystem')
-  ALTER TABLE Prm.AppUser ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_AppUser_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='SourceSystem')
+  ALTER TABLE YfgPrm.AppUser ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_AppUser_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.AppUser') AND name='CreatedAtJ')
-  ALTER TABLE Prm.AppUser ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.AppUser') AND name='CreatedAtJ')
+  ALTER TABLE YfgPrm.AppUser ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Prm.FiscalYear
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalYear') AND name='CreatedBy')
-  ALTER TABLE Prm.FiscalYear ADD CreatedBy varchar(50) NULL;
+-- YfgPrm.FiscalYear
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='CreatedBy')
+  ALTER TABLE YfgPrm.FiscalYear ADD CreatedBy varchar(50) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalYear') AND name='CreatedBy')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='CreatedBy')
 BEGIN
-  UPDATE Prm.FiscalYear SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
-  ALTER TABLE Prm.FiscalYear ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  UPDATE YfgPrm.FiscalYear SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgPrm.FiscalYear ALTER COLUMN CreatedBy varchar(50) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalYear') AND name='UpdatedAt')
-  ALTER TABLE Prm.FiscalYear ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='UpdatedAt')
+  ALTER TABLE YfgPrm.FiscalYear ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalYear') AND name='SourceSystem')
-  ALTER TABLE Prm.FiscalYear ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_FiscalYear_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='SourceSystem')
+  ALTER TABLE YfgPrm.FiscalYear ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_FiscalYear_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalYear') AND name='CreatedAtJ')
-  ALTER TABLE Prm.FiscalYear ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalYear') AND name='CreatedAtJ')
+  ALTER TABLE YfgPrm.FiscalYear ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Prm.FiscalPeriod
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalPeriod') AND name='CreatedAt')
-  ALTER TABLE Prm.FiscalPeriod ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgPrm.FiscalPeriod
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='CreatedAt')
+  ALTER TABLE YfgPrm.FiscalPeriod ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalPeriod') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='CreatedAt')
 BEGIN
-  UPDATE Prm.FiscalPeriod SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Prm.FiscalPeriod ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Prm.FiscalPeriod ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgPrm.FiscalPeriod SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgPrm.FiscalPeriod ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgPrm.FiscalPeriod ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalPeriod') AND name='UpdatedAt')
-  ALTER TABLE Prm.FiscalPeriod ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='UpdatedAt')
+  ALTER TABLE YfgPrm.FiscalPeriod ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalPeriod') AND name='SourceSystem')
-  ALTER TABLE Prm.FiscalPeriod ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_FiscalPeriod_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='SourceSystem')
+  ALTER TABLE YfgPrm.FiscalPeriod ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Prm_FiscalPeriod_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Prm.FiscalPeriod') AND name='CreatedAtJ')
-  ALTER TABLE Prm.FiscalPeriod ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgPrm.FiscalPeriod') AND name='CreatedAtJ')
+  ALTER TABLE YfgPrm.FiscalPeriod ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.Group
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.[Group]') AND name='CreatedAt')
-  ALTER TABLE Acc.[Group] ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.AccGroup
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.AccGroup ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.[Group]') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.[Group] SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.[Group] ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.[Group] ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.AccGroup SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.AccGroup ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.AccGroup ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.[Group]') AND name='UpdatedAt')
-  ALTER TABLE Acc.[Group] ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.AccGroup ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.[Group]') AND name='SourceSystem')
-  ALTER TABLE Acc.[Group] ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Group_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.AccGroup ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Group_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.[Group]') AND name='CreatedAtJ')
-  ALTER TABLE Acc.[Group] ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.AccGroup') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.AccGroup ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.Kol
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Kol') AND name='CreatedAt')
-  ALTER TABLE Acc.Kol ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.Kol
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.Kol ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Kol') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.Kol SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.Kol ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.Kol ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.Kol SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.Kol ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.Kol ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Kol') AND name='UpdatedAt')
-  ALTER TABLE Acc.Kol ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.Kol ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Kol') AND name='SourceSystem')
-  ALTER TABLE Acc.Kol ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Kol_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.Kol ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Kol_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Kol') AND name='CreatedAtJ')
-  ALTER TABLE Acc.Kol ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Kol') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.Kol ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.Moein
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Moein') AND name='CreatedAt')
-  ALTER TABLE Acc.Moein ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.Moein
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.Moein ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Moein') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.Moein SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.Moein ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.Moein ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.Moein SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.Moein ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.Moein ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Moein') AND name='UpdatedAt')
-  ALTER TABLE Acc.Moein ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.Moein ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Moein') AND name='SourceSystem')
-  ALTER TABLE Acc.Moein ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Moein_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.Moein ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Moein_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.Moein') AND name='CreatedAtJ')
-  ALTER TABLE Acc.Moein ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Moein') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.Moein ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.DlType
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlType') AND name='CreatedBy')
-  ALTER TABLE Acc.DlType ADD CreatedBy varchar(50) NULL;
+-- YfgAcc.TafsiliType
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='CreatedBy')
+  ALTER TABLE YfgAcc.TafsiliType ADD CreatedBy varchar(50) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlType') AND name='CreatedBy')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='CreatedBy')
 BEGIN
-  UPDATE Acc.DlType SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
-  ALTER TABLE Acc.DlType ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  UPDATE YfgAcc.TafsiliType SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.TafsiliType ALTER COLUMN CreatedBy varchar(50) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlType') AND name='UpdatedAt')
-  ALTER TABLE Acc.DlType ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.TafsiliType ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlType') AND name='SourceSystem')
-  ALTER TABLE Acc.DlType ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_DlType_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.TafsiliType ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_TafsiliType_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlType') AND name='CreatedAtJ')
-  ALTER TABLE Acc.DlType ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliType') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.TafsiliType ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.DL
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DL') AND name='CreatedBy')
-  ALTER TABLE Acc.DL ADD CreatedBy varchar(50) NULL;
+-- YfgAcc.Tafsili
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='CreatedBy')
+  ALTER TABLE YfgAcc.Tafsili ADD CreatedBy varchar(50) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DL') AND name='CreatedBy')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='CreatedBy')
 BEGIN
-  UPDATE Acc.DL SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
-  ALTER TABLE Acc.DL ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  UPDATE YfgAcc.Tafsili SET CreatedBy=N'system' WHERE CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.Tafsili ALTER COLUMN CreatedBy varchar(50) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DL') AND name='UpdatedAt')
-  ALTER TABLE Acc.DL ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.Tafsili ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DL') AND name='SourceSystem')
-  ALTER TABLE Acc.DL ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_DL_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.Tafsili ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_Tafsili_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DL') AND name='CreatedAtJ')
-  ALTER TABLE Acc.DL ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.Tafsili') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.Tafsili ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.DlCtgry
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlCtgry') AND name='CreatedAt')
-  ALTER TABLE Acc.DlCtgry ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.TafsiliCategory
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.TafsiliCategory ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlCtgry') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.DlCtgry SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.DlCtgry ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.DlCtgry ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.TafsiliCategory SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.TafsiliCategory ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.TafsiliCategory ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlCtgry') AND name='UpdatedAt')
-  ALTER TABLE Acc.DlCtgry ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.TafsiliCategory ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlCtgry') AND name='SourceSystem')
-  ALTER TABLE Acc.DlCtgry ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_DlCtgry_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.TafsiliCategory ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_TafsiliCategory_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.DlCtgry') AND name='CreatedAtJ')
-  ALTER TABLE Acc.DlCtgry ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategory') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.TafsiliCategory ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.StdDesc
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.StdDesc') AND name='CreatedAt')
-  ALTER TABLE Acc.StdDesc ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.StdNarration
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.StdNarration ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.StdDesc') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.StdDesc SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.StdDesc ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.StdDesc ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.StdNarration SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.StdNarration ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.StdNarration ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.StdDesc') AND name='UpdatedAt')
-  ALTER TABLE Acc.StdDesc ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.StdNarration ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.StdDesc') AND name='SourceSystem')
-  ALTER TABLE Acc.StdDesc ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_StdDesc_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.StdNarration ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_StdNarration_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.StdDesc') AND name='CreatedAtJ')
-  ALTER TABLE Acc.StdDesc ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.StdNarration') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.StdNarration ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Acc.OpeningBalance
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.OpeningBalance') AND name='CreatedAt')
-  ALTER TABLE Acc.OpeningBalance ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgAcc.OpeningBalance
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='CreatedAt')
+  ALTER TABLE YfgAcc.OpeningBalance ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.OpeningBalance') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='CreatedAt')
 BEGIN
-  UPDATE Acc.OpeningBalance SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Acc.OpeningBalance ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Acc.OpeningBalance ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgAcc.OpeningBalance SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgAcc.OpeningBalance ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgAcc.OpeningBalance ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.OpeningBalance') AND name='UpdatedAt')
-  ALTER TABLE Acc.OpeningBalance ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.OpeningBalance ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.OpeningBalance') AND name='SourceSystem')
-  ALTER TABLE Acc.OpeningBalance ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_OB_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.OpeningBalance ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Acc_OB_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Acc.OpeningBalance') AND name='CreatedAtJ')
-  ALTER TABLE Acc.OpeningBalance ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.OpeningBalance') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.OpeningBalance ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Vch.Type
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Type') AND name='CreatedAt')
-  ALTER TABLE Vch.Type ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgVch.VoucherType
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='CreatedAt')
+  ALTER TABLE YfgVch.VoucherType ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
 GO
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Type') AND name='CreatedAt')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='CreatedAt')
 BEGIN
-  UPDATE Vch.Type SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
-  ALTER TABLE Vch.Type ALTER COLUMN CreatedBy varchar(50) NOT NULL;
-  ALTER TABLE Vch.Type ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
+  UPDATE YfgVch.VoucherType SET CreatedBy=N'system', CreatedAt=SYSDATETIME() WHERE CreatedAt IS NULL OR CreatedBy IS NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='CreatedBy' AND is_nullable=1)
+  ALTER TABLE YfgVch.VoucherType ALTER COLUMN CreatedBy varchar(50) NOT NULL;
+  IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='CreatedAt' AND is_nullable=1)
+  ALTER TABLE YfgVch.VoucherType ALTER COLUMN CreatedAt datetime2(0) NOT NULL;
 END
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Type') AND name='UpdatedAt')
-  ALTER TABLE Vch.Type ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='UpdatedAt')
+  ALTER TABLE YfgVch.VoucherType ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Type') AND name='SourceSystem')
-  ALTER TABLE Vch.Type ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Vch_Type_SrcSys DEFAULT('ACCWEB');
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='SourceSystem')
+  ALTER TABLE YfgVch.VoucherType ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Vch_Type_SrcSys DEFAULT('ACCWEB');
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Type') AND name='CreatedAtJ')
-  ALTER TABLE Vch.Type ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
-GO
-
--- Vch.Hdr: Updated + Edited + SourceSystem already present as SourceModule
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Hdr') AND name='UpdatedAt')
-  ALTER TABLE Vch.Hdr ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
-GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Hdr') AND name='EditedBy')
-  ALTER TABLE Vch.Hdr ADD EditedBy varchar(50) NULL, EditedAt datetime2(0) NULL;
-GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Hdr') AND name='CreatedAtJ')
-  ALTER TABLE Vch.Hdr ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt),
-    CheckedAtJ AS gnr.Grg2Jal(CheckedAt), FinalizedAtJ AS gnr.Grg2Jal(FinalizedAt), EditedAtJ AS gnr.Grg2Jal(EditedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherType') AND name='CreatedAtJ')
+  ALTER TABLE YfgVch.VoucherType ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
 GO
 
--- Vch.Itm
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Itm') AND name='CreatedAt')
-  ALTER TABLE Vch.Itm ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+-- YfgVch.Voucher: Updated + Edited + SourceSystem (audit standard: ALL tables)
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.Voucher') AND name='SourceSystem')
+  ALTER TABLE YfgVch.Voucher ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_YfgVch_Voucher_SrcSys DEFAULT('ACCWEB');
 GO
--- Vch.Itm: audit stays NULLABLE - rows of reviewed/final vouchers are guarded
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Itm') AND name='CreatedBy')
-  ALTER TABLE Vch.Itm ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.Voucher') AND name='UpdatedAt')
+  ALTER TABLE YfgVch.Voucher ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Itm') AND name='UpdatedAt')
-  ALTER TABLE Vch.Itm ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.Voucher') AND name='EditedBy')
+  ALTER TABLE YfgVch.Voucher ADD EditedBy varchar(50) NULL, EditedAt datetime2(0) NULL;
 GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Itm') AND name='SourceSystem')
-  ALTER TABLE Vch.Itm ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Vch_Itm_SrcSys DEFAULT('ACCWEB');
-GO
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.Itm') AND name='CreatedAtJ')
-  ALTER TABLE Vch.Itm ADD CreatedAtJ AS gnr.Grg2Jal(CreatedAt), UpdatedAtJ AS gnr.Grg2Jal(UpdatedAt);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.Voucher') AND name='CreatedAtJ')
+  ALTER TABLE YfgVch.Voucher ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt),
+    CheckedAtJ AS YfgGen.GrgToJalali(CheckedAt), FinalizedAtJ AS YfgGen.GrgToJalali(FinalizedAt), EditedAtJ AS YfgGen.GrgToJalali(EditedAt);
 GO
 
--- Vch.WfLog: only J companion
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Vch.WfLog') AND name='AtJ')
-  ALTER TABLE Vch.WfLog ADD AtJ AS gnr.Grg2Jal(At);
+-- YfgVch.VoucherLine
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherLine') AND name='CreatedAt')
+  ALTER TABLE YfgVch.VoucherLine ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+GO
+-- YfgVch.VoucherLine: audit stays NULLABLE - rows of reviewed/final vouchers are guarded
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherLine') AND name='CreatedBy')
+  ALTER TABLE YfgVch.VoucherLine ADD CreatedBy varchar(50) NULL, CreatedAt datetime2(0) NULL;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherLine') AND name='UpdatedAt')
+  ALTER TABLE YfgVch.VoucherLine ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherLine') AND name='SourceSystem')
+  ALTER TABLE YfgVch.VoucherLine ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_Vch_Line_SrcSys DEFAULT('ACCWEB');
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherLine') AND name='CreatedAtJ')
+  ALTER TABLE YfgVch.VoucherLine ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
+GO
+
+-- YfgVch.VoucherFlow: only J companion
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgVch.VoucherFlow') AND name='AtJ')
+  ALTER TABLE YfgVch.VoucherFlow ADD AtJ AS YfgGen.GrgToJalali(At);
+GO
+
+-- YfgAcc.TafsiliCategoryLink (audit standard: ALL tables)
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategoryLink') AND name='CreatedBy')
+  ALTER TABLE YfgAcc.TafsiliCategoryLink ADD CreatedBy varchar(50) NOT NULL CONSTRAINT DF_YfgAcc_TCL_CreatedBy DEFAULT('system'), CreatedAt datetime2(0) NOT NULL CONSTRAINT DF_YfgAcc_TCL_CreatedAt DEFAULT(SYSDATETIME());
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategoryLink') AND name='UpdatedAt')
+  ALTER TABLE YfgAcc.TafsiliCategoryLink ADD UpdatedBy varchar(50) NULL, UpdatedAt datetime2(0) NULL;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategoryLink') AND name='SourceSystem')
+  ALTER TABLE YfgAcc.TafsiliCategoryLink ADD SourceSystem varchar(20) NOT NULL CONSTRAINT DF_YfgAcc_TCL_SrcSys DEFAULT('ACCWEB');
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('YfgAcc.TafsiliCategoryLink') AND name='CreatedAtJ')
+  ALTER TABLE YfgAcc.TafsiliCategoryLink ADD CreatedAtJ AS YfgGen.GrgToJalali(CreatedAt), UpdatedAtJ AS YfgGen.GrgToJalali(UpdatedAt);
+GO
+
+-- Defaults for CreatedBy/CreatedAt on every audited table (same standard as YfgGen)
+DECLARE @df varchar(200), @t varchar(120), @col sysname, @src nvarchar(60);
+DECLARE c CURSOR FOR
+  SELECT OBJECT_SCHEMA_NAME(c.object_id)+'.'+OBJECT_NAME(c.object_id),
+    CASE c.name WHEN 'CreatedBy' THEN '''system''' ELSE 'SYSDATETIME()' END,
+    c.name, 'DF_YfgAud_'+OBJECT_NAME(c.object_id)+'_'+c.name
+  FROM sys.columns c
+  WHERE c.name IN ('CreatedBy','CreatedAt')
+    AND OBJECT_SCHEMA_NAME(c.object_id) IN ('YfgPrm','YfgAcc','YfgVch','YfgGen')
+    AND NOT EXISTS (SELECT 1 FROM sys.default_constraints d WHERE d.parent_object_id=c.object_id AND d.parent_column_id=c.column_id);
+OPEN c; FETCH NEXT FROM c INTO @t, @src, @col, @df;
+WHILE @@FETCH_STATUS=0 BEGIN
+  EXEC('ALTER TABLE '+@t+' ADD CONSTRAINT '+@df+' DEFAULT('+@src+') FOR '+@col+';');
+  FETCH NEXT FROM c INTO @t, @src, @col, @df;
+END; CLOSE c; DEALLOCATE c;
+GO
+PRINT '=== audit defaults done ===';
 GO

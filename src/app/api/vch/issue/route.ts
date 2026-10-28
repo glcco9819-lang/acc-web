@@ -9,13 +9,13 @@ import { isValidJalali } from "@/lib/jalali";
 
 interface ItemIn {
   KolCode: string; MoeinCode: string;
-  Dl1Id?: number | null; Dl2Id?: number | null; Dl3Id?: number | null;
+  Taf1Id?: number | null; Taf2Id?: number | null; Taf3Id?: number | null;
   Descr?: string; Dbt?: number | string; Crt?: number | string;
 }
 
 interface OutItem {
   KolCode: string; MoeinCode: string;
-  Dl1Id: number | null; Dl2Id: number | null; Dl3Id: number | null;
+  Taf1Id: number | null; Taf2Id: number | null; Taf3Id: number | null;
   Descr: string | null; Dbt: number; Crt: number;
 }
 
@@ -32,16 +32,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const vchDate = String(body.VchDate || "").trim();
   const descr = String(body.Descr || "").trim().slice(0, 500) || null;
-  const typeId = Number(body.TypeId || 0);
+  const typeId = Number(body.VoucherTypeId || 0);
   const items: ItemIn[] = Array.isArray(body.items) ? body.items : [];
 
   if (!isValidJalali(vchDate)) return NextResponse.json({ ok: false, error: "تاریخ سند نامعتبر است (جلالی YYYY/MM/DD)" }, { status: 400 });
-  const t = await one("SELECT Title FROM Vch.[Type] WHERE TypeId=@t AND CompanyId=@c", { t: typeId, c: companyId });
+  const t = await one("SELECT Title FROM YfgVch.VoucherType WHERE VoucherTypeId=@t AND CompanyId=@c", { t: typeId, c: companyId });
   if (!t) return NextResponse.json({ ok: false, error: "نوع سند نامعتبر" }, { status: 400 });
   if (!items.length) return NextResponse.json({ ok: false, error: "سند بدون ردیف نیست" }, { status: 400 });
 
   /* سال مالی باز؟ */
-  const yr = await one("SELECT IsClosed FROM Prm.FiscalYear WHERE YearId=@y", { y: yearId });
+  const yr = await one("SELECT IsClosed FROM YfgPrm.FiscalYear WHERE YearId=@y", { y: yearId });
   if (!yr) return NextResponse.json({ ok: false, error: "سال مالی یافت نشد" }, { status: 400 });
   if (yr.IsClosed) return NextResponse.json({ ok: false, error: "سال مالی بسته است" }, { status: 400 });
 
@@ -59,20 +59,20 @@ export async function POST(req: NextRequest) {
     if (dbt > 0 && crt > 0) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: هم‌زمان بدهکار و بستانکار` }, { status: 400 });
     if (dbt === 0 && crt === 0) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: مبلغ صفر` }, { status: 400 });
 
-    const m = await one<any>("SELECT Code, KolCode, Title, Dl1TypeId, Dl2TypeId, Dl3TypeId FROM Acc.Moein WHERE CompanyId=@c AND Code=@m AND KolCode=@k",
+    const m = await one<any>("SELECT Code, KolCode, Title, Taf1TypeId, Taf2TypeId, Taf3TypeId FROM YfgAcc.Moein WHERE CompanyId=@c AND Code=@m AND KolCode=@k",
       { c: companyId, m: moein, k: kol });
     if (!m) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: معین ${moein} زیرمجموعهٔ کل ${kol} نیست` }, { status: 400 });
 
     /* اعتبار تفصیلی‌ها مطابق ارتباط معین با سطوح چهارم/پنجم/ششم */
-    const slots: [number | null, "Dl1Id" | "Dl2Id" | "Dl3Id", string][] = [
-      [m.Dl1TypeId, "Dl1Id", "چهارم"], [m.Dl2TypeId, "Dl2Id", "پنجم"], [m.Dl3TypeId, "Dl3Id", "ششم"],
+    const slots: [number | null, "Taf1Id" | "Taf2Id" | "Taf3Id", string][] = [
+      [m.Taf1TypeId, "Taf1Id", "چهارم"], [m.Taf2TypeId, "Taf2Id", "پنجم"], [m.Taf3TypeId, "Taf3Id", "ششم"],
     ];
     const out: Record<string, number | null> = {};
     for (const [needType, field, label] of slots) {
       const given = (it as any)[field];
       if (needType) {
         if (!given) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تفصیلی سطح ${label} برای معین ${moein} الزامی است` }, { status: 400 });
-        const d = await one<{ DlId: number }>("SELECT DlId FROM Acc.DL WHERE DlId=@d AND CompanyId=@c AND DlTypeId=@t AND IsActive=1", { d: given, c: companyId, t: needType });
+        const d = await one<{ TafsiliId: number }>("SELECT TafsiliId FROM YfgAcc.Tafsili WHERE TafsiliId=@d AND CompanyId=@c AND TafsiliTypeId=@t AND IsActive=1", { d: given, c: companyId, t: needType });
         if (!d) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تفصیلی انتخابی سطح ${label} با نوع معین ${moein} هم‌خوان نیست` }, { status: 400 });
         out[field] = given;
       } else {
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     totalDbt += dbt; totalCrt += crt;
     cleaned.push({
       KolCode: kol, MoeinCode: moein,
-      Dl1Id: out.Dl1Id, Dl2Id: out.Dl2Id, Dl3Id: out.Dl3Id,
+      Taf1Id: out.Taf1Id, Taf2Id: out.Taf2Id, Taf3Id: out.Taf3Id,
       Descr: String(it.Descr || "").trim().slice(0, 500) || null,
       Dbt: dbt, Crt: crt,
     });
@@ -96,22 +96,22 @@ export async function POST(req: NextRequest) {
     let hdr: any = null;
     await tx(async (run) => {
       const noRow = await run(
-        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM Vch.Hdr WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
+        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM YfgVch.Voucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
         { c: companyId, y: yearId });
       const folio = Number(noRow[0].NF), vchNo = Number(noRow[0].NV);
       const h = await run(
-        `INSERT INTO Vch.Hdr (CompanyId, YearId, FolioNo, VchNo, TypeId, VchDate, Descr, State, SourceModule, CreatedBy)
+        `INSERT INTO YfgVch.Voucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
          OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u)`,
         { c: companyId, y: yearId, f: folio, n: vchNo, t: typeId, d: vchDate, ds: descr, u: s.username });
       hdr = h[0];
       for (let i = 0; i < cleaned.length; i++) {
         const it = cleaned[i];
         await run(
-          `INSERT INTO Vch.Itm (HdrId, RowNo, KolCode, MoeinCode, Dl1Id, Dl2Id, Dl3Id, Descr, Dbt, Crt)
+          `INSERT INTO YfgVch.VoucherLine (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
            VALUES (@h, @r, @k, @m, @d1, @d2, @d3, @ds, @db, @cr)`,
-          { h: hdr.HdrId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Dl1Id, d2: it.Dl2Id, d3: it.Dl3Id, ds: it.Descr, db: it.Dbt, cr: it.Crt });
+          { h: hdr.VoucherId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Taf1Id, d2: it.Taf2Id, d3: it.Taf3Id, ds: it.Descr, db: it.Dbt, cr: it.Crt });
       }
-      await run(`INSERT INTO Vch.WfLog (HdrId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.HdrId, u: s.username });
+      await run(`INSERT INTO YfgVch.VoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.VoucherId, u: s.username });
     });
     return NextResponse.json({ ok: true, voucher: hdr });
   } catch (e: any) {

@@ -37,7 +37,7 @@ export default function Page() {
           </tr></thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.HdrId}>
+              <tr key={r.VoucherId}>
                 <td className="num">{fa(r.FolioNo)}</td>
                 <td className="num"><b>{fa(r.VchNo)}</b></td>
                 <td className="num">{r.VchDate}</td>
@@ -48,7 +48,7 @@ export default function Page() {
                 <td>{r.FinalizedBy}</td>
                 <td>
                   {!r.ReversalOf && can.reverse
-                    ? <button className="btn danger" onClick={() => reverse(r.HdrId)} style={{ padding: "1px 10px" }}>صدور برگشتی</button>
+                    ? <button className="btn danger" onClick={() => reverse(r.VoucherId)} style={{ padding: "1px 10px" }}>صدور برگشتی</button>
                     : null}
                 </td>
               </tr>

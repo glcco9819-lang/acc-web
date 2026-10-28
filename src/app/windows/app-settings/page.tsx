@@ -1,9 +1,9 @@
 "use client";
 
 import Shell from "@/components/Shell";
-import GnrWindow, { GCol } from "@/components/GnrWindow";
+import GenWindow, { GCol } from "@/components/GenWindow";
 
-/* تنظیمات عمومی — gnr.MisSetup (ConfigCommon.bpl اصل: KeyValue/DataValue/SystemName)
+/* تنظیمات عمومی — YfgGen.AppSetting (ConfigCommon.bpl اصل: KeyValue/DataValue/SystemName)
    تقویم پیش‌فرض = شمسی (ملاک سامانه — دستور کارفرما) */
 
 const cols: GCol[] = [
@@ -15,8 +15,8 @@ const cols: GCol[] = [
 
 export default function Page() {
   return (
-    <Shell title="تنظیمات عمومی سامانه" sub="اطلاعات عمومی — الگوی gnr.MisSetup اصل؛ شمسی بودن تقویم و بله/خیر بودن نمایش منطقی اینجا ملاک است">
-      <GnrWindow entity="missetup" cols={cols} />
+    <Shell title="تنظیمات عمومی سامانه" sub="اطلاعات عمومی — الگوی YfgGen.AppSetting اصل؛ شمسی بودن تقویم و بله/خیر بودن نمایش منطقی اینجا ملاک است">
+      <GenWindow entity="app-setting" cols={cols} />
     </Shell>
   );
 }
