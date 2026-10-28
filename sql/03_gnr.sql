@@ -478,9 +478,11 @@ GO
 
 /* ---------------------------------------------------------------------------
    بخش ۵ — تاریخ‌گذاری رخدادها برای جدول‌های ممیزی‌شده (حفظ ردپای موجود)
+   گارد ستونی — ستون‌های ممیزی در 03b_audit اضافه می‌شوند
    --------------------------------------------------------------------------- */
-IF OBJECT_ID('ACC.AccVoucher') IS NOT NULL
-  UPDATE ACC.AccVoucher SET SourceSystem = 'ACC' WHERE SourceSystem = 'ACCWEB' AND CreatedBy <> 'system';
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('ACC.AccVoucher') AND name = 'SourceSystem')
+   AND EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('ACC.AccVoucher') AND name = 'CreatedBy')
+  EXEC('UPDATE ACC.AccVoucher SET SourceSystem = ''ACC'' WHERE SourceSystem = ''ACCWEB'' AND CreatedBy <> ''system''');
 GO
 
 /* ---------------------------------------------------------------------------
