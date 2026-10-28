@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "نام کاربری و رمز الزامی است" }, { status: 400 });
     }
     const u = await one<{ Username: string; DisplayName: string; RoleCode: string; PassHash: string }>(
-      "SELECT Username, DisplayName, RoleCode, PassHash FROM YfgPrm.AppUser WHERE Username=@u AND IsActive=1",
+      "SELECT Username, DisplayName, RoleCode, PassHash FROM pob.AppUser WHERE Username=@u AND IsActive=1",
       { u: username }
     );
     if (!u || u.PassHash !== hashPass(password)) {

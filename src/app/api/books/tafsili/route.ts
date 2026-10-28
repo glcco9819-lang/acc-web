@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!moein) return NextResponse.json({ ok: false, error: "معین انتخاب نشده — کارت تفصیلی زیر یک معین است" }, { status: 400 });
 
   const tfs = await one<any>(
-    `SELECT d.TafsiliId, d.Code, d.Title, t.Title TypeTitle FROM YfgAcc.Tafsili d JOIN YfgAcc.TafsiliType t ON t.TafsiliTypeId=d.TafsiliTypeId
+    `SELECT d.TafsiliId, d.Code, d.Title, t.Title TypeTitle FROM ACC.AccTafsili d JOIN ACC.AccTafsiliType t ON t.TafsiliTypeId=d.TafsiliTypeId
      WHERE d.TafsiliId=@d AND d.CompanyId=@c`, { d: dlId, c: companyId });
   if (!tfs) return NextResponse.json({ ok: false, error: "تفصیلی یافت نشد" }, { status: 404 });
 
@@ -33,20 +33,20 @@ export async function GET(req: NextRequest) {
             i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle, m.AccNature,
             CASE WHEN i.Taf1Id=@d THEN N'سطح چهارم' WHEN i.Taf2Id=@d THEN N'سطح پنجم' ELSE N'سطح ششم' END Slot,
             i.Descr ItmDescr, i.Dbt, i.Crt
-     FROM YfgVch.Voucher h
-     JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
-     JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
-     JOIN YfgAcc.Moein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
+     FROM ACC.AccVoucher h
+     JOIN ACC.AccVoucherItm i ON i.VoucherId=h.VoucherId
+     JOIN ACC.AccKol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+     JOIN ACC.AccMoein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
      WHERE ${conds.join(" AND ")}
      ORDER BY h.VchDate, h.VchNo, i.RowNo`, inp);
 
   const opDone = await openingDone(companyId, yearId);
   const op = opDone ? null : await one(
     `SELECT SUM(CASE WHEN m.AccNature=2 THEN ob.Crt-ob.Dbt ELSE ob.Dbt-ob.Crt END) Bal
-     FROM YfgAcc.OpeningBalance ob JOIN YfgAcc.Moein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
+     FROM ACC.AccOpeningBalance ob JOIN ACC.AccMoein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
      WHERE ob.CompanyId=@c AND ob.YearId=@y AND ob.MoeinCode=@m AND (ob.Taf1Id=@d OR ob.Taf2Id=@d OR ob.Taf3Id=@d)`, inp);
 
-  const nat = Number((await one<any>(`SELECT AccNature FROM YfgAcc.Moein WHERE CompanyId=@c AND Code=@m`, { c: companyId, m: moein }))?.AccNature || 1);
+  const nat = Number((await one<any>(`SELECT AccNature FROM ACC.AccMoein WHERE CompanyId=@c AND Code=@m`, { c: companyId, m: moein }))?.AccNature || 1);
   let running = Number(op?.Bal || 0);
   const lines = rows.map((r) => {
     running += nat === 2 ? (Number(r.Crt) - Number(r.Dbt)) : (Number(r.Dbt) - Number(r.Crt));

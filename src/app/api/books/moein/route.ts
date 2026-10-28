@@ -27,20 +27,20 @@ export async function GET(req: NextRequest) {
             i.RowNo, i.KolCode, k.Title KolTitle, i.MoeinCode, m.Title MoeinTitle, m.AccNature,
             d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
             i.Descr ItmDescr, i.Dbt, i.Crt
-     FROM YfgVch.Voucher h
-     JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
-     JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
-     JOIN YfgAcc.Moein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
-     LEFT JOIN YfgAcc.Tafsili d1 ON d1.TafsiliId=i.Taf1Id
-     LEFT JOIN YfgAcc.Tafsili d2 ON d2.TafsiliId=i.Taf2Id
-     LEFT JOIN YfgAcc.Tafsili d3 ON d3.TafsiliId=i.Taf3Id
+     FROM ACC.AccVoucher h
+     JOIN ACC.AccVoucherItm i ON i.VoucherId=h.VoucherId
+     JOIN ACC.AccKol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+     JOIN ACC.AccMoein m ON m.CompanyId=h.CompanyId AND m.Code=i.MoeinCode
+     LEFT JOIN ACC.AccTafsili d1 ON d1.TafsiliId=i.Taf1Id
+     LEFT JOIN ACC.AccTafsili d2 ON d2.TafsiliId=i.Taf2Id
+     LEFT JOIN ACC.AccTafsili d3 ON d3.TafsiliId=i.Taf3Id
      WHERE ${conds.join(" AND ")}
      ORDER BY i.MoeinCode, h.VchDate, h.VchNo, i.RowNo`, inp);
 
   const opDone = await openingDone(companyId, yearId);
   const opening = opDone ? [] : await q(
     `SELECT ob.KolCode, ob.MoeinCode, SUM(ob.Dbt) Dbt, SUM(ob.Crt) Crt
-     FROM YfgAcc.OpeningBalance ob WHERE ob.CompanyId=@c AND ob.YearId=@y ${moein ? "AND ob.MoeinCode=@moein" : ""}
+     FROM ACC.AccOpeningBalance ob WHERE ob.CompanyId=@c AND ob.YearId=@y ${moein ? "AND ob.MoeinCode=@moein" : ""}
      GROUP BY ob.KolCode, ob.MoeinCode`, inp);
 
   /* ماندهٔ در خط: بر اساس ماهیت معین */

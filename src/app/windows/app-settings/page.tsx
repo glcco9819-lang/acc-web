@@ -3,7 +3,7 @@
 import Shell from "@/components/Shell";
 import GenWindow, { GCol } from "@/components/GenWindow";
 
-/* تنظیمات عمومی — YfgGen.AppSetting (ConfigCommon.bpl اصل: KeyValue/DataValue/SystemName)
+/* تنظیمات عمومی — pob.AppSetting (ConfigCommon.bpl اصل: KeyValue/DataValue/SystemName)
    تقویم پیش‌فرض = شمسی (ملاک سامانه — دستور کارفرما) */
 
 const cols: GCol[] = [
@@ -15,7 +15,7 @@ const cols: GCol[] = [
 
 export default function Page() {
   return (
-    <Shell title="تنظیمات عمومی سامانه" sub="اطلاعات عمومی — الگوی YfgGen.AppSetting اصل؛ شمسی بودن تقویم و بله/خیر بودن نمایش منطقی اینجا ملاک است">
+    <Shell title="تنظیمات عمومی سامانه" sub="اطلاعات عمومی — الگوی pob.AppSetting اصل؛ شمسی بودن تقویم و بله/خیر بودن نمایش منطقی اینجا ملاک است">
       <GenWindow entity="app-setting" cols={cols} />
     </Shell>
   );

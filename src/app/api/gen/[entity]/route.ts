@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { q, one } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
 
-/* اطلاعات عمومی (شمای YfgGen — همتاسازی اطلاعات عمومی فایل‌های اصلی: HumCmp/GnrGeneral/ConfigCommon/gnCalndr)
+/* اطلاعات عمومی (شمای pob — همتاسازی اطلاعات عمومی فایل‌های اصلی: HumCmp/GnrGeneral/ConfigCommon/gnCalndr)
    اشخاص و شرکت‌ها / نشانی‌ها / طبقه‌بندی / موقعیت‌های جغرافیایی /
    تنظیمات عمومی / مرجع کدها / تعطیلات
    همهٔ جدول‌ها ستون‌های ممیزی دارند: CreatedBy/CreatedAt(+J)/UpdatedBy/UpdatedAt(+J)/SourceSystem
-   تاریخ شمسی ملاک است (ستون‌های J خودکار از توابع YfgGen.GrgToJalali پر می‌شوند) */
+   تاریخ شمسی ملاک است (ستون‌های J خودکار از توابع pob.GrgToJalali پر می‌شوند) */
 
 const NUM = /^\d+$/;
 const JDATE = /^\d{4}\/\d{2}\/\d{2}$/;
@@ -22,7 +22,7 @@ interface Spec {
 function spec(entity: string): Spec | null {
   switch (entity) {
     case "party": return {
-      table: "YfgGen.Party", key: "Serial", orderBy: "Serial DESC",
+      table: "pob.Party", key: "Serial", orderBy: "Serial DESC",
       cols: [
         { name: "RecType", req: true },
         { name: "PartyKind", num: true },
@@ -36,7 +36,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "address": return {
-      table: "YfgGen.PartyAddress", key: "Serial", orderBy: "Serial", scope: "PartyRef=@p",
+      table: "pob.PartyAddress", key: "Serial", orderBy: "Serial", scope: "PartyRef=@p",
       cols: [
         { name: "Title", max: 200 }, { name: "Address", max: 1000 }, { name: "Address_En", max: 1000 },
         { name: "ZipCode", max: 20 }, { name: "PostBox", max: 20 },
@@ -45,15 +45,15 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "party-ctgry": return {
-      table: "YfgGen.PartyCategory", key: "CategoryId", orderBy: "CategoryId",
+      table: "pob.PartyCategory", key: "CategoryId", orderBy: "CategoryId",
       cols: [{ name: "Title", req: true, max: 200 }, { name: "ParentRef", num: true }],
     };
     case "party-cat": return {
-      table: "YfgGen.PartyCategoryLink", key: "PartyRef", orderBy: "CategoryRef", scope: "PartyRef=@p",
+      table: "pob.PartyCategoryLink", key: "PartyRef", orderBy: "CategoryRef", scope: "PartyRef=@p",
       cols: [{ name: "CategoryRef", req: true, num: true }],
     };
     case "geo-place": return {
-      table: "YfgGen.GeoPlace", key: "GeoPlaceId", orderBy: "GeoPlaceId",
+      table: "pob.GeoPlace", key: "GeoPlaceId", orderBy: "GeoPlaceId",
       cols: [
         { name: "Title", req: true, max: 200 },
         { name: "ParentRef", num: true },
@@ -62,7 +62,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "lookup": return {
-      table: "YfgGen.CodeList", key: "CodeId", orderBy: "[Type], Code",
+      table: "pob.CodeList", key: "CodeId", orderBy: "[Type], Code",
       cols: [
         { name: "Type", req: true, max: 40 },
         { name: "Code", req: true, num: true },
@@ -71,7 +71,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "app-setting": return {
-      table: "YfgGen.AppSetting", key: "SettingId", orderBy: "SettingId",
+      table: "pob.AppSetting", key: "SettingId", orderBy: "SettingId",
       cols: [
         { name: "KeyValue", req: true, max: 60 },
         { name: "DataValue", req: true, max: 400 },
@@ -80,7 +80,7 @@ function spec(entity: string): Spec | null {
       ],
     };
     case "holidays": return {
-      table: "YfgGen.Holiday", key: "HolidayId", orderBy: "JDate DESC",
+      table: "pob.Holiday", key: "HolidayId", orderBy: "JDate DESC",
       cols: [
         { name: "JDate", req: true, jdate: true },
         { name: "HolidayTypeRef", num: true },
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
     sp.scope && p ? { p } : {});
   /* انواع تعطیلی برای دراپ‌داون پنجرهٔ تعطیلات */
   if (entity === "holidays") {
-    const types = await q(`SELECT HolidayTypeId v, Title t FROM YfgGen.HolidayType WHERE IsActive=1 ORDER BY HolidayTypeId`);
+    const types = await q(`SELECT HolidayTypeId v, Title t FROM pob.HolidayType WHERE IsActive=1 ORDER BY HolidayTypeId`);
     return NextResponse.json({ ok: true, rows, types });
   }
   return NextResponse.json({ ok: true, rows });
@@ -211,16 +211,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ e
   /* کنترل ارجاع قبل از حذف (الگوی اصل) */
   const refs: Record<string, { sql: string; msg: string }[]> = {
     party: [
-      { sql: "SELECT 1 x FROM YfgAcc.Tafsili WHERE PartyRef=@id", msg: "شخص/شرکت در تفصیلی‌های حسابداری استفاده شده است" },
-      { sql: "SELECT 1 x FROM YfgGen.PartyAddress WHERE PartyRef=@id", msg: "ابتدا نشانی‌های این شخص را حذف کنید" },
+      { sql: "SELECT 1 x FROM ACC.AccTafsili WHERE PartyRef=@id", msg: "شخص/شرکت در تفصیلی‌های حسابداری استفاده شده است" },
+      { sql: "SELECT 1 x FROM pob.PartyAddress WHERE PartyRef=@id", msg: "ابتدا نشانی‌های این شخص را حذف کنید" },
     ],
     "party-ctgry": [
-      { sql: "SELECT 1 x FROM YfgGen.PartyCategoryLink WHERE CategoryRef=@id", msg: "طبقه‌بندی به اشخاص اختصاص داده شده است" },
-      { sql: "SELECT 1 x FROM YfgGen.PartyCategory WHERE ParentRef=@id", msg: "طبقه‌بندی دارای زیرمجموعه است" },
+      { sql: "SELECT 1 x FROM pob.PartyCategoryLink WHERE CategoryRef=@id", msg: "طبقه‌بندی به اشخاص اختصاص داده شده است" },
+      { sql: "SELECT 1 x FROM pob.PartyCategory WHERE ParentRef=@id", msg: "طبقه‌بندی دارای زیرمجموعه است" },
     ],
     "geo-place": [
-      { sql: "SELECT 1 x FROM YfgGen.GeoPlace WHERE ParentRef=@id", msg: "موقعیت دارای زیرمجموعه است" },
-      { sql: "SELECT 1 x FROM YfgGen.PartyAddress WHERE GeoPlaceRef=@id", msg: "موقعیت در نشانی‌ها استفاده شده است" },
+      { sql: "SELECT 1 x FROM pob.GeoPlace WHERE ParentRef=@id", msg: "موقعیت دارای زیرمجموعه است" },
+      { sql: "SELECT 1 x FROM pob.PartyAddress WHERE GeoPlaceRef=@id", msg: "موقعیت در نشانی‌ها استفاده شده است" },
     ],
     holidays: [],
     lookup: [],

@@ -6,7 +6,7 @@ import GenWindow, { GCol } from "@/components/GenWindow";
 import { api } from "@/lib/ui";
 
 /* معرفی اشخاص و شرکت‌های طرف مکاتبه — OF0001/0002/0005/0006 (HumCmp.bpl)
-   ساختار وفادار YfgGen.Party + YfgGen.PartyAddress + YfgGen.PartyCategoryLink اصل */
+   ساختار وفادار pob.Party + pob.PartyAddress + pob.PartyCategoryLink اصل */
 
 const COMP_TYPES = [
   { v: 1, t: "شخص حقیقی" }, { v: 2, t: "شخص حقوقی" }, { v: 3, t: "موسسه دولتی" },

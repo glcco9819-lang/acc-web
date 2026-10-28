@@ -15,26 +15,26 @@ interface EntSpec {
 function spec(entity: string, mode: number): EntSpec | null {
   switch (entity) {
     case "groups": return {
-      table: "YfgAcc.AccGroup",
+      table: "ACC.AccGroup",
       cols: [
         { name: "Code", req: true, code: 2 },
         { name: "Title", req: true, max: 200 },
         { name: "AccNature", req: true, num: true },
       ],
-      delCheck: [{ sql: "SELECT 1 x FROM YfgAcc.Kol WHERE CompanyId=@c AND GroupCode=@code", inp: ["code"], msg: "گروه دارای حساب کل است — ابتدا کل‌ها را حذف کنید" }],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccKol WHERE CompanyId=@c AND GroupCode=@code", inp: ["code"], msg: "گروه دارای حساب کل است — ابتدا کل‌ها را حذف کنید" }],
     };
     case "kol": return {
-      table: "YfgAcc.Kol",
+      table: "ACC.AccKol",
       cols: [
         { name: "Code", req: true, code: 4 },
         { name: "GroupCode", code: mode === 2 ? 2 : 0, req: mode === 2 },
         { name: "Title", req: true, max: 200 },
         { name: "AccNature", req: true, num: true },
       ],
-      delCheck: [{ sql: "SELECT 1 x FROM YfgAcc.Moein WHERE CompanyId=@c AND KolCode=@code", inp: ["code"], msg: "کل دارای معین است" }],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccMoein WHERE CompanyId=@c AND KolCode=@code", inp: ["code"], msg: "کل دارای معین است" }],
     };
     case "moein": return {
-      table: "YfgAcc.Moein",
+      table: "ACC.AccMoein",
       cols: [
         { name: "Code", req: true, code: 6 },
         { name: "KolCode", req: true, code: mode === 2 ? 4 : 2 },
@@ -46,13 +46,13 @@ function spec(entity: string, mode: number): EntSpec | null {
         { name: "IsActive", num: true },
       ],
       delCheck: [
-        { sql: "SELECT 1 x FROM YfgVch.VoucherLine i JOIN YfgVch.Voucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND i.MoeinCode=@code", inp: ["code"], msg: "معین در سند استفاده شده است" },
-        { sql: "SELECT 1 x FROM YfgAcc.OpeningBalance WHERE CompanyId=@c AND MoeinCode=@code", inp: ["code"], msg: "معین دارای ماندهٔ ابتدای دوره است" },
-        { sql: "SELECT 1 x FROM YfgAcc.StdNarration WHERE CompanyId=@c AND MoeinCode=@code", inp: ["code"], msg: "معین دارای شرح استاندارد است" },
+        { sql: "SELECT 1 x FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND i.MoeinCode=@code", inp: ["code"], msg: "معین در سند استفاده شده است" },
+        { sql: "SELECT 1 x FROM ACC.AccOpeningBalance WHERE CompanyId=@c AND MoeinCode=@code", inp: ["code"], msg: "معین دارای ماندهٔ ابتدای دوره است" },
+        { sql: "SELECT 1 x FROM ACC.AccStdNarration WHERE CompanyId=@c AND MoeinCode=@code", inp: ["code"], msg: "معین دارای شرح استاندارد است" },
       ],
     };
     case "tafsili": return {
-      table: "YfgAcc.Tafsili",
+      table: "ACC.AccTafsili",
       cols: [
         { name: "Code", req: true, code: 8 },
         { name: "TafsiliTypeId", req: true, num: true },
@@ -61,31 +61,31 @@ function spec(entity: string, mode: number): EntSpec | null {
         { name: "IsActive", num: true },
       ],
       delCheck: [
-        { sql: "SELECT 1 x FROM YfgVch.VoucherLine i JOIN YfgVch.Voucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@code OR i.Taf2Id=@code OR i.Taf3Id=@code)", inp: ["code", "int"], msg: "تفصیلی در سند استفاده شده است" },
-        { sql: "SELECT 1 x FROM YfgAcc.TafsiliCategoryLink WHERE TafsiliId=@code", inp: ["code", "int"], msg: "تفصیلی در طبقه‌بندی استفاده شده است" },
+        { sql: "SELECT 1 x FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@code OR i.Taf2Id=@code OR i.Taf3Id=@code)", inp: ["code", "int"], msg: "تفصیلی در سند استفاده شده است" },
+        { sql: "SELECT 1 x FROM ACC.AccTafsiliCategoryLink WHERE TafsiliId=@code", inp: ["code", "int"], msg: "تفصیلی در طبقه‌بندی استفاده شده است" },
       ],
     };
     case "tafsili-types": return {
-      table: "YfgAcc.TafsiliType",
+      table: "ACC.AccTafsiliType",
       cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }],
       delCheck: [
-        { sql: "SELECT 1 x FROM YfgAcc.Moein WHERE CompanyId=@c AND (Taf1TypeId=@code OR Taf2TypeId=@code OR Taf3TypeId=@code)", inp: ["code", "int"], msg: "نوع تفصیل به معین متصل است" },
-        { sql: "SELECT 1 x FROM YfgAcc.Tafsili WHERE CompanyId=@c AND TafsiliTypeId=@code", inp: ["code", "int"], msg: "تفصیلی‌هایی از این نوع وجود دارد" },
+        { sql: "SELECT 1 x FROM ACC.AccMoein WHERE CompanyId=@c AND (Taf1TypeId=@code OR Taf2TypeId=@code OR Taf3TypeId=@code)", inp: ["code", "int"], msg: "نوع تفصیل به معین متصل است" },
+        { sql: "SELECT 1 x FROM ACC.AccTafsili WHERE CompanyId=@c AND TafsiliTypeId=@code", inp: ["code", "int"], msg: "تفصیلی‌هایی از این نوع وجود دارد" },
       ],
     };
     case "tafsili-ctgries": return {
-      table: "YfgAcc.TafsiliCategory",
+      table: "ACC.AccTafsiliCategory",
       cols: [{ name: "Title", req: true, max: 100 }],
-      delCheck: [{ sql: "SELECT 1 x FROM YfgAcc.TafsiliCategoryLink WHERE CategoryId=@code", inp: ["code", "int"], msg: "طبقه دارای تفصیلی است" }],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccTafsiliCategoryLink WHERE CategoryId=@code", inp: ["code", "int"], msg: "طبقه دارای تفصیلی است" }],
     };
     case "std-narration": return {
-      table: "YfgAcc.StdNarration",
+      table: "ACC.AccStdNarration",
       cols: [{ name: "MoeinCode", req: true, code: 6 }, { name: "Seq", req: true, num: true }, { name: "DescText", req: true, max: 300 }],
     };
     case "vchtypes": return {
-      table: "YfgVch.VoucherType",
+      table: "ACC.AccVoucherType",
       cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }],
-      delCheck: [{ sql: "SELECT 1 x FROM YfgVch.Voucher WHERE CompanyId=@c AND VoucherTypeId=@code", inp: ["code"], msg: "سندهایی از این نوع ثبت شده است" }],
+      delCheck: [{ sql: "SELECT 1 x FROM ACC.AccVoucher WHERE CompanyId=@c AND VoucherTypeId=@code", inp: ["code"], msg: "سندهایی از این نوع ثبت شده است" }],
     };
     default: return null;
   }
@@ -110,18 +110,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
               m.Code MoeinCode, m.Title MoeinTitle, m.IsActive MoeinActive,
               m.Taf1TypeId, m.Taf2TypeId, m.Taf3TypeId,
               t1.Title Taf1Title, t2.Title Taf2Title, t3.Title Taf3Title
-       FROM YfgAcc.AccGroup g
-       LEFT JOIN YfgAcc.Kol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
-       LEFT JOIN YfgAcc.Moein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
-       LEFT JOIN YfgAcc.TafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
-       LEFT JOIN YfgAcc.TafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
-       LEFT JOIN YfgAcc.TafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
+       FROM ACC.AccGroup g
+       LEFT JOIN ACC.AccKol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
+       LEFT JOIN ACC.AccMoein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
+       LEFT JOIN ACC.AccTafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
+       LEFT JOIN ACC.AccTafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
+       LEFT JOIN ACC.AccTafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
        WHERE g.CompanyId=@c
        ORDER BY g.Code, k.Code, m.Code`, { c: companyId });
     return NextResponse.json({ ok: true, rows });
   }
 
-  const mode = Number(await scalar("SELECT CodingMode FROM YfgPrm.Company WHERE CompanyId=@c", { c: companyId }) || 2);
+  const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
   const rows = await q(`SELECT * FROM ${sp.table} WHERE CompanyId=@c ORDER BY 1`, { c: companyId });
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   const { entity } = await params;
   const { companyId } = ctxOf(req);
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده" }, { status: 400 });
-  const mode = Number(await scalar("SELECT CodingMode FROM YfgPrm.Company WHERE CompanyId=@c", { c: companyId }) || 2);
+  const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
   const body = await req.json().catch(() => ({}));
@@ -182,7 +182,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز ندارید" }, { status: 403 });
   const { entity } = await params;
   const { companyId } = ctxOf(req);
-  const mode = Number(await scalar("SELECT CodingMode FROM YfgPrm.Company WHERE CompanyId=@c", { c: companyId }) || 2);
+  const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
   const body = await req.json().catch(() => ({}));
@@ -196,10 +196,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
     const old = await one<{ Code: string }>(`SELECT Code FROM ${sp.table} WHERE ${keyCol}=@id AND CompanyId=@c`, { id: key, c: companyId });
     if (old && String(old.Code) !== String(body.Code).trim()) {
       const used = await scalar(
-        entity === "groups" ? "SELECT COUNT(*) FROM YfgAcc.Kol WHERE CompanyId=@c AND GroupCode=@oc"
-          : entity === "kol" ? "SELECT COUNT(*) FROM YfgAcc.Moein WHERE CompanyId=@c AND KolCode=@oc"
-            : entity === "moein" ? "SELECT COUNT(*) FROM YfgVch.VoucherLine i JOIN YfgVch.Voucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND i.MoeinCode=@oc"
-              : "SELECT COUNT(*) FROM YfgVch.VoucherLine i JOIN YfgVch.Voucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@oc OR i.Taf2Id=@oc OR i.Taf3Id=@oc)",
+        entity === "groups" ? "SELECT COUNT(*) FROM ACC.AccKol WHERE CompanyId=@c AND GroupCode=@oc"
+          : entity === "kol" ? "SELECT COUNT(*) FROM ACC.AccMoein WHERE CompanyId=@c AND KolCode=@oc"
+            : entity === "moein" ? "SELECT COUNT(*) FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND i.MoeinCode=@oc"
+              : "SELECT COUNT(*) FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@oc OR i.Taf2Id=@oc OR i.Taf3Id=@oc)",
         { c: companyId, oc: old.Code });
       if (Number(used) > 0) return NextResponse.json({ ok: false, error: "کد در اسناد/زیرمجموعه استفاده شده — تغییر کد ممنوع" }, { status: 400 });
     }
@@ -241,7 +241,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ e
   const url = new URL(req.url);
   const id = Number(url.searchParams.get("id") || 0);
   if (!id) return NextResponse.json({ ok: false, error: "شناسه لازم است" }, { status: 400 });
-  const mode = Number(await scalar("SELECT CodingMode FROM YfgPrm.Company WHERE CompanyId=@c", { c: companyId }) || 2);
+  const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
 

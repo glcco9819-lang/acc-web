@@ -13,38 +13,38 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const id = Number(body.id || 0);
   const descr = String(body.Descr || "").trim().slice(0, 500) || null;
-  const hdr = await one<any>("SELECT * FROM YfgVch.Voucher WHERE VoucherId=@id", { id });
+  const hdr = await one<any>("SELECT * FROM ACC.AccVoucher WHERE VoucherId=@id", { id });
   if (!hdr) return NextResponse.json({ ok: false, error: "سند یافت نشد" }, { status: 404 });
   if (hdr.State !== 3) return NextResponse.json({ ok: false, error: "فقط سند قطعی برگشت می‌خورد" }, { status: 400 });
-  const already = await one("SELECT VoucherId FROM YfgVch.Voucher WHERE ReversalOf=@id", { id });
+  const already = await one("SELECT VoucherId FROM ACC.AccVoucher WHERE ReversalOf=@id", { id });
   if (already) return NextResponse.json({ ok: false, error: `این سند قبلاً برگشت خورده (سند ${already.VoucherId})` }, { status: 400 });
 
-  const rows = await one<any>(`SELECT COUNT(*) C FROM YfgVch.VoucherLine WHERE VoucherId=@id`, { id });
+  const rows = await one<any>(`SELECT COUNT(*) C FROM ACC.AccVoucherItm WHERE VoucherId=@id`, { id });
   if (!rows || !rows.C) return NextResponse.json({ ok: false, error: "سند بدون ردیف" }, { status: 400 });
 
   try {
     let rev: any = null;
     await tx(async (run) => {
       const noRow = await run(
-        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM YfgVch.Voucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
+        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM ACC.AccVoucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
         { c: hdr.CompanyId, y: hdr.YearId });
       const h = await run(
-        `INSERT INTO YfgVch.Voucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, ReversalOf, SourceModule, CreatedBy, FinalizedBy, FinalizedAt)
+        `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, ReversalOf, SourceModule, CreatedBy, FinalizedBy, FinalizedAt)
          OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, @rev, 'ACC', @u, NULL, NULL)`,
         { c: hdr.CompanyId, y: hdr.YearId, f: Number(noRow[0].NF), n: Number(noRow[0].NV), t: hdr.VoucherTypeId, d: todayJalali(), ds: descr || `برگشت سند شماره ${hdr.VchNo}`, rev: id, u: s.username });
       rev = h[0];
-      const src = await run(`SELECT RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt FROM YfgVch.VoucherLine WHERE VoucherId=@id ORDER BY RowNo`, { id });
+      const src = await run(`SELECT RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt FROM ACC.AccVoucherItm WHERE VoucherId=@id ORDER BY RowNo`, { id });
       for (let i = 0; i < src.length; i++) {
         const it = src[i];
         await run(
-          `INSERT INTO YfgVch.VoucherLine (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+          `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
            VALUES (@h, @r, @k, @m, @d1, @d2, @d3, @ds, @db, @cr)`,
           { h: rev.VoucherId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Taf1Id, d2: it.Taf2Id, d3: it.Taf3Id,
             ds: it.Descr, db: it.Crt, cr: it.Dbt }); /* معکوس */
       }
-      await run(`INSERT INTO YfgVch.VoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 6, @u, @n)`,
+      await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 6, @u, @n)`,
         { h: rev.VoucherId, u: s.username, n: `سند برگشتی برای سند ${hdr.VchNo}` });
-      await run(`INSERT INTO YfgVch.VoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@id, 6, @u, @n)`,
+      await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@id, 6, @u, @n)`,
         { id, u: s.username, n: `سند برگشتی شماره ${Number(noRow[0].NV)} صادر شد` });
     });
     return NextResponse.json({ ok: true, reversal: rev });

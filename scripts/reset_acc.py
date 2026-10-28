@@ -9,31 +9,31 @@ c = pymssql.connect(server="85.133.175.190", port=1433, user="acc_app",
 cur = c.cursor()
 
 for stmt in [
-    "ALTER TABLE YfgVch.Voucher DISABLE TRIGGER Tr_YfgVch_Voucher_NoDeleteFinal",
-    "ALTER TABLE YfgVch.Voucher DISABLE TRIGGER Tr_YfgVch_Voucher_StateGuard",
-    "ALTER TABLE YfgVch.VoucherLine DISABLE TRIGGER Tr_YfgVch_VoucherLine_EditGuard",
+    "ALTER TABLE ACC.AccVoucher DISABLE TRIGGER Tr_ACC_AccVoucher_NoDeleteFinal",
+    "ALTER TABLE ACC.AccVoucher DISABLE TRIGGER Tr_ACC_AccVoucher_StateGuard",
+    "ALTER TABLE ACC.AccVoucherItm DISABLE TRIGGER Tr_ACC_AccVoucherItm_EditGuard",
 ]:
     cur.execute(stmt)
 
 for stmt in [
-    "DELETE FROM YfgVch.VoucherFlow",
-    "DELETE FROM YfgVch.VoucherLine",
-    "DELETE FROM YfgVch.Voucher",
-    "DELETE FROM YfgAcc.OpeningBalance",
+    "DELETE FROM ACC.AccVoucherFlow",
+    "DELETE FROM ACC.AccVoucherItm",
+    "DELETE FROM ACC.AccVoucher",
+    "DELETE FROM ACC.AccOpeningBalance",
 ]:
     cur.execute(stmt)
     print("ok:", stmt[:40])
 
 for stmt in [
-    "ALTER TABLE YfgVch.Voucher ENABLE TRIGGER Tr_YfgVch_Voucher_NoDeleteFinal",
-    "ALTER TABLE YfgVch.Voucher ENABLE TRIGGER Tr_YfgVch_Voucher_StateGuard",
-    "ALTER TABLE YfgVch.VoucherLine ENABLE TRIGGER Tr_YfgVch_VoucherLine_EditGuard",
+    "ALTER TABLE ACC.AccVoucher ENABLE TRIGGER Tr_ACC_AccVoucher_NoDeleteFinal",
+    "ALTER TABLE ACC.AccVoucher ENABLE TRIGGER Tr_ACC_AccVoucher_StateGuard",
+    "ALTER TABLE ACC.AccVoucherItm ENABLE TRIGGER Tr_ACC_AccVoucherItm_EditGuard",
 ]:
     cur.execute(stmt)
 
-cur.execute("SELECT COUNT(*) FROM YfgVch.Voucher")
+cur.execute("SELECT COUNT(*) FROM ACC.AccVoucher")
 print("vouchers:", cur.fetchone()[0])
-cur.execute("SELECT COUNT(*) FROM YfgAcc.OpeningBalance")
+cur.execute("SELECT COUNT(*) FROM ACC.AccOpeningBalance")
 print("opening:", cur.fetchone()[0])
 c.close()
 print("RESET DONE")

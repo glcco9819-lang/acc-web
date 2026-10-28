@@ -20,14 +20,14 @@ export async function GET(req: NextRequest) {
               m.Code MoeinCode, m.Title MoeinTitle, m.AccNature, m.IsActive,
               t1.Title Taf1Title, t2.Title Taf2Title, t3.Title Taf3Title,
               ISNULL(bal.D,0) Dbt, ISNULL(bal.C,0) Crt
-       FROM YfgAcc.AccGroup g
-       LEFT JOIN YfgAcc.Kol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
-       LEFT JOIN YfgAcc.Moein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
-       LEFT JOIN YfgAcc.TafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
-       LEFT JOIN YfgAcc.TafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
-       LEFT JOIN YfgAcc.TafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
+       FROM ACC.AccGroup g
+       LEFT JOIN ACC.AccKol k ON k.CompanyId=g.CompanyId AND k.GroupCode=g.Code
+       LEFT JOIN ACC.AccMoein m ON m.CompanyId=k.CompanyId AND m.KolCode=k.Code
+       LEFT JOIN ACC.AccTafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
+       LEFT JOIN ACC.AccTafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
+       LEFT JOIN ACC.AccTafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
        LEFT JOIN (SELECT i.MoeinCode, SUM(i.Dbt) D, SUM(i.Crt) C
-                  FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
+                  FROM ACC.AccVoucher h JOIN ACC.AccVoucherItm i ON i.VoucherId=h.VoucherId
                   WHERE h.CompanyId=@c AND h.YearId=@y AND h.State=3
                   GROUP BY i.MoeinCode) bal ON bal.MoeinCode=m.Code
        WHERE g.CompanyId=@c
@@ -45,10 +45,10 @@ export async function GET(req: NextRequest) {
     const head = await one<any>(
       `SELECT m.Code, m.Title, m.AccNature, m.Taf1TypeId, m.Taf2TypeId, m.Taf3TypeId, k.Title KolTitle,
               t1.Title Dl1TypeTitle, t2.Title Dl2TypeTitle, t3.Title Dl3TypeTitle
-       FROM YfgAcc.Moein m JOIN YfgAcc.Kol k ON k.CompanyId=m.CompanyId AND k.Code=m.KolCode
-       LEFT JOIN YfgAcc.TafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
-       LEFT JOIN YfgAcc.TafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
-       LEFT JOIN YfgAcc.TafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
+       FROM ACC.AccMoein m JOIN ACC.AccKol k ON k.CompanyId=m.CompanyId AND k.Code=m.KolCode
+       LEFT JOIN ACC.AccTafsiliType t1 ON t1.TafsiliTypeId=m.Taf1TypeId
+       LEFT JOIN ACC.AccTafsiliType t2 ON t2.TafsiliTypeId=m.Taf2TypeId
+       LEFT JOIN ACC.AccTafsiliType t3 ON t3.TafsiliTypeId=m.Taf3TypeId
        WHERE m.CompanyId=@c AND m.Code=@m`, { c: companyId, m: moein });
     if (!head) return NextResponse.json({ ok: false, error: "معین یافت نشد" }, { status: 404 });
 
@@ -63,18 +63,18 @@ export async function GET(req: NextRequest) {
               i.RowNo, i.KolCode, k.Title KolTitle,
               d1.Title Taf1Title, d2.Title Taf2Title, d3.Title Taf3Title,
               i.Descr ItmDescr, i.Dbt, i.Crt
-       FROM YfgVch.Voucher h JOIN YfgVch.VoucherLine i ON i.VoucherId=h.VoucherId
-       JOIN YfgAcc.Kol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
-       LEFT JOIN YfgAcc.Tafsili d1 ON d1.TafsiliId=i.Taf1Id
-       LEFT JOIN YfgAcc.Tafsili d2 ON d2.TafsiliId=i.Taf2Id
-       LEFT JOIN YfgAcc.Tafsili d3 ON d3.TafsiliId=i.Taf3Id
+       FROM ACC.AccVoucher h JOIN ACC.AccVoucherItm i ON i.VoucherId=h.VoucherId
+       JOIN ACC.AccKol k ON k.CompanyId=h.CompanyId AND k.Code=i.KolCode
+       LEFT JOIN ACC.AccTafsili d1 ON d1.TafsiliId=i.Taf1Id
+       LEFT JOIN ACC.AccTafsili d2 ON d2.TafsiliId=i.Taf2Id
+       LEFT JOIN ACC.AccTafsili d3 ON d3.TafsiliId=i.Taf3Id
        WHERE ${conds.join(" AND ")}
        ORDER BY h.VchDate, h.VchNo, i.RowNo`, inp);
 
     const opDone = await openingDone(companyId, yearId);
     const op = opDone ? null : await one(
       `SELECT SUM(CASE WHEN m.AccNature=2 THEN ob.Crt-ob.Dbt ELSE ob.Dbt-ob.Crt END) Bal
-       FROM YfgAcc.OpeningBalance ob JOIN YfgAcc.Moein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
+       FROM ACC.AccOpeningBalance ob JOIN ACC.AccMoein m ON m.CompanyId=ob.CompanyId AND m.Code=ob.MoeinCode
        WHERE ob.CompanyId=@c AND ob.YearId=@y AND ob.MoeinCode=@m ${dlId ? "AND (ob.Taf1Id=@d OR ob.Taf2Id=@d OR ob.Taf3Id=@d)" : ""}`, inp);
 
     let running = Number(op?.Bal || 0);

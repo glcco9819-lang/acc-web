@@ -1,4 +1,4 @@
-/* E2E اطلاعات عمومی (YfgGen) روی دیتابیس acc — نسخهٔ ۱ */
+/* E2E اطلاعات عمومی (pob) روی دیتابیس acc — نسخهٔ ۱ */
 const BASE = process.env.E2E_BASE || "http://127.0.0.1:3200";
 let pass = 0, fail = 0; const fails = [];
 

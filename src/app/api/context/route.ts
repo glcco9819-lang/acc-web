@@ -6,9 +6,9 @@ import { getSession } from "@/lib/auth";
 export async function GET() {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "لاگین نکرده‌اید" }, { status: 401 });
-  const companies = await q("SELECT CompanyId, CompanyCode, TitleFa, CodingMode FROM YfgPrm.Company WHERE IsActive=1 ORDER BY CompanyCode");
+  const companies = await q("SELECT CompanyId, CompanyCode, TitleFa, CodingMode FROM pob.Companies WHERE IsActive=1 ORDER BY CompanyCode");
   const years = await q(`SELECT y.YearId, y.CompanyId, y.JalaliYear, y.Title, y.StartDate, y.EndDate, y.IsClosed
-                         FROM YfgPrm.FiscalYear y ORDER BY y.JalaliYear DESC`);
+                         FROM pob.FiscalYear y ORDER BY y.JalaliYear DESC`);
   const store = await (await import("next/headers")).cookies();
   const ctxRaw = store.get("acc_ctx")?.value;
   let ctx: { companyId?: number; yearId?: number } = {};
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const companyId = Number(body.companyId || 0);
   const yearId = Number(body.yearId || 0);
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت نامعتبر" }, { status: 400 });
-  const year = yearId ? await one("SELECT YearId FROM YfgPrm.FiscalYear WHERE YearId=@y AND CompanyId=@c", { y: yearId, c: companyId }) : null;
+  const year = yearId ? await one("SELECT YearId FROM pob.FiscalYear WHERE YearId=@y AND CompanyId=@c", { y: yearId, c: companyId }) : null;
   if (yearId && !year) return NextResponse.json({ ok: false, error: "سال مالی متعلق به این شرکت نیست" }, { status: 400 });
   const res = NextResponse.json({ ok: true });
   res.cookies.set("acc_ctx", JSON.stringify({ companyId, yearId: year ? yearId : 0 }), {

@@ -3,7 +3,7 @@
 import Shell from "@/components/Shell";
 import GenWindow, { GCol } from "@/components/GenWindow";
 
-/* معرفی موقعیت‌های جغرافیایی — OF0004 (TFrmGeoPos در GnrGeneral.bpl) — YfgGen.GeoPlace
+/* معرفی موقعیت‌های جغرافیایی — OF0004 (TFrmGeoPos در GnrGeneral.bpl) — pob.GeoPlace
    1=کشور 2=استان 3=شهرستان 4=شهر */
 
 const cols: GCol[] = [

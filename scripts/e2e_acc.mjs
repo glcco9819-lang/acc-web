@@ -242,18 +242,18 @@ async function main() {
 
   /* ---------- ۱۰) گاردهای دیتابیسی — رفتارمحور ---------- */
   let delErr = "";
-  try { await sql("DELETE FROM YfgVch.Voucher WHERE VoucherId=@i", { i: v1id }); } catch (e) { delErr = String(e.stderr || e.message); }
-  const still1 = await sql("SELECT COUNT(*) N FROM YfgVch.Voucher WHERE VoucherId=@i", { i: v1id });
+  try { await sql("DELETE FROM ACC.AccVoucher WHERE VoucherId=@i", { i: v1id }); } catch (e) { delErr = String(e.stderr || e.message); }
+  const still1 = await sql("SELECT COUNT(*) N FROM ACC.AccVoucher WHERE VoucherId=@i", { i: v1id });
   ok("تریگر: حذف سند قطعی رد می‌شود و سند باقی است", delErr.includes("50000") && JSON.parse(still1).rows[0][0] === "1", { blocked: delErr.includes("50000"), still: still1.slice(0, 60) });
 
   let editErr = "";
-  try { await sql("UPDATE YfgVch.VoucherLine SET Descr=N'tamper' WHERE VoucherId=@i", { i: v1id }); } catch (e) { editErr = String(e.stderr || e.message); }
-  const still2 = await sql("SELECT Descr FROM YfgVch.VoucherLine WHERE VoucherId=@i AND RowNo=1", { i: v1id });
+  try { await sql("UPDATE ACC.AccVoucherItm SET Descr=N'tamper' WHERE VoucherId=@i", { i: v1id }); } catch (e) { editErr = String(e.stderr || e.message); }
+  const still2 = await sql("SELECT Descr FROM ACC.AccVoucherItm WHERE VoucherId=@i AND RowNo=1", { i: v1id });
   const descrTxt = JSON.parse(still2).rows[0][0];
   ok("تریگر: ویرایش ردیف قطعی رد می‌شود و شرح دست‌نخورده", editErr.includes("50000") && descrTxt.includes("بدهی"), { blocked: editErr.includes("50000"), descr: descrTxt });
 
   let kolErr = "";
-  try { await sql("UPDATE YfgAcc.Kol SET GroupCode='02' WHERE CompanyId=1 AND Code='0101'"); } catch (e) { kolErr = String(e.stderr || e.message); }
+  try { await sql("UPDATE ACC.AccKol SET GroupCode='02' WHERE CompanyId=1 AND Code='0101'"); } catch (e) { kolErr = String(e.stderr || e.message); }
   ok("تریگر: شکستن پیشوند کدینگ رد می‌شود", kolErr.includes("50000"), kolErr.slice(0, 100));
 
   /* ---------- ۱۱) آپدیت آنلاین (فقط بررسی) ---------- */

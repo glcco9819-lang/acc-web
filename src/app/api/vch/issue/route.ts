@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
   const items: ItemIn[] = Array.isArray(body.items) ? body.items : [];
 
   if (!isValidJalali(vchDate)) return NextResponse.json({ ok: false, error: "تاریخ سند نامعتبر است (جلالی YYYY/MM/DD)" }, { status: 400 });
-  const t = await one("SELECT Title FROM YfgVch.VoucherType WHERE VoucherTypeId=@t AND CompanyId=@c", { t: typeId, c: companyId });
+  const t = await one("SELECT Title FROM ACC.AccVoucherType WHERE VoucherTypeId=@t AND CompanyId=@c", { t: typeId, c: companyId });
   if (!t) return NextResponse.json({ ok: false, error: "نوع سند نامعتبر" }, { status: 400 });
   if (!items.length) return NextResponse.json({ ok: false, error: "سند بدون ردیف نیست" }, { status: 400 });
 
   /* سال مالی باز؟ */
-  const yr = await one("SELECT IsClosed FROM YfgPrm.FiscalYear WHERE YearId=@y", { y: yearId });
+  const yr = await one("SELECT IsClosed FROM pob.FiscalYear WHERE YearId=@y", { y: yearId });
   if (!yr) return NextResponse.json({ ok: false, error: "سال مالی یافت نشد" }, { status: 400 });
   if (yr.IsClosed) return NextResponse.json({ ok: false, error: "سال مالی بسته است" }, { status: 400 });
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (dbt > 0 && crt > 0) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: هم‌زمان بدهکار و بستانکار` }, { status: 400 });
     if (dbt === 0 && crt === 0) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: مبلغ صفر` }, { status: 400 });
 
-    const m = await one<any>("SELECT Code, KolCode, Title, Taf1TypeId, Taf2TypeId, Taf3TypeId FROM YfgAcc.Moein WHERE CompanyId=@c AND Code=@m AND KolCode=@k",
+    const m = await one<any>("SELECT Code, KolCode, Title, Taf1TypeId, Taf2TypeId, Taf3TypeId FROM ACC.AccMoein WHERE CompanyId=@c AND Code=@m AND KolCode=@k",
       { c: companyId, m: moein, k: kol });
     if (!m) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: معین ${moein} زیرمجموعهٔ کل ${kol} نیست` }, { status: 400 });
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       const given = (it as any)[field];
       if (needType) {
         if (!given) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تفصیلی سطح ${label} برای معین ${moein} الزامی است` }, { status: 400 });
-        const d = await one<{ TafsiliId: number }>("SELECT TafsiliId FROM YfgAcc.Tafsili WHERE TafsiliId=@d AND CompanyId=@c AND TafsiliTypeId=@t AND IsActive=1", { d: given, c: companyId, t: needType });
+        const d = await one<{ TafsiliId: number }>("SELECT TafsiliId FROM ACC.AccTafsili WHERE TafsiliId=@d AND CompanyId=@c AND TafsiliTypeId=@t AND IsActive=1", { d: given, c: companyId, t: needType });
         if (!d) return NextResponse.json({ ok: false, error: `ردیف ${i + 1}: تفصیلی انتخابی سطح ${label} با نوع معین ${moein} هم‌خوان نیست` }, { status: 400 });
         out[field] = given;
       } else {
@@ -96,22 +96,22 @@ export async function POST(req: NextRequest) {
     let hdr: any = null;
     await tx(async (run) => {
       const noRow = await run(
-        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM YfgVch.Voucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
+        `SELECT ISNULL(MAX(FolioNo),0)+1 NF, ISNULL(MAX(VchNo),0)+1 NV FROM ACC.AccVoucher WITH (TABLOCKX) WHERE CompanyId=@c AND YearId=@y`,
         { c: companyId, y: yearId });
       const folio = Number(noRow[0].NF), vchNo = Number(noRow[0].NV);
       const h = await run(
-        `INSERT INTO YfgVch.Voucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
+        `INSERT INTO ACC.AccVoucher (CompanyId, YearId, FolioNo, VchNo, VoucherTypeId, VchDate, Descr, State, SourceModule, CreatedBy)
          OUTPUT INSERTED.* VALUES (@c, @y, @f, @n, @t, @d, @ds, 1, 'ACC', @u)`,
         { c: companyId, y: yearId, f: folio, n: vchNo, t: typeId, d: vchDate, ds: descr, u: s.username });
       hdr = h[0];
       for (let i = 0; i < cleaned.length; i++) {
         const it = cleaned[i];
         await run(
-          `INSERT INTO YfgVch.VoucherLine (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
+          `INSERT INTO ACC.AccVoucherItm (VoucherId, RowNo, KolCode, MoeinCode, Taf1Id, Taf2Id, Taf3Id, Descr, Dbt, Crt)
            VALUES (@h, @r, @k, @m, @d1, @d2, @d3, @ds, @db, @cr)`,
           { h: hdr.VoucherId, r: i + 1, k: it.KolCode, m: it.MoeinCode, d1: it.Taf1Id, d2: it.Taf2Id, d3: it.Taf3Id, ds: it.Descr, db: it.Dbt, cr: it.Crt });
       }
-      await run(`INSERT INTO YfgVch.VoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.VoucherId, u: s.username });
+      await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@h, 1, @u, N'صدور سند')`, { h: hdr.VoucherId, u: s.username });
     });
     return NextResponse.json({ ok: true, voucher: hdr });
   } catch (e: any) {

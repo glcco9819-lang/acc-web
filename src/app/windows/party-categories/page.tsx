@@ -3,7 +3,7 @@
 import Shell from "@/components/Shell";
 import GenWindow, { GCol } from "@/components/GenWindow";
 
-/* تعریف طبقه‌بندی اشخاص — OF0003 (HumCmp.bpl) — YfgGen.PartyCategory */
+/* تعریف طبقه‌بندی اشخاص — OF0003 (HumCmp.bpl) — pob.PartyCategory */
 
 const cols: GCol[] = [
   { key: "Title", label: "عنوان طبقه‌بندی", required: true, width: 280 },

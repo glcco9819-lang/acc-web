@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!cfg) return NextResponse.json({ ok: false, error: "عملیات ناشناخته — سند قطعی فقط با سند برگشتی اصلاح می‌شود" }, { status: 400 });
   if (!can(s, cfg.role)) return NextResponse.json({ ok: false, error: "نقش شما مجاز به این عملیات نیست" }, { status: 403 });
 
-  const hdr = await one<any>("SELECT * FROM YfgVch.Voucher WHERE VoucherId=@id", { id });
+  const hdr = await one<any>("SELECT * FROM ACC.AccVoucher WHERE VoucherId=@id", { id });
   if (!hdr) return NextResponse.json({ ok: false, error: "سند یافت نشد" }, { status: 404 });
   if (hdr.State !== cfg.from)
     return NextResponse.json({ ok: false, error: `وضعیت سند با این عملیات هم‌خوان نیست (وضعیت فعلی: ${["", "موقت", "بررسی‌شده", "قطعی"][hdr.State]})` }, { status: 400 });
@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
 
   if (action === "finalize") {
     const bal = await one<{ D: number; C: number }>(
-      "SELECT ISNULL(SUM(Dbt),0) D, ISNULL(SUM(Crt),0) C FROM YfgVch.VoucherLine WHERE VoucherId=@id", { id });
+      "SELECT ISNULL(SUM(Dbt),0) D, ISNULL(SUM(Crt),0) C FROM ACC.AccVoucherItm WHERE VoucherId=@id", { id });
     const d = Number(bal?.D || 0), c = Number(bal?.C || 0);
     if (d !== c)
       return NextResponse.json({ ok: false, error: `سند تراز نیست (${d} ≠ ${c})` }, { status: 400 });
     const bad = await scalar(
-      `SELECT COUNT(*) FROM YfgVch.VoucherLine i JOIN YfgAcc.Moein m ON m.CompanyId=(SELECT CompanyId FROM YfgVch.Voucher WHERE VoucherId=@id) AND m.Code=i.MoeinCode
+      `SELECT COUNT(*) FROM ACC.AccVoucherItm i JOIN ACC.AccMoein m ON m.CompanyId=(SELECT CompanyId FROM ACC.AccVoucher WHERE VoucherId=@id) AND m.Code=i.MoeinCode
        WHERE i.VoucherId=@id AND ((m.Taf1TypeId IS NOT NULL AND i.Taf1Id IS NULL) OR (m.Taf2TypeId IS NOT NULL AND i.Taf2Id IS NULL) OR (m.Taf3TypeId IS NOT NULL AND i.Taf3Id IS NULL))`, { id });
     if (Number(bad) > 0)
       return NextResponse.json({ ok: false, error: "ردیف‌هایی بدون تفصیلی الزامی وجود دارد" }, { status: 400 });
@@ -50,13 +50,13 @@ export async function POST(req: NextRequest) {
   try {
     await tx(async (run) => {
       if (action === "review") {
-        await run(`UPDATE YfgVch.Voucher SET State=@to, CheckedBy=@u, CheckedAt=SYSDATETIME() WHERE VoucherId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
+        await run(`UPDATE ACC.AccVoucher SET State=@to, CheckedBy=@u, CheckedAt=SYSDATETIME() WHERE VoucherId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
       } else if (action === "unreview") {
-        await run(`UPDATE YfgVch.Voucher SET State=@to, CheckedBy=NULL, CheckedAt=NULL WHERE VoucherId=@id AND State=@from`, { to: cfg.to, id, from: cfg.from });
+        await run(`UPDATE ACC.AccVoucher SET State=@to, CheckedBy=NULL, CheckedAt=NULL WHERE VoucherId=@id AND State=@from`, { to: cfg.to, id, from: cfg.from });
       } else if (action === "finalize") {
-        await run(`UPDATE YfgVch.Voucher SET State=@to, FinalizedBy=@u, FinalizedAt=SYSDATETIME() WHERE VoucherId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
+        await run(`UPDATE ACC.AccVoucher SET State=@to, FinalizedBy=@u, FinalizedAt=SYSDATETIME() WHERE VoucherId=@id AND State=@from`, { to: cfg.to, u: s.username, id, from: cfg.from });
       }
-      await run(`INSERT INTO YfgVch.VoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@id, @a, @u, @n)`,
+      await run(`INSERT INTO ACC.AccVoucherFlow (VoucherId, Action, ByUser, Note) VALUES (@id, @a, @u, @n)`,
         { id, a: cfg.log, u: s.username, n: action === "review" ? "بررسی شد" : action === "unreview" ? "لغو بررسی" : "قطعی شد" });
     });
     return NextResponse.json({ ok: true });

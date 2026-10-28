@@ -5,7 +5,7 @@ import Shell from "@/components/Shell";
 import GenWindow, { GCol } from "@/components/GenWindow";
 import { api } from "@/lib/ui";
 
-/* تعطیلات و تقویم — gnCalndr.bpl اصل: YfgGen.Holiday + YfgGen.HolidayType
+/* تعطیلات و تقویم — gnCalndr.bpl اصل: pob.Holiday + pob.HolidayType
    تاریخ شمسی ملاک؛ معادل میلادی به‌صورت خودکار محاسبه و نمایش داده می‌شود (GDate) */
 
 export default function Page() {

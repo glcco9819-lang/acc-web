@@ -29,9 +29,9 @@ export async function GET(req: NextRequest) {
     `SELECT h.VoucherId, h.FolioNo, h.VchNo, h.VchDate, h.Descr, h.State, h.SourceModule, h.ReversalOf,
             h.CreatedBy, h.CheckedBy, h.FinalizedBy,
             t.Title TypeTitle,
-            (SELECT COUNT(*) FROM YfgVch.VoucherLine i WHERE i.VoucherId = h.VoucherId) ItemCount,
-            (SELECT SUM(i.Dbt) FROM YfgVch.VoucherLine i WHERE i.VoucherId = h.VoucherId) TotalDbt
-     FROM YfgVch.Voucher h JOIN YfgVch.VoucherType t ON t.VoucherTypeId = h.VoucherTypeId
+            (SELECT COUNT(*) FROM ACC.AccVoucherItm i WHERE i.VoucherId = h.VoucherId) ItemCount,
+            (SELECT SUM(i.Dbt) FROM ACC.AccVoucherItm i WHERE i.VoucherId = h.VoucherId) TotalDbt
+     FROM ACC.AccVoucher h JOIN ACC.AccVoucherType t ON t.VoucherTypeId = h.VoucherTypeId
      WHERE ${conds.join(" AND ")}
      ORDER BY h.VchNo DESC`, inp);
   return NextResponse.json({ ok: true, rows });
