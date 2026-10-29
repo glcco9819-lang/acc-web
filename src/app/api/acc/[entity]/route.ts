@@ -61,6 +61,8 @@ function spec(entity: string, mode: number): EntSpec | null {
         { name: "Title", req: true, max: 200 },
         { name: "LatinTitle", max: 200 },
         { name: "IsActive", num: true },
+        /* v2.4.2 — انتخاب نوع‌محور: پیوند تفصیلیِ نوعِ اشخاص به pob.Party (فهرست مبدأ) */
+        { name: "PartyRef", num: true },
       ],
       delCheck: [
         { sql: "SELECT 1 x FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@code OR i.Taf2Id=@code OR i.Taf3Id=@code)", inp: ["code", "int"], msg: "تفصیلی در سند استفاده شده است" },
@@ -69,7 +71,8 @@ function spec(entity: string, mode: number): EntSpec | null {
     };
     case "tafsili-types": return {
       table: "ACC.AccTafsiliType", key: "TafsiliTypeId",
-      cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }],
+      /* v2.4.2 — CodeListType: فهرست مبدأ نوع (PARTY/BANK/BRANCH یا خالی = آزاد مثل سایر) */
+      cols: [{ name: "Title", req: true, max: 100 }, { name: "LatinTitle", max: 100 }, { name: "CodeListType", max: 40 }],
       delCheck: [
         { sql: "SELECT 1 x FROM ACC.AccMoein WHERE CompanyId=@c AND (Taf1TypeId=@code OR Taf2TypeId=@code OR Taf3TypeId=@code)", inp: ["code", "int"], msg: "نوع تفصیل به معین متصل است" },
         { sql: "SELECT 1 x FROM ACC.AccTafsili WHERE CompanyId=@c AND TafsiliTypeId=@code", inp: ["code", "int"], msg: "تفصیلی‌هایی از این نوع وجود دارد" },
@@ -111,10 +114,8 @@ function spec(entity: string, mode: number): EntSpec | null {
   }
 }
 
-function ctxFromBody(body: unknown) {
-  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
-  return { companyId: Number(b.companyId || 0), yearId: Number(b.yearId || 0) };
-}
+/* v2.4.2 — کانتکست از کوکی + پشتیبان body (ctxFromBody حذف شد؛ صفرِ شرکتِ پیش‌فرض
+   روی کوکی غلبه می‌کرد و همهٔ POST/PUT تعاریف را با «شرکت انتخاب نشده» می‌شکست) */
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ entity: string }> }) {
   const s = await getSession();
@@ -144,6 +145,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
+  /* تفصیلی — همراه با عنوان شخص مرتبط از pob.Party [v2.4.2] */
+  if (entity === "tafsili") {
+    const rows = await q(
+      `SELECT t.*, p.Title PartyTitle, p.FName PartyFName, p.LName PartyLName,
+              CAST(t.TafsiliId AS int) AS id
+       FROM ACC.AccTafsili t LEFT JOIN pob.Party p ON p.Serial = t.PartyRef
+       WHERE t.CompanyId=@c ORDER BY t.TafsiliId`, { c: companyId });
+    return NextResponse.json({ ok: true, rows, mode });
+  }
   /* شناسهٔ یکنواخت id برای کلاینت (CrudWindow) + کل سطر */
   const rows = await q(`SELECT *, CAST(${sp.key} AS int) AS id FROM ${sp.table} WHERE CompanyId=@c ORDER BY 1`, { c: companyId });
   return NextResponse.json({ ok: true, rows, mode });
@@ -154,7 +164,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز تعریف ندارید" }, { status: 403 });
   const { entity } = await params;
   const body = await req.json().catch(() => ({}));
-  const { companyId } = { ...ctxOf(req), ...ctxFromBody(body) };
+  const { companyId } = ctxOf(req, body);
   if (!companyId) return NextResponse.json({ ok: false, error: "شرکت انتخاب نشده" }, { status: 400 });
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
@@ -211,7 +221,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ enti
   if (!s || !can(s, "master")) return NextResponse.json({ ok: false, error: "مجوز ندارید" }, { status: 403 });
   const { entity } = await params;
   const body = await req.json().catch(() => ({}));
-  const { companyId } = { ...ctxOf(req), ...ctxFromBody(body) };
+  const { companyId } = ctxOf(req, body);
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });

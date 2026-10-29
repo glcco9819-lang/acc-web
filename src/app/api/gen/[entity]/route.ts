@@ -99,10 +99,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
   const url = new URL(req.url);
   const p = url.searchParams.get("p");
-  const where = sp.scope && p ? `WHERE ${sp.scope}` : "";
+  /* v2.4.2 — lookup پشتیبانی فیلتر نوع: ?t=BANK برای فهرست بانک‌ها */
+  const t = url.searchParams.get("t");
+  let where = sp.scope && p ? `WHERE ${sp.scope}` : "";
+  const inp: Record<string, unknown> = sp.scope && p ? { p } : {};
+  if (entity === "lookup" && t) {
+    where = where ? `${where} AND [Type]=@t` : "WHERE [Type]=@t";
+    inp.t = t;
+  }
   const rows = await q(
-    `SELECT * FROM ${sp.table} ${where} ORDER BY ${sp.orderBy}`,
-    sp.scope && p ? { p } : {});
+    `SELECT * FROM ${sp.table} ${where} ORDER BY ${sp.orderBy}`, inp);
   /* انواع تعطیلی برای دراپ‌داون پنجرهٔ تعطیلات */
   if (entity === "holidays") {
     const types = await q(`SELECT HolidayTypeId v, Title t FROM pob.HolidayType WHERE IsActive=1 ORDER BY HolidayTypeId`);
