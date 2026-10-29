@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { api } from "@/lib/ui";
 
 /* صفحهٔ ورود (v2.4.0) — سبک هیرو سایت YFG: پس‌زمینهٔ شب‌رنگ + شبکه + هالهٔ سبز
@@ -11,13 +10,15 @@ export default function LoginPage() {
   const [p, setP] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr("");
     try {
       await api("/api/auth/login", { method: "POST", body: JSON.stringify({ username: u, password: p }) });
-      router.replace("/");
+      /* v2.4.1 — ناوبری سخت (بارگذاری کامل): AppProvider از نو mount می‌شود و کانتکست
+         (شرکت‌ها/سال‌ها) حتماً بارگذاری می‌شود؛ با ناوبری نرم، Provider ریمانت نمی‌شد
+         و dropdown شرکت خالی می‌ماند */
+      location.href = "/";
     } catch (e: any) { setErr(e.message); }
     setBusy(false);
   };

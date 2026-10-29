@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 
 /* ============================================================================
    کانتکست سراسری برنامه (v2.0.0 — بازنویسی از صفر)
@@ -52,6 +53,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [years, setYears] = useState<CtxYear[]>([]);
   const [companyId, setCompanyId] = useState(0);
   const [yearId, setYearId] = useState(0);
+  /* v2.4.1 — ریشه‌کنی باگ «انتخاب شرکت انجام نمی‌شود»: پس از ورود با ناوبری نرم،
+     AppProvider دوباره remount نمی‌شود و اگر فقط در mount فچ می‌زدیم، لیست شرکت‌ها
+     هرگز پس از لاگین بارگذاری نمی‌شد. حالا با هر تغییر مسیر (به‌ویژه خروج از
+     صفحهٔ ورود) کانتکست دوباره همگام می‌شود. */
+  const path = usePathname();
 
   const load = useCallback(async () => {
     /* در صفحهٔ لاگین کانتکست لازم نیست و ریدایرکت تكراری ممنوع */
@@ -76,6 +82,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  /* v2.4.1 — همگام‌سازی مجدد کانتکست با هر تغییر مسیر؛ در /login زود خارج می‌شود
+     (بدون ریدایرکت حلقه‌ای) و به‌محض ورود به اولین پنجره، شرکت‌ها و سال‌ها می‌آیند */
+  useEffect(() => {
+    if (path && !path.startsWith("/login")) load();
+  }, [path, load]);
 
   const pickCompany = useCallback(async (cId: number) => {
     /* تغییر شرکت → سال صفر می‌شود؛ سپس اولین سال بازِ همان شرکت خودکار انتخاب می‌شود */
