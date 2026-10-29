@@ -6,9 +6,11 @@ import { CtxGate, useApp } from "@/components/App";
 import { api, fa, STATE_FA, STATE_CLS } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { VoucherEditor } from "@/components/VoucherEditor";
+import { useColResize, ColGrip } from "@/lib/colresize";
 
 /* بررسی اسناد (v2.0.0) [فرم اصلی: بررسي اسناد — TAccCtlVchForm]
-   فقط اسناد موقت / فقط اسناد بررسی‌شده + بررسی شد / لغو بررسی + ریز سند با کدها */
+   فقط اسناد موقت / فقط اسناد بررسی‌شده + بررسی شد / لغو بررسی + ریز سند با کدها
+   v2.3.0 — صفحه‌بندی + ستون‌های قابل تغییر اندازه */
 export default function Page() {
   const app = useApp();
   const [rows, setRows] = useState<any[]>([]);
@@ -17,7 +19,11 @@ export default function Page() {
   const [msg, setMsg] = useState<{ t: "err" | "ok"; s: string } | null>(null);
   const [detail, setDetail] = useState<VchDetail | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const can = app.can || ({} as any);
+  const rs = useColResize({}, "acc-cols-vchreview");
 
   /* ویرایش سند در همین پنجره (v2.2.0) — پس از ذخیره، فهرست به‌روز می‌شود */
   const onEdited = async (v: any) => {
@@ -32,10 +38,13 @@ export default function Page() {
       const p = new URLSearchParams();
       if (state) p.set("state", state); if (from) p.set("from", from);
       if (to) p.set("to", to); if (qtext) p.set("q", qtext);
+      p.set("page", String(page)); p.set("pageSize", "50");
       const j = await api(`/api/vch/list?${p}`);
       setRows(j.rows || []);
+      setPages(Math.max(1, Number(j.pages) || 1));
+      setTotal(Number(j.total) || 0);
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
-  }, [state, from, to, qtext, app.companyId, app.ctxMissing]);
+  }, [state, from, to, qtext, page, app.companyId, app.ctxMissing]);
   useEffect(() => { load(); }, [load]);
 
   const doAct = async (id: number, action: string) => {
@@ -57,23 +66,31 @@ export default function Page() {
         {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
         <div className="form-grid" style={{ gridTemplateColumns: "150px 110px 110px 1fr" }}>
           <div className="field"><label>وضعیت</label>
-            <select value={state} onChange={(e) => setState(e.target.value)}>
+            <select value={state} onChange={(e) => { setState(e.target.value); setPage(1); }}>
               <option value="">همه</option>
               <option value="1">فقط موقت</option>
               <option value="2">فقط بررسی‌شده</option>
               <option value="3">قطعی</option>
             </select>
           </div>
-          <div className="field"><label>از سند</label><input value={from} onChange={(e) => setFrom(e.target.value)} className="num" style={{ direction: "ltr" }} /></div>
-          <div className="field"><label>تا سند</label><input value={to} onChange={(e) => setTo(e.target.value)} className="num" style={{ direction: "ltr" }} /></div>
-          <div className="field"><label>جست‌وجو</label><input value={qtext} onChange={(e) => setQ(e.target.value)} /></div>
+          <div className="field"><label>از سند</label><input value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="num" style={{ direction: "ltr" }} /></div>
+          <div className="field"><label>تا سند</label><input value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="num" style={{ direction: "ltr" }} /></div>
+          <div className="field"><label>جست‌وجو</label><input value={qtext} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") setPage(1); }} /></div>
         </div>
         <div className="scrollbox">
           <table className="grid">
             <thead><tr>
-              <th>عطف</th><th>شماره سند</th><th>تاریخ</th><th>نوع</th><th>شرح</th>
-              <th className="num">ردیف</th><th className="num">جمع</th><th>مبدأ</th><th>وضعیت</th>
-              <th>سازنده / بررسی‌کننده</th><th style={{ width: 210 }}>عملیات</th>
+              <th style={rs.thStyle("folio", 90)}><ColGrip onDown={rs.onDown("folio", rs.widths.folio ?? 90)} />عطف</th>
+              <th style={rs.thStyle("no", 100)}><ColGrip onDown={rs.onDown("no", rs.widths.no ?? 100)} />شماره سند</th>
+              <th style={rs.thStyle("date", 100)}><ColGrip onDown={rs.onDown("date", rs.widths.date ?? 100)} />تاریخ</th>
+              <th style={rs.thStyle("type", 120)}><ColGrip onDown={rs.onDown("type", rs.widths.type ?? 120)} />نوع</th>
+              <th style={rs.thStyle("descr", 160)}><ColGrip onDown={rs.onDown("descr", rs.widths.descr ?? 160)} />شرح</th>
+              <th style={rs.thStyle("items", 60)} className="num"><ColGrip onDown={rs.onDown("items", rs.widths.items ?? 60)} />ردیف</th>
+              <th style={rs.thStyle("dbt", 110)} className="num"><ColGrip onDown={rs.onDown("dbt", rs.widths.dbt ?? 110)} />جمع</th>
+              <th style={rs.thStyle("src", 90)}><ColGrip onDown={rs.onDown("src", rs.widths.src ?? 90)} />مبدأ</th>
+              <th style={rs.thStyle("state", 100)}><ColGrip onDown={rs.onDown("state", rs.widths.state ?? 100)} />وضعیت</th>
+              <th style={rs.thStyle("users", 140)}><ColGrip onDown={rs.onDown("users", rs.widths.users ?? 140)} />سازنده / بررسی‌کننده</th>
+              <th style={rs.thStyle("ops", 210)}><ColGrip onDown={rs.onDown("ops", rs.widths.ops ?? 210)} />عملیات</th>
             </tr></thead>
             <tbody>
               {rows.map((r) => (
@@ -103,6 +120,16 @@ export default function Page() {
             </tbody>
           </table>
         </div>
+
+        {pages > 1 && (
+          <div className="btnrow" style={{ justifyContent: "center", margin: "10px 0 0" }}>
+            <button className="btn" disabled={page <= 1} onClick={() => setPage(1)}>ابتدا</button>
+            <button className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>قبلی</button>
+            <span style={{ padding: "0 8px" }}>صفحهٔ <b>{fa(page)}</b> از <b>{fa(pages)}</b> — مجموع <b>{fa(total)}</b> سند</span>
+            <button className="btn" disabled={page >= pages} onClick={() => setPage(page + 1)}>بعدی</button>
+            <button className="btn" disabled={page >= pages} onClick={() => setPage(pages)}>انتها</button>
+          </div>
+        )}
 
         {detail && <VoucherDetailCard d={detail} canEdit={!!can.issue} onClose={() => setDetail(null)}
           onEdit={() => { const id = detail.hdr.VoucherId; setDetail(null); setEditing(id); }} />}

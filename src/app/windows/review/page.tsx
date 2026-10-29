@@ -6,6 +6,7 @@ import { CtxGate, useApp } from "@/components/App";
 import { api, fa, exportCsv } from "@/lib/ui";
 import { VoucherDetailCard, VchDetail, fetchVoucher } from "@/components/VoucherDetail";
 import { VoucherEditor } from "@/components/VoucherEditor";
+import { todayJalali } from "@/lib/jalali";
 
 /* ============================================================================
    مرور حساب‌ها — بازنویسی کامل از صفر مطابق AcVwDef.BPL (v2.1.0)
@@ -78,8 +79,8 @@ export default function Page() {
   const [editing, setEditing] = useState<number | null>(null); /* ویرایش سند در همین پنجره (v2.2.0) */
   const [okMsg, setOkMsg] = useState("");
 
-  const todayFa = () => new Intl.DateTimeFormat("fa-IR-u-nu-latn", { calendar: "persian" })
-    .format(new Date()).replace(/\//g, "/");
+  /* v2.3.0 — منبع واحد تاریخ امروز جلالی (مطابق بقیهٔ برنامه، به‌جای Intl) */
+  const todayFa = () => todayJalali();
 
   const loadTree = useCallback(async (search = q, only = onlyBal) => {
     try {

@@ -46,8 +46,9 @@ export default function Page() {
   const [lastNo, setLastNo] = useState<number | null>(null);
   const [moeins, setMoeins] = useState<any[]>([]);
   const [dls, setDls] = useState<any[]>([]);
-  /* v2.2.0 — ستون‌های قابل تغییر اندازه با موس (درخواست کارفرما) */
-  const rs = useColResize({});
+  /* v2.2.0 — ستون‌های قابل تغییر اندازه با موس (درخواست کارفرما)
+     v2.3.0 — اندازهٔ ستون‌ها به‌خاطر سپرده می‌شود */
+  const rs = useColResize({}, "acc-cols-issue");
 
   /* بارگیری داده‌های کمکی — فقط وقتی کانتکست کامل است (بدون شکست بی‌صدا) */
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { api, fa } from "@/lib/ui";
+import { isValidJalali } from "@/lib/jalali";
 import { fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { useColResize, ColGrip } from "@/lib/colresize";
 
@@ -60,7 +61,7 @@ export function VoucherEditor({ id, onClose, onSaved }: {
   const [openRows, setOpenRows] = useState<Set<number>>(new Set());
   const [msg, setMsg] = useState<{ t: "err" | "ok"; s: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const rs = useColResize({});
+  const rs = useColResize({}, "acc-cols-editor");
 
   useEffect(() => {
     (async () => {
@@ -111,8 +112,11 @@ export function VoucherEditor({ id, onClose, onSaved }: {
   const forbidden = h && (h.State === 3 ? "سند قطعی قابل ویرایش نیست — ابتدا سند را برگشت دهید."
     : h.ReversalOf ? "سند برگشتی قابل ویرایش نیست." : "");
 
+  const dateBad = !!vchDate && !isValidJalali(vchDate);
+
   const save = async () => {
     if (!d) return;
+    if (!isValidJalali(vchDate)) { setMsg({ t: "err", s: "تاریخ سند نامعتبر است — قالب جلالی: 1405/01/01" }); return; }
     setBusy(true); setMsg(null);
     try {
       const items = rows
@@ -159,7 +163,9 @@ export function VoucherEditor({ id, onClose, onSaved }: {
                   <div className="form-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
                     <div className="field">
                       <label>تاریخ سند (جلالی)</label>
-                      <input value={vchDate} onChange={(e) => setVchDate(e.target.value)} style={{ direction: "ltr", textAlign: "left" }} />
+                      <input value={vchDate} onChange={(e) => setVchDate(e.target.value)} placeholder="1405/01/01"
+                        style={{ direction: "ltr", textAlign: "left", borderColor: dateBad ? "var(--accent)" : undefined }} />
+                      {dateBad && <span style={{ color: "var(--accent)", fontSize: 11 }}>قالب جلالی نیست</span>}
                     </div>
                     <div className="field" style={{ gridColumn: "span 2" }}>
                       <label>شرح سند</label>

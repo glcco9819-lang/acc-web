@@ -37,7 +37,9 @@ export function VoucherDetailCard({ d, onClose, onEdit, canEdit }: { d: VchDetai
           عطف: <b>{fa(h.FolioNo)}</b> · ش فرعی: {fa(h.SubNo ?? 0)} · تاریخ: {h.VchDate} · شرح: {h.Descr || "—"}
           {h.LatinDescr ? <> · Latin: <span dir="ltr">{h.LatinDescr}</span></> : null}
           {" "}· وضعیت: <b>{STATE_FA[h.State]}</b>
-          {" "}· سازنده: {h.CreatedBy} · بررسی: {h.CheckedBy || "—"} · قطعی: {h.FinalizedBy || "—"}
+          {" "}· سازنده: {h.CreatedBy}{h.CreatedAtFa ? <span className="muted"> ({h.CreatedAtFa})</span> : null}
+          {" "}· بررسی: {h.CheckedBy || "—"}{h.CheckedAtFa ? <span className="muted"> ({h.CheckedAtFa})</span> : null}
+          {" "}· قطعی: {h.FinalizedBy || "—"}{h.FinalizedAtFa ? <span className="muted"> ({h.FinalizedAtFa})</span> : null}
           {h.BranchId ? <> · شعبه: {h.BranchId}</> : null}
         </p>
         <table className="grid">
