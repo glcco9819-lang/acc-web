@@ -52,6 +52,19 @@ export function todayJalali(): string {
   return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
 }
 
+/* تبدیل datetime میلادی (سرور UTC) به رشتهٔ شمسی «YYYY/MM/DD HH:MM» — تهران +03:30
+   [رفع «تاریخ‌ها شمسی نیستند»: ردپای عملیات سند و زمان‌های سیستم با تاریخ میلادی نمایش داده می‌شد] */
+export function faDateTime(v: string | Date | null | undefined): string {
+  if (!v) return "";
+  const d = typeof v === "string" ? new Date(v.endsWith("Z") || v.includes("T") ? v : v.replace(" ", "T") + "Z") : v;
+  if (isNaN(d.getTime())) return "";
+  const t = new Date(d.getTime() + 3.5 * 3600 * 1000); /* تهران */
+  const [jy, jm, jd] = gregorianToJalali(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+  const hh = String(t.getUTCHours()).padStart(2, "0");
+  const mi = String(t.getUTCMinutes()).padStart(2, "0");
+  return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")} ${hh}:${mi}`;
+}
+
 export function isValidJalali(s: string): boolean {
   const m = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(s.trim());
   if (!m) return false;

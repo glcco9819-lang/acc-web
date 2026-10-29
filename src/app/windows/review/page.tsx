@@ -5,6 +5,7 @@ import Shell from "@/components/Shell";
 import { CtxGate, useApp } from "@/components/App";
 import { api, fa, exportCsv } from "@/lib/ui";
 import { VoucherDetailCard, VchDetail, fetchVoucher } from "@/components/VoucherDetail";
+import { VoucherEditor } from "@/components/VoucherEditor";
 
 /* ============================================================================
    مرور حساب‌ها — بازنویسی کامل از صفر مطابق AcVwDef.BPL (v2.1.0)
@@ -74,6 +75,8 @@ export default function Page() {
 
   /* ---- سند ---- */
   const [vch, setVch] = useState<VchDetail | null>(null);
+  const [editing, setEditing] = useState<number | null>(null); /* ویرایش سند در همین پنجره (v2.2.0) */
+  const [okMsg, setOkMsg] = useState("");
 
   const todayFa = () => new Intl.DateTimeFormat("fa-IR-u-nu-latn", { calendar: "persian" })
     .format(new Date()).replace(/\//g, "/");
@@ -205,6 +208,13 @@ export default function Page() {
     try { setVch(await fetchVoucher(id)); } catch (e: any) { setErr(e.message); }
   };
 
+  /* پس از ذخیرهٔ ویرایش — سند و گردش به‌روز می‌شوند (مبالغ ممکن است تغییر کرده باشند) */
+  const onEdited = useCallback(async (v: any) => {
+    setEditing(null); setOkMsg(`سند ${v.VchNo ? fa(v.VchNo) : ""} با موفقیت ویرایش شد`); setErr("");
+    try { setVch(await fetchVoucher(v.VoucherId)); } catch { /* - */ }
+    if (sel) loadCard(sel);
+  }, [sel, loadCard]);
+
   /* نگاشت lineId → voucherId برای صدور اعلاميه */
   const pickedVoucher = useMemo(() => {
     const m = new Map<number, number>();
@@ -279,6 +289,7 @@ export default function Page() {
         </div>
 
         {err && <div className="msg err">{err}</div>}
+        {okMsg && <div className="msg ok" onClick={() => setOkMsg("")} style={{ cursor: "pointer" }}>{okMsg}</div>}
         {!sel && !err && (
           <div className="msg ok">یک حساب را از درخت انتخاب کنید — روی معین کلیک کنید؛ «گردش کل» برای کارت کل؛ دوبار کلیک روی کل هم کارت کل را باز می‌کند.</div>
         )}
@@ -677,9 +688,16 @@ export default function Page() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(15,35,55,.45)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
             onClick={() => setVch(null)}>
             <div style={{ background: "#fff", borderRadius: 10, maxHeight: "88vh", overflow: "auto", padding: 14, minWidth: 720 }} onClick={(e) => e.stopPropagation()}>
-              <VoucherDetailCard d={vch} onClose={() => setVch(null)} />
+              <VoucherDetailCard d={vch} canEdit={!!app.can?.issue}
+                onClose={() => setVch(null)}
+                onEdit={() => { const id = vch.hdr.VoucherId; setVch(null); setEditing(id); }} />
             </div>
           </div>
+        )}
+
+        {/* ---------- ویرایش سند در همین پنجره (v2.2.0) ---------- */}
+        {editing !== null && (
+          <VoucherEditor id={editing} onClose={() => setEditing(null)} onSaved={onEdited} />
         )}
       </CtxGate>
     </Shell>

@@ -5,6 +5,7 @@ import Shell from "@/components/Shell";
 import { CtxGate, useApp } from "@/components/App";
 import { api, fa, STATE_FA, STATE_CLS } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
+import { VoucherEditor } from "@/components/VoucherEditor";
 
 /* بررسی اسناد (v2.0.0) [فرم اصلی: بررسي اسناد — TAccCtlVchForm]
    فقط اسناد موقت / فقط اسناد بررسی‌شده + بررسی شد / لغو بررسی + ریز سند با کدها */
@@ -15,7 +16,15 @@ export default function Page() {
   const [from, setFrom] = useState(""); const [to, setTo] = useState(""); const [qtext, setQ] = useState("");
   const [msg, setMsg] = useState<{ t: "err" | "ok"; s: string } | null>(null);
   const [detail, setDetail] = useState<VchDetail | null>(null);
+  const [editing, setEditing] = useState<number | null>(null);
   const can = app.can || ({} as any);
+
+  /* ویرایش سند در همین پنجره (v2.2.0) — پس از ذخیره، فهرست به‌روز می‌شود */
+  const onEdited = async (v: any) => {
+    setEditing(null);
+    setMsg({ t: "ok", s: `سند ${fa(v.VchNo)} ویرایش شد` });
+    await load();
+  };
 
   const load = useCallback(async () => {
     if (app.ctxMissing) return;
@@ -81,6 +90,10 @@ export default function Page() {
                   <td>{r.CreatedBy} / {r.CheckedBy || "—"}</td>
                   <td>
                     <button className="btn" onClick={() => openDetail(r.VoucherId)} style={{ padding: "1px 8px" }}>مشاهده</button>{" "}
+                    {r.State !== 3 && !r.ReversalOf && String(r.SourceModule || "ACC") === "ACC" && can.issue && (
+                      <button className="btn" onClick={() => { setDetail(null); setEditing(r.VoucherId); }} style={{ padding: "1px 8px" }}
+                        title="ویرایش سند در همین پنجره">ویرایش</button>
+                    )}{" "}
                     {r.State === 1 && can.review && <button className="btn green" onClick={() => doAct(r.VoucherId, "review")} style={{ padding: "1px 8px" }}>بررسی شد</button>}
                     {r.State === 2 && can.review && <button className="btn" onClick={() => doAct(r.VoucherId, "unreview")} style={{ padding: "1px 8px" }}>لغو بررسی</button>}
                   </td>
@@ -91,7 +104,12 @@ export default function Page() {
           </table>
         </div>
 
-        {detail && <VoucherDetailCard d={detail} onClose={() => setDetail(null)} />}
+        {detail && <VoucherDetailCard d={detail} canEdit={!!can.issue} onClose={() => setDetail(null)}
+          onEdit={() => { const id = detail.hdr.VoucherId; setDetail(null); setEditing(id); }} />}
+
+        {editing !== null && (
+          <VoucherEditor id={editing} onClose={() => setEditing(null)} onSaved={onEdited} />
+        )}
       </CtxGate>
     </Shell>
   );

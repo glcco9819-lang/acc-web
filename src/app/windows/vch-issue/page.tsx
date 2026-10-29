@@ -5,6 +5,7 @@ import Shell from "@/components/Shell";
 import { CtxGate, useApp } from "@/components/App";
 import { api, fa } from "@/lib/ui";
 import { todayJalali } from "@/lib/jalali";
+import { useColResize, ColGrip } from "@/lib/colresize";
 
 /* ============================================================================
    صدور سند حسابداری (v2.0.0 — بازنویسی از صفر) [فرم اصلی: صدور سند حسابداري — acGenVch]
@@ -45,6 +46,8 @@ export default function Page() {
   const [lastNo, setLastNo] = useState<number | null>(null);
   const [moeins, setMoeins] = useState<any[]>([]);
   const [dls, setDls] = useState<any[]>([]);
+  /* v2.2.0 — ستون‌های قابل تغییر اندازه با موس (درخواست کارفرما) */
+  const rs = useColResize({});
 
   /* بارگیری داده‌های کمکی — فقط وقتی کانتکست کامل است (بدون شکست بی‌صدا) */
   useEffect(() => {
@@ -169,16 +172,18 @@ export default function Page() {
         <div className="scrollbox" style={{ maxHeight: "none" }}>
           <table className="grid">
             <thead><tr>
-              <th style={{ width: 32 }}>#</th>
-              <th style={{ width: 120 }}>کد کل</th>
-              <th style={{ width: 168 }}>حساب کل</th>
-              <th style={{ width: 120 }}>کد معین</th>
-              <th style={{ width: 200 }}>حساب معین</th>
-              <th>تفصیلی ۴</th><th>تفصیلی ۵</th><th>تفصیلی ۶</th>
-              <th style={{ width: 170 }}>شرح ردیف</th>
-              <th style={{ width: 118 }} className="num">بدهکار</th>
-              <th style={{ width: 118 }} className="num">بستانکار</th>
-              <th style={{ width: 62 }}></th>
+              <th style={rs.thStyle("no", 32)}><ColGrip onDown={rs.onDown("no", rs.widths.no ?? 32)} /></th>
+              <th className="ltr" style={rs.thStyle("kolCode", 110)}><ColGrip onDown={rs.onDown("kolCode", rs.widths.kolCode ?? 110)} />کد کل</th>
+              <th style={rs.thStyle("kol", 168)}><ColGrip onDown={rs.onDown("kol", rs.widths.kol ?? 168)} />حساب کل</th>
+              <th className="ltr" style={rs.thStyle("moeinCode", 110)}><ColGrip onDown={rs.onDown("moeinCode", rs.widths.moeinCode ?? 110)} />کد معین</th>
+              <th style={rs.thStyle("moein", 200)}><ColGrip onDown={rs.onDown("moein", rs.widths.moein ?? 200)} />حساب معین</th>
+              <th style={rs.thStyle("taf1", 130)}><ColGrip onDown={rs.onDown("taf1", rs.widths.taf1 ?? 130)} />تفصیلی ۴</th>
+              <th style={rs.thStyle("taf2", 130)}><ColGrip onDown={rs.onDown("taf2", rs.widths.taf2 ?? 130)} />تفصیلی ۵</th>
+              <th style={rs.thStyle("taf3", 130)}><ColGrip onDown={rs.onDown("taf3", rs.widths.taf3 ?? 130)} />تفصیلی ۶</th>
+              <th style={rs.thStyle("descr", 170)}><ColGrip onDown={rs.onDown("descr", rs.widths.descr ?? 170)} />شرح ردیف</th>
+              <th style={rs.thStyle("dbt", 118)} className="num"><ColGrip onDown={rs.onDown("dbt", rs.widths.dbt ?? 118)} />بدهکار</th>
+              <th style={rs.thStyle("crt", 118)} className="num"><ColGrip onDown={rs.onDown("crt", rs.widths.crt ?? 118)} />بستانکار</th>
+              <th style={rs.thStyle("ops", 62)}><ColGrip onDown={rs.onDown("ops", rs.widths.ops ?? 62)} /></th>
             </tr></thead>
             <tbody>
               {rows.map((r, i) => {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { q, one, tx } from "@/lib/db";
 import { getSession, can } from "@/lib/auth";
 import { ctxOf } from "@/lib/ctx";
+import { faDateTime } from "@/lib/jalali";
 
 /* ============================================================================
    اعلاميه‌ها — مطابق AcVwDef.BPL (v2.1.0)
@@ -40,7 +41,9 @@ export async function GET(req: NextRequest) {
        LEFT JOIN ACC.AccTafsili d3 ON d3.TafsiliId = x.Taf3Id
        WHERE x.NoteId = @id
        ORDER BY x.NoteLineNo`, { id, c: companyId });
-    return NextResponse.json({ ok: true, hdr, items });
+    /* زمان‌های سیستم شمسی — [رفع «تاریخ‌ها شمسی نیستند»] */
+    const hdrFa = { ...hdr, CreatedAtJ: faDateTime(hdr.CreatedAt) };
+    return NextResponse.json({ ok: true, hdr: hdrFa, items });
   }
 
   const rows = await q(
@@ -53,7 +56,9 @@ export async function GET(req: NextRequest) {
      LEFT JOIN ACC.AccMoein m ON m.CompanyId = n.CompanyId AND m.Code = n.MoeinCode
      WHERE n.CompanyId = @c AND n.YearId = @y
      ORDER BY n.NoteNo DESC`, { c: companyId, y: yearId });
-  return NextResponse.json({ ok: true, rows });
+  /* زمان‌های سیستم شمسی */
+  const rowsFa = (rows as any[]).map((r) => ({ ...r, CreatedAtJ: faDateTime(r.CreatedAt) }));
+  return NextResponse.json({ ok: true, rows: rowsFa });
 }
 
 export async function POST(req: NextRequest) {

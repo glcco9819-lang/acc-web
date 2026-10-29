@@ -12,9 +12,13 @@ export async function GET(req: NextRequest) {
 
   const sp = new URL(req.url).searchParams;
   const state = sp.get("state") || ""; /* 1 موقت | 2 بررسی‌شده | 3 قطعی | خالی=همه */
-  const from = sp.get("from") || "";
-  const to = sp.get("to") || "";
+  const from = sp.get("from") || "";   /* از شماره سند */
+  const to = sp.get("to") || "";       /* تا شماره سند */
   const qtext = sp.get("q") || "";
+  /* v2.2.0 — فیلترهای «لیست اسناد»: بازهٔ تاریخ جلالی + نوع سند */
+  const dFrom = sp.get("dFrom") || "";
+  const dTo = sp.get("dTo") || "";
+  const typeId = Number(sp.get("typeId") || 0);
 
   const conds = ["h.CompanyId=@c"];
   const inp: Record<string, unknown> = { c: companyId };
@@ -23,6 +27,9 @@ export async function GET(req: NextRequest) {
   if (from) { conds.push("h.VchNo >= @from"); inp.from = Number(from) || 0; }
   if (to) { conds.push("h.VchNo <= @to"); inp.to = Number(to) || 0; }
   if (qtext) { conds.push("(h.Descr LIKE @q OR CAST(h.VchNo AS varchar) LIKE @q)"); inp.q = `%${qtext}%`; }
+  if (dFrom) { conds.push("h.VchDate >= @dF"); inp.dF = dFrom; }
+  if (dTo) { conds.push("h.VchDate <= @dT"); inp.dT = dTo; }
+  if (typeId) { conds.push("h.VoucherTypeId=@tp"); inp.tp = typeId; }
 
   const rows = await q(
     `SELECT h.VoucherId, h.FolioNo, h.VchNo, h.VchDate, h.Descr, h.State, h.SourceModule, h.ReversalOf,

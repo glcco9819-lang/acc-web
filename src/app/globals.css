@@ -31,6 +31,7 @@
 }
 
 html { scrollbar-color: #b9c2cc transparent; }
+html, body { height: 100%; }
 body {
   font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
   background:
@@ -108,12 +109,26 @@ body {
 }
 .menubar .brand { display: inline-flex; align-items: center; text-decoration: none; color: #fff; }
 
-.main { padding: 14px 16px 40px; max-width: 1500px; }
+/* v2.2.0 — قاب تمام‌صفحه: پنجره کل صفحه را پر می‌کند (درخواست کارفرما) */
+.shell { display: flex; flex-direction: column; height: 100vh; }
+.main {
+  flex: 1 1 auto; min-height: 0;
+  padding: 14px 16px 24px;
+  display: flex; flex-direction: column;
+  overflow: auto; /* اسکرول داخل قاب اصلی — نوار منو همیشه بالای صفحه */
+}
 
 /* ---------- پنجره ---------- */
 .window {
   background: var(--panel2); border: 1px solid var(--line2); border-radius: var(--radius);
   box-shadow: var(--shadow-m); overflow: hidden;
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.window.win {
+  flex: 0 0 auto;
+  width: min(1250px, 97%); margin-inline: auto; min-height: 480px; height: calc(100vh - 140px);
+  resize: both; /* تغییر اندازه با موس — دستگیرهٔ گوشه */
 }
 .window-title {
   background: linear-gradient(180deg, var(--head2), var(--head));
@@ -121,7 +136,19 @@ body {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
 .window-title .sub { font-weight: 400; font-size: 11.5px; opacity: .88; }
-.window-body { padding: 12px 14px; }
+.btn-win {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3);
+  border-radius: var(--radius-s); width: 26px; height: 24px; cursor: pointer; font-size: 12px; line-height: 1;
+  transition: background .15s ease;
+}
+.btn-win:hover { background: rgba(255,255,255,.28); }
+.window-body {
+  padding: 12px 14px; flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: stretch;
+}
+/* اسکرول‌باکسِ فرزند مستقیم — تا انتهای پنجره کشیده می‌شود */
+.window-body > .scrollbox { flex: 1 1 auto; min-height: 280px; max-height: none; }
+.window.win .window-body { overflow: auto; }
 
 /* ---------- کارت (بخش‌بندی فرم‌های بزرگ) ---------- */
 .card {
@@ -232,8 +259,11 @@ tr.row-open td { background: #f4f8fc; }
 /* ---------- چاپ ---------- */
 .print-only { display: none; }
 @media print {
-  .menubar, .ctxbar, .no-print { display: none !important; }
-  .main { padding: 0; max-width: none; }
+  .menubar, .ctxbar, .no-print, .btn-win { display: none !important; }
+  .main { padding: 0; max-width: none; overflow: visible; }
+  .shell { height: auto; }
+  .window { flex: none; resize: none; height: auto !important; }
+  .window-body { overflow: visible; }
   body { background: #fff; }
   .window { border: none; box-shadow: none; }
   .print-head { padding: 8px 0 12px; text-align: center; border-bottom: 2px solid #333; margin-bottom: 10px; }

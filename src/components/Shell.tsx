@@ -16,6 +16,19 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
   const path = usePathname();
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
+  /* v2.2.0 — پنجرهٔ تمام‌صفحه یا پنجره‌ای قابل تغییر اندازه (درخواست: پنجره‌ها کل صفحه را پر کنند و قابل بزرگ/کوچک شدن باشند) */
+  const [big, setBig] = useState(true);
+
+  useEffect(() => {
+    try { const v = localStorage.getItem("acc-win-size"); if (v === "win") setBig(false); } catch { /* - */ }
+  }, []);
+
+  const toggleSize = () => {
+    setBig((b) => {
+      try { localStorage.setItem("acc-win-size", b ? "win" : "full"); } catch { /* - */ }
+      return !b;
+    });
+  };
 
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null); };
@@ -82,8 +95,13 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
       </div>
 
       <div className="main">
-        <div className="window">
-          <div className="window-title"><span>{title}</span>{sub && <span className="sub">{sub}</span>}</div>
+        <div className={`window ${big ? "full" : "win"}`}>
+          <div className="window-title">
+            <span>{title}{sub && <span className="sub"> — {sub}</span>}</span>
+            <button className="btn-win" onClick={toggleSize}
+              title={big ? "حالت پنجره‌ای (قابل تغییر اندازه با موس)" : "تمام‌صفحه — کل صفحه را پر می‌کند"}
+              aria-label="تغییر اندازهٔ پنجره">{big ? "❐" : "▣"}</button>
+          </div>
           <div className="window-body">{children}</div>
         </div>
       </div>
@@ -122,6 +140,7 @@ const MENUS: { title: string; items: [string, string][] }[] = [
       ["/windows/branch", "تعریف شعبه"],
       ["/windows/fx", "تعریف ارزها"],
       ["/windows/vch-issue", "صدور سند حسابداری"],
+      ["/windows/vch-list", "لیست اسناد"],
       ["/windows/vch-review", "بررسی اسناد"],
       ["/windows/vch-finalize", "قطعی کردن اسناد"],
       ["/windows/vch-reverse", "برگشت اسناد قطعی"],

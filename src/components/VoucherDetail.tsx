@@ -3,8 +3,10 @@
 import { api, fa, STATE_FA } from "@/lib/ui";
 
 /* ============================================================================
-   مشاهدهٔ کامل یک سند (v2.0.0) — ردیف‌ها با «کد و عنوان» هر سطح
+   مشاهدهٔ کامل یک سند (v2.2.0) — ردیف‌ها با «کد و عنوان» هر سطح
    کد کل/کد معین/کد تفصیلی ۴-۶ همگی صریح و قابل مشاهده‌اند (رفع باگ ①)
+   v2.2.0: دکمهٔ «ویرایش سند» — درخواست کارفرما: ویرایش سند در همان پنجرهٔ مرور حساب‌ها
+   زمان‌های ردپای عملیات شمسی هستند (API تبدیل می‌کند)
    ============================================================================ */
 
 export interface VchDetail { hdr: any; items: any[]; log: any[]; reversalOf?: any }
@@ -13,15 +15,22 @@ export async function fetchVoucher(id: number): Promise<VchDetail> {
   return api(`/api/vch/get?id=${id}`);
 }
 
-const ACTION_FA = ["", "صدور", "بررسی", "لغو بررسی", "قطعی", "لغو قطعی", "برگشت"];
+const ACTION_FA = ["", "صدور", "بررسی", "لغو بررسی", "قطعی", "لغو قطعی", "برگشت", "ویرایش"];
 
-export function VoucherDetailCard({ d, onClose }: { d: VchDetail; onClose?: () => void }) {
+export function VoucherDetailCard({ d, onClose, onEdit, canEdit }: { d: VchDetail; onClose?: () => void; onEdit?: () => void; canEdit?: boolean }) {
   const h = d.hdr;
+  const editable = !!onEdit && (canEdit ?? true) && h.State !== 3 && !h.ReversalOf && String(h.SourceModule || "ACC") === "ACC";
   return (
     <div className="window" style={{ marginTop: 12 }}>
       <div className="window-title">
         <span>سند {fa(h.VchNo)} — {h.TypeTitle}{h.ReversalOf ? " (برگشتی)" : ""}</span>
-        {onClose && <button className="btn" onClick={onClose} style={{ padding: "1px 10px" }}>بستن</button>}
+        <span style={{ display: "inline-flex", gap: 6 }}>
+          {editable && (
+            <button className="btn" onClick={onEdit} style={{ padding: "1px 10px" }}
+              title="ویرایش سند در همین پنجره [فرم: اصلاح سند]">ویرایش سند</button>
+          )}
+          {onClose && <button className="btn" onClick={onClose} style={{ padding: "1px 10px" }}>بستن</button>}
+        </span>
       </div>
       <div className="window-body">
         <p style={{ marginBottom: 8, fontSize: 12.5 }}>

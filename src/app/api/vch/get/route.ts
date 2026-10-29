@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { one, q } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { faDateTime } from "@/lib/jalali";
 
-/* مشاهدهٔ کامل یک سند: سرسند + ردیف‌ها با عناوین + ردپای عملیات */
+/* مشاهدهٔ کامل یک سند: سرسند + ردیف‌ها با عناوین + ردپای عملیات
+   [رفع «تاریخ‌ها شمسی نیستند»: زمان ردپای عملیات از میلادی به شمسی تبدیل می‌شود] */
 export async function GET(req: NextRequest) {
   const s = await getSession();
   if (!s) return NextResponse.json({ ok: false, error: "دسترسی رد شد" }, { status: 401 });
@@ -28,12 +30,25 @@ export async function GET(req: NextRequest) {
      LEFT JOIN ACC.AccTafsili d3 ON d3.TafsiliId=i.Taf3Id
      WHERE i.VoucherId=@id ORDER BY i.RowNo`, { id });
 
-  const log = await q(
-    `SELECT Action, ByUser, CONVERT(varchar(16), At, 120) AtFa, Note FROM ACC.AccVoucherFlow WHERE VoucherId=@id ORDER BY LogId`, { id });
+  const logRaw = await q(
+    `SELECT Action, ByUser, At, Note FROM ACC.AccVoucherFlow WHERE VoucherId=@id ORDER BY LogId`, { id });
+  /* زمان عملیات به‌صورت شمسی «YYYY/MM/DD HH:MM» — دیگر تاریخ میلادی نمایش داده نمی‌شود */
+  const log = (logRaw as any[]).map((l) => ({
+    Action: l.Action, ByUser: l.ByUser, Note: l.Note,
+    At: l.At, AtFa: faDateTime(l.At),
+  }));
 
   const rev = hdr.ReversalOf
     ? await one(`SELECT VoucherId, VchNo, VchDate FROM ACC.AccVoucher WHERE VoucherId=@r`, { r: hdr.ReversalOf })
     : null;
 
-  return NextResponse.json({ ok: true, hdr, items, log, reversalOf: rev });
+  /* زمان‌های سرسند هم شمسی — برای نمایش در پنجره‌های مشاهده/ویرایش */
+  const hdrFa = {
+    ...hdr,
+    CreatedAtFa: faDateTime(hdr.CreatedAt),
+    CheckedAtFa: faDateTime(hdr.CheckedAt),
+    FinalizedAtFa: faDateTime(hdr.FinalizedAt),
+  };
+
+  return NextResponse.json({ ok: true, hdr: hdrFa, items, log, reversalOf: rev });
 }
