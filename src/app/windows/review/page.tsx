@@ -100,7 +100,7 @@ export default function Page() {
     api("/api/acc/tafsili").then((j) => setTafsilis(j.rows || [])).catch(() => {});
     api("/api/acc/vchtypes").then((j) => setVchTypes(j.rows || [])).catch(() => {});
     api("/api/acc/branch").then((j) => setBranches(j.rows || [])).catch(() => {});
-  }, [app.companyId, app.yearId]); /* eslint-disable-line react-hooks/exhaustive-deps */
+  }, [app.companyId, app.yearId, app.rev]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   /* سال مالی پیش‌فرض برای فیلتر سال */
   useEffect(() => {

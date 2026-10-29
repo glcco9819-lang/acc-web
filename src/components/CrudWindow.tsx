@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* پنجرهٔ عمومی تعاریف (مطابق الگوی فرم‌های اصلی: نوار دکمه + گرید + فرم ثبت) */
 
@@ -31,7 +32,7 @@ export default function CrudWindow({ entity, title, sub, cols, note }: {
       else setMsg({ t: "err", s: e.message });
     }
   }, [entity]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const blank = useCallback(() => {
     const f: Record<string, string> = {};

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [معرفی شرکت‌ها — اصل استیجاری: چند شرکت در یک دیتابیس] */
 export default function Page() {
@@ -14,7 +15,8 @@ export default function Page() {
   const load = useCallback(async () => {
     try { const j = await api("/api/prm/company"); setRows(j.rows || []); } catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, []);
-  useEffect(() => { load(); api("/api/auth/login").then((j) => setRole(j.user?.role || "")).catch(() => {}); }, [load]);
+  useSync(load);
+  useEffect(() => { api("/api/auth/login").then((j) => setRole(j.user?.role || "")).catch(() => {}); }, []);
 
   const save = async () => {
     setMsg(null);

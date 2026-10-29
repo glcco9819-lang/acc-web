@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [دفتر روزنامه — خروجی چاپی قانونی: فقط اسناد قطعی + برچسب برگشتی + جمع کل] */
 export default function Page() {
@@ -24,7 +25,7 @@ export default function Page() {
     } catch (e: any) { setErr(e.message); }
     setLoaded(true);
   }, [from, to]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const coTitle = co && co.length ? co[0].TitleFa : "";
 

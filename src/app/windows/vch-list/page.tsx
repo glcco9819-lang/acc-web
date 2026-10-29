@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
-import { CtxGate, useApp } from "@/components/App";
+import { CtxGate, useApp, useSync } from "@/components/App";
 import { api, fa, exportCsv, STATE_FA, STATE_CLS } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { VoucherEditor } from "@/components/VoucherEditor";
@@ -61,7 +61,7 @@ export default function Page() {
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
     setBusy(false);
   }, [state, dFrom, dTo, noFrom, noTo, typeId, qtext, page, app.companyId, app.ctxMissing]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   /* تغییر هر فیلتر = برگشت به صفحهٔ یک */
   const resetPage = () => setPage(1);

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [دفتر کل — مانده ابتدا/گردش/مانده پایان هر حساب کل + فیلتر بازه و کل] */
 export default function Page() {
@@ -18,7 +19,8 @@ export default function Page() {
       setRows(j.rows || []); setErr("");
     } catch (e: any) { setErr(e.message); }
   }, [from, to, kol]);
-  useEffect(() => { load(); api("/api/acc/kol").then((j) => setKols(j.rows || [])).catch(() => {}); }, [load]);
+  useSync(load);
+  useEffect(() => { api("/api/acc/kol").then((j) => setKols(j.rows || [])).catch(() => {}); }, []);
 
   return (
     <Shell title="دفتر کل" sub="گردش و ماندهٔ هر حساب کل — فقط اسناد قطعی + ماندهٔ ابتدای دوره">

@@ -13,6 +13,12 @@ export async function api(path: string, init?: RequestInit): Promise<any> {
     (err as any).code = j?.code;
     throw err;
   }
+  /* v2.4.4 — همگام‌سازی خودکار پنجره‌ها: پس از هر تغییر موفق داده (ثبت/اصلاح/حذف)
+     رویداد سراسری acc:data منتشر می‌شود تا پنجره‌های شنونده فهرست خود را تازه کنند */
+  const m = init?.method;
+  if (m && m !== "GET") {
+    try { window.dispatchEvent(new CustomEvent("acc:data", { detail: { method: m, path } })); } catch { /* - */ }
+  }
   return j;
 }
 

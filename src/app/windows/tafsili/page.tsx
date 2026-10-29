@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [فرم اصلی: معرفي حسابهاي تفصيل — کد، عنوان، نوع تفصيل، عنوان لاتين، وضعيت]
    v2.4.3 — تکمیل انواع استاندارد بر اساس فایل اولیه (YFG/SG) و سند ۹۰:
@@ -100,6 +101,7 @@ export default function Page() {
     setEditId(null); setFilter(""); setNpOpen(false); setNbOpen(false); setNbTitle("");
   }, [rows, suggestCode]);
 
+  useSync(load); /* v2.4.4 — فهرست تفصیل‌ها با هر ثبت/اصلاح/حذف (در هر پنجره‌ای) خودکار تازه می‌شود */
   useEffect(() => {
     (async () => {
       const rws = await load();

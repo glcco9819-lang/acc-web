@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Shell from "@/components/Shell";
-import { CtxGate, useApp } from "@/components/App";
+import { CtxGate, useApp, useSync } from "@/components/App";
 import { api, fa, STATE_FA } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 
@@ -23,7 +23,7 @@ export default function Page() {
       setRows(j.rows || []);
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, [state, app.companyId, app.ctxMissing]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const finalize = async (id: number) => {
     setMsg(null);

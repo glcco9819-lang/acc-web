@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /* ============================================================================
@@ -33,6 +33,7 @@ interface AppState {
   pickCompany: (companyId: number) => Promise<void>;
   pickYear: (yearId: number) => Promise<void>;
   reload: () => Promise<void>;
+  rev: number;                    /* v2.4.4 — شمارندهٔ بازنگری داده؛ با هر تغییر موفق افزایش می‌یابد */
   ctxMissing: boolean;            /* شرکت/سال انتخاب نشده */
   ctxMsg: string;                 /* پیام راهنمای یکدست */
 }
@@ -54,6 +55,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [companyId, setCompanyId] = useState(0);
   const [yearId, setYearId] = useState(0);
   const [fatal, setFatal] = useState<string>("");
+  /* v2.4.4 — همگام‌سازی خودکار: با هر تغییر موفق داده (رویداد acc:data از lib/ui.api)
+     این شمارنده بالا می‌رود و پنجره‌های شنونده (useSync) فهرست خود را تازه می‌کنند */
+  const [rev, setRev] = useState(0);
+  useEffect(() => {
+    const onData = () => setRev((r) => r + 1);
+    window.addEventListener("acc:data", onData);
+    return () => window.removeEventListener("acc:data", onData);
+  }, []);
   /* v2.4.1 — ریشه‌کنی باگ «انتخاب شرکت انجام نمی‌شود»: پس از ورود با ناوبری نرم،
      AppProvider دوباره remount نمی‌شود و اگر فقط در mount فچ می‌زدیم، لیست شرکت‌ها
      هرگز پس از لاگین بارگذاری نمی‌شد. حالا با هر تغییر مسیر (به‌ویژه خروج از
@@ -147,7 +156,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const value: AppState = {
     ready, user, can, companies, years, company, year, companyId, yearId,
-    pickCompany, pickYear, reload: load,
+    pickCompany, pickYear, reload: load, rev,
     ctxMissing: !companyId || !yearId,
     ctxMsg: !companyId
       ? "برای شروع، از نوار بالا شرکت را انتخاب کنید."
@@ -172,6 +181,34 @@ export function useApp(): AppState {
   const v = useContext(Ctx);
   if (!v) throw new Error("useApp خارج از AppProvider استفاده شده است");
   return v;
+}
+
+/* ============================================================================
+   v2.4.4 — همگام‌سازی خودکار پنجره با داده‌ها (درخواست کارفرما)
+   پنجره‌ها به‌طور خودکار با تغییر اطلاعات همگام می‌شوند:
+   ① تغییر شرکت/سال مالی از نوار بالا → بارگذاری دوبارهٔ فهرست
+   ② هر ثبت/اصلاح/حذف موفق در هر پنجره (رویداد acc:data) → تازه‌سازی
+   ③ بازگشت به تب برنامه (focus/visibility) → تازه‌سازی با وقف ۳ ثانیه‌ای
+   ============================================================================ */
+export function useSync(load: () => void | Promise<void>): void {
+  const app = useApp();
+  useEffect(() => { void load(); }, [load, app.companyId, app.yearId, app.rev]);
+  const last = useRef(0);
+  useEffect(() => {
+    const onWake = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - last.current < 3000) return;
+      last.current = now;
+      void load();
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
+    return () => {
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
+    };
+  }, [load]);
 }
 
 /* نوار راهنمای «کانتکست ناقص» — یکدست در همهٔ پنجره‌ها */

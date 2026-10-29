@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [دفتر تفصیلی — کارت تفصیلی از سه اسلات سند + برچسب سطح] */
 export default function Page() {
@@ -24,6 +25,7 @@ export default function Page() {
       setRows(j.rows || []); setTfs(j.tfs); setOpening(j.opening || 0); setErr("");
     } catch (e: any) { setErr(e.message); }
   }, [dlId, moein, from, to]);
+  useSync(load); /* v2.4.4 — با هر تغییر اسناد، ردیف‌های دفتر تازه می‌شوند */
   useEffect(() => {
     api("/api/acc/tafsili").then((j) => setDls(j.rows || [])).catch(() => {});
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});

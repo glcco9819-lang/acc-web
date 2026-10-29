@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa, exportCsv } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [فرم: گزارش تراز اسناد شش سطحي — AcRepDef]
    شش ستون: ماندهٔ ابتدا (بد/بس) + گردش دوره (بد/بس) + ماندهٔ پایان (بد/بس) در سطح انتخابی */
@@ -34,7 +35,7 @@ export default function Page() {
       setRows(j.rows || []); setTotals(j.totals || null); setErr(""); setLoaded(true);
     } catch (e: any) { setErr(e.message); }
   }, [level, from, to, fromVch, toVch, kol, moein, withOpening, onlyBal]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
   useEffect(() => { api("/api/acc/kol").then((j) => setKols(j.rows || [])).catch(() => {}); }, []);
   useEffect(() => {
     if (level === "kol") { setMoeins([]); return; }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, exportCsv, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* واژه‌نامهٔ داده — سه جدول مرجع YFG (درخواست کارفرما):
    ۱) TableName : نام جدول انگلیسی + شما + نام فارسی بر اساس نقش
@@ -35,7 +36,7 @@ export default function Page() {
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, [tab, search, schema]);
 
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
   useEffect(() => {
     api("/api/context").then((j) => setCanEdit(!!j.ok && j.user?.role === "admin")).catch(() => {});
     fetch("/api/meta", { method: "HEAD" }).then((r) => {

@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa, exportCsv } from "@/lib/ui";
 import { MONTHS_FA } from "@/lib/jalali";
+import { useSync } from "@/components/App";
 
 /* [فرم: گزارش تحلیلی تراز ماهانه — AcRepDef]
    ستون اول = ماندهٔ ابتدای دوره، ستون‌های ماهانه = گردش بد/بس، ستون پایان = ماندهٔ پایان بازه */
@@ -26,7 +27,7 @@ export default function Page() {
       setRows(j.rows || []); setMonths(j.months || []); setTotals(j.totals || null); setErr(""); setLoaded(true);
     } catch (e: any) { setErr(e.message); }
   }, [level, mFrom, mTo, withOpening, onlyBal]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const doCsv = () => exportCsv("taraz-monthly.csv",
     ["عنوان حساب", "ماندهٔ ابتدا (بد)", "ماندهٔ ابتدا (بس)",

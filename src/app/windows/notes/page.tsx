@@ -25,7 +25,7 @@ export default function Page() {
     } catch (e: any) { setErr(e.message); }
   }, []);
 
-  useEffect(() => { if (!app.ctxMissing) load(); }, [app.companyId, app.yearId, load]); /* eslint-disable-line react-hooks/exhaustive-deps */
+  useEffect(() => { if (!app.ctxMissing) load(); }, [app.companyId, app.yearId, app.rev, load]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   const open = async (r: any) => {
     try {

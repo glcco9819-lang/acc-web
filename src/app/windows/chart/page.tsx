@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa, NATURE_FA } from "@/lib/ui";
 
@@ -9,9 +9,14 @@ export default function Page() {
   const [rows, setRows] = useState<any[]>([]);
   const [err, setErr] = useState("");
 
+  const fetchChart = useCallback(() => { api("/api/acc/chart").then((j) => setRows(j.rows || [])).catch((e) => setErr(e.message)); }, []);
+  useEffect(() => { fetchChart(); }, [fetchChart]);
+  /* v2.4.4 — همگام‌سازی خودکار: با هر تغییر حساب/سند در پنجره‌های دیگر، شجره تازه می‌شود */
   useEffect(() => {
-    api("/api/acc/chart").then((j) => setRows(j.rows || [])).catch((e) => setErr(e.message));
-  }, []);
+    const h = () => fetchChart();
+    window.addEventListener("acc:data", h);
+    return () => window.removeEventListener("acc:data", h);
+  }, [fetchChart]);
 
   /* گروه‌بندی درختی */
   const groups = new Map<string, any[]>();

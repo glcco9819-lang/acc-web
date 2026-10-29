@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
+import { useApp } from "@/components/App";
 import { api, fa } from "@/lib/ui";
 
 /* [سال مالی — ایجاد سال مالی جدید / تغییر سال مالی — acyear] */
 export default function Page() {
+  const app = useApp();
   const [companyId, setCompanyId] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
   const [periods, setPeriods] = useState<any[]>([]);
@@ -25,6 +27,8 @@ export default function Page() {
     api("/api/prm/company").then((j) => { setCompanies(j.rows || []); if (j.rows?.length) { setCompanyId(j.rows[0].CompanyId); load(j.rows[0].CompanyId); } }).catch(() => {});
     api("/api/auth/login").then((j) => setRole(j.user?.role || "")).catch(() => {});
   }, [load]);
+  /* v2.4.4 — همگام‌سازی خودکار: با هر تغییر داده، دوره‌های شرکت جاری تازه می‌شوند */
+  useEffect(() => { if (companyId) load(companyId); }, [app.rev, companyId, load]);
 
   const create = async () => {
     setMsg(null);

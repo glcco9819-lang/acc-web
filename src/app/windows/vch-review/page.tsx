@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Shell from "@/components/Shell";
-import { CtxGate, useApp } from "@/components/App";
+import { CtxGate, useApp, useSync } from "@/components/App";
 import { api, fa, STATE_FA, STATE_CLS } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { VoucherEditor } from "@/components/VoucherEditor";
@@ -45,7 +45,7 @@ export default function Page() {
       setTotal(Number(j.total) || 0);
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, [state, from, to, qtext, page, app.companyId, app.ctxMissing]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const doAct = async (id: number, action: string) => {
     setMsg(null);

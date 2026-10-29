@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* پنجرهٔ عمومی اطلاعات عمومی (شمای pob) — با ستون‌های ممیزی و تاریخ شمسی
    ممیزی: ایجادکننده/تاریخ ایجاد(شمسی)/ویرایش‌کننده/تاریخ ویرایش(شمسی)/سیستم مبدأ
@@ -36,7 +37,7 @@ export default function GenWindow({ entity, title, sub, cols, note, parent }: {
     try { const j = await api(url); setRows(j.rows || []); setMsg(null); }
     catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, [url, entity, parent, pval]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   useEffect(() => {
     if (parent) parent.load().then(setPopts).catch(() => {});

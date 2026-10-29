@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Shell from "@/components/Shell";
-import { CtxGate, useApp } from "@/components/App";
+import { CtxGate, useApp, useSync } from "@/components/App";
 import { api, fa } from "@/lib/ui";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 
@@ -19,7 +19,7 @@ export default function Page() {
     try { const j = await api(`/api/vch/list?state=3&companyId=${app.companyId}`); setRows(j.rows || []); }
     catch (e: any) { setMsg({ t: "err", s: e.message }); }
   }, [app.companyId, app.ctxMissing]);
-  useEffect(() => { load(); }, [load]);
+  useSync(load);
 
   const reverse = async (id: number) => {
     setMsg(null);

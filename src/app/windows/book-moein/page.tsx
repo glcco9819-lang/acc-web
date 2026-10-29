@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { api, fa } from "@/lib/ui";
+import { useSync } from "@/components/App";
 
 /* [دفتر معین — کارت هر معین با مانده در خط + فیلتر کل والد] */
 export default function Page() {
@@ -21,11 +22,11 @@ export default function Page() {
       setRows(j.rows || []); setErr("");
     } catch (e: any) { setErr(e.message); }
   }, [from, to, kol, moein]);
+  useSync(load);
   useEffect(() => {
-    load();
     api("/api/acc/kol").then((j) => setKols(j.rows || [])).catch(() => {});
     api("/api/acc/moein").then((j) => setMoeins(j.rows || [])).catch(() => {});
-  }, [load]);
+  }, []);
 
   return (
     <Shell title="دفتر معین" sub="کارت گردش معین با مانده در خط">

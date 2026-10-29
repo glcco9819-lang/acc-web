@@ -10,18 +10,75 @@ import { useApp } from "@/components/App";
    منبع شرکت/سال: AppContext سراسری (نه کوکی محلی هر پنجره)
    ============================================================================ */
 
+/* v2.4.4 — هندسهٔ پنجره: حداقل اندازه و کلید ذخیره‌سازی به‌ازای هر مسیر */
+type Geom = { w: number; h: number };
+const MIN_W = 560, MIN_H = 480; /* MIN_H هم‌تراز با min-height:480px در CSS — تا اندازهٔ ذخیره‌شده با نمایش یکی باشد */
+const geomKey = (p: string) => `acc-win-geom:${p}`;
+
 export default function Shell({ children, title, sub }: { children: React.ReactNode; title: string; sub?: string }) {
   const app = useApp();
   const [open, setOpen] = useState<string | null>(null);
   const path = usePathname();
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
-  /* v2.2.0 — پنجرهٔ تمام‌صفحه یا پنجره‌ای قابل تغییر اندازه (درخواست: پنجره‌ها کل صفحه را پر کنند و قابل بزرگ/کوچک شدن باشند) */
+  /* v2.2.0 — پنجرهٔ تمام‌صفحه یا پنجره‌ای قابل تغییر اندازه (درخواست: پنجره‌ها کل صفحه را پر کنند و قابل بزرگ/کوچک شوند) */
   const [big, setBig] = useState(true);
+  /* v2.4.4 — تغییر اندازهٔ پنجره با موس (دستگیرهٔ لبهٔ پایین و گوشه‌ها) + همگام‌سازی خودکار هندسه:
+     اندازهٔ هر پنجره به‌ازای مسیرش در localStorage ذخیره می‌شود؛ هنگام باز شدن دوبارهٔ همان
+     پنجره (حتی در جلسهٔ بعد یا تب دیگر) به‌طور خودکار بازیابی و همگام می‌گردد. */
+  const [geom, setGeom] = useState<Geom | null>(null);
+  const winRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    try { const v = localStorage.getItem("acc-win-size"); if (v === "win") setBig(false); } catch { /* - */ }
-  }, []);
+    try {
+      const v = localStorage.getItem("acc-win-size"); if (v === "win") setBig(false);
+      const g = localStorage.getItem(geomKey(path || ""));
+      setGeom(g ? JSON.parse(g) : null);
+    } catch { /* - */ }
+  }, [path]);
+
+  /* همگام‌سازی خودکار بین تب‌ها — تغییر اندازه در یک تب، بقیهٔ تب‌ها را هم زنده به‌روز می‌کند */
+  useEffect(() => {
+    const h = (e: StorageEvent) => {
+      if (e.key === geomKey(path || "") && e.newValue) { try { setGeom(JSON.parse(e.newValue)); } catch { /* - */ } }
+      else if (e.key === "acc-win-size" && e.newValue) setBig(e.newValue !== "win");
+    };
+    window.addEventListener("storage", h);
+    return () => window.removeEventListener("storage", h);
+  }, [path]);
+
+  const persistGeom = (g: Geom) => {
+    try {
+      localStorage.setItem(geomKey(path || ""), JSON.stringify(g));
+      localStorage.setItem("acc-win-size", "win");
+    } catch { /* - */ }
+  };
+
+  /* شروع درگ دستگیره‌ها — نقطهٔ شروع: مستطیل فعلی پنجره؛ در حالت تمام‌صفحه اولین درگ یعنی رفتن به حالت پنجره‌ای با همان اندازه */
+  const startResize = (side: "s" | "se" | "sw") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    const el = winRef.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY, sw = r.width, sh = r.height;
+    let last: Geom = { w: Math.round(sw), h: Math.round(sh) };
+    if (big) { setGeom(last); persistGeom(last); setBig(false); }
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      const maxW = window.innerWidth - 24, maxH = window.innerHeight - 92;
+      let w = sw, h = sh;
+      if (side === "se") w = sw + dx; else if (side === "sw") w = sw - dx;
+      h = sh + dy; /* هر سه دستگیره ارتفاع را تغییر می‌دهند */
+      last = { w: Math.min(maxW, Math.max(Math.min(MIN_W, maxW), Math.round(w))), h: Math.min(maxH, Math.max(Math.min(MIN_H, maxH), Math.round(h))) };
+      setGeom(last);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setGeom(last); persistGeom(last); /* ذخیرهٔ خودکار پس از پایان درگ */
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
 
   const toggleSize = () => {
     setBig((b) => {
@@ -95,14 +152,22 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
       </div>
 
       <div className="main">
-        <div className={`window ${big ? "full" : "win"}`}>
+        <div
+          className={`window ${big ? "full" : "win"}`}
+          ref={winRef}
+          style={!big && geom ? { width: geom.w, height: geom.h } : undefined}
+        >
           <div className="window-title">
             <span>{title}{sub && <span className="sub"> — {sub}</span>}</span>
             <button className="btn-win" onClick={toggleSize}
-              title={big ? "حالت پنجره‌ای (قابل تغییر اندازه با موس)" : "تمام‌صفحه — کل صفحه را پر می‌کند"}
+              title={big ? "حالت پنجره‌ای (اندازهٔ ذخیره‌شده به‌طور خودکار بازیابی می‌شود)" : "تمام‌صفحه — کل صفحه را پر می‌کند"}
               aria-label="تغییر اندازهٔ پنجره">{big ? "❐" : "▣"}</button>
           </div>
           <div className="window-body">{children}</div>
+          {/* v2.4.4 — دستگیره‌های تغییر اندازه با موس: لبهٔ پایین + دو گوشهٔ پایین */}
+          <div className="rz rz-s"  onPointerDown={startResize("s")}  title="تغییر ارتفاع" />
+          <div className="rz rz-se" onPointerDown={startResize("se")} title="تغییر اندازه (گوشه)" />
+          <div className="rz rz-sw" onPointerDown={startResize("sw")} title="تغییر اندازه (گوشه)" />
         </div>
       </div>
     </div>
