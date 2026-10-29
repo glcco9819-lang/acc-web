@@ -61,8 +61,10 @@ function spec(entity: string, mode: number): EntSpec | null {
         { name: "Title", req: true, max: 200 },
         { name: "LatinTitle", max: 200 },
         { name: "IsActive", num: true },
-        /* v2.4.2 — انتخاب نوع‌محور: پیوند تفصیلیِ نوعِ اشخاص به pob.Party (فهرست مبدأ) */
+        /* v2.4.2/3 — مرجع مبدأ بنا به نوع تفصیل: اشخاص→Party، شعبه→AccBranch، سایر انواع→pob.CodeList */
         { name: "PartyRef", num: true },
+        { name: "BranchRef", num: true },
+        { name: "ListRef", num: true },
       ],
       delCheck: [
         { sql: "SELECT 1 x FROM ACC.AccVoucherItm i JOIN ACC.AccVoucher h ON h.VoucherId=i.VoucherId WHERE h.CompanyId=@c AND (i.Taf1Id=@code OR i.Taf2Id=@code OR i.Taf3Id=@code)", inp: ["code", "int"], msg: "تفصیلی در سند استفاده شده است" },
@@ -145,12 +147,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ enti
   const mode = Number(await scalar("SELECT CodingMode FROM pob.Companies WHERE CompanyId=@c", { c: companyId }) || 2);
   const sp = spec(entity, mode);
   if (!sp) return NextResponse.json({ ok: false, error: "تعریف ناشناخته" }, { status: 404 });
-  /* تفصیلی — همراه با عنوان شخص مرتبط از pob.Party [v2.4.2] */
+  /* تفصیلی — همراه با عنوان مبدأ مرتبط بنا به نوع (اشخاص/شعبه/فهرست کد) [v2.4.3] */
   if (entity === "tafsili") {
     const rows = await q(
       `SELECT t.*, p.Title PartyTitle, p.FName PartyFName, p.LName PartyLName,
+              b.Title BranchTitle, cl.Title ListTitle, cl.[Type] ListType,
               CAST(t.TafsiliId AS int) AS id
-       FROM ACC.AccTafsili t LEFT JOIN pob.Party p ON p.Serial = t.PartyRef
+       FROM ACC.AccTafsili t
+       LEFT JOIN pob.Party p ON p.Serial = t.PartyRef
+       LEFT JOIN ACC.AccBranch b ON b.BranchId = t.BranchRef
+       LEFT JOIN pob.CodeList cl ON cl.CodeId = t.ListRef
        WHERE t.CompanyId=@c ORDER BY t.TafsiliId`, { c: companyId });
     return NextResponse.json({ ok: true, rows, mode });
   }

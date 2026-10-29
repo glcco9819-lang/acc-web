@@ -75,6 +75,8 @@ CREATE TABLE ACC.AccTafsiliType (
   CompanyId  smallint      NOT NULL CONSTRAINT FK_TafsiliType_Company REFERENCES pob.Companies(CompanyId),
   Title      nvarchar(100) NOT NULL,
   LatinTitle varchar(100)  NULL,
+  /* v2.4.3 — فهرست مبدأ نوع (PARTY/BANK/BRANCH/PROJECT/CASH/COSTCENTER/EMPLOYEE/GOODS/CHECK/LC یا خالی=آزاد) */
+  CodeListType varchar(40) NULL,
   CreatedAt  datetime2(0)  NOT NULL CONSTRAINT DF_AccTafsiliType_Cr DEFAULT(SYSUTCDATETIME()),
   CONSTRAINT UQ_AccTafsiliType UNIQUE(CompanyId, Title)
 );
@@ -92,6 +94,10 @@ CREATE TABLE ACC.AccTafsili (
   LatinTitle varchar(200)  NULL,
   IsActive   bit           NOT NULL CONSTRAINT DF_AccTafsili_Act DEFAULT(1),
   CreatedAt  datetime2(0)  NOT NULL CONSTRAINT DF_AccTafsili_Cr DEFAULT(SYSUTCDATETIME()),
+  /* v2.4.3 — مرجع مبدأ: اشخاص → pob.Party / شعبه → ACC.AccBranch / سایر انواع → pob.CodeList */
+  PartyRef   bigint        NULL,
+  BranchRef  int           NULL,
+  ListRef    bigint        NULL,
   CONSTRAINT UQ_AccTafsili_Code UNIQUE(CompanyId, Code)
 );
 GO

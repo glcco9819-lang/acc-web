@@ -27,15 +27,22 @@ BEGIN
 END
 GO
 
-/* انواع تفصیل [فرم: انواع تفصيل] */
+/* انواع تفصیل [فرم: انواع تفصيل] — v2.4.3 فهرست استاندارد کامل بر اساس فایل اولیه و سند ۹۰ */
 DECLARE @co3 smallint = (SELECT CompanyId FROM pob.Companies WHERE CompanyCode = N'A');
 IF NOT EXISTS (SELECT 1 FROM ACC.AccTafsiliType WHERE CompanyId = @co3)
-INSERT INTO ACC.AccTafsiliType (CompanyId, Title, LatinTitle) VALUES
- (@co3, N'مشتری',        'Customer'),
- (@co3, N'تأمین‌کننده',  'Supplier'),
- (@co3, N'بانک',         'Bank'),
- (@co3, N'شعبه',         'Branch'),
- (@co3, N'پروژه',        'Project');
+INSERT INTO ACC.AccTafsiliType (CompanyId, Title, LatinTitle, CodeListType) VALUES
+ (@co3, N'مشتری',        'Customer',       'PARTY'),
+ (@co3, N'تأمین‌کننده',  'Supplier',       'PARTY'),
+ (@co3, N'بانک',         'Bank',           'BANK'),
+ (@co3, N'شعبه',         'Branch',         'BRANCH'),
+ (@co3, N'پروژه',        'Project',        'PROJECT'),
+ (@co3, N'صندوق',        'Cash',           'CASH'),
+ (@co3, N'مرکز هزینه',   'CostCenter',     'COSTCENTER'),
+ (@co3, N'کارمند',       'Employee',       'EMPLOYEE'),
+ (@co3, N'کالا',         'Goods',          'GOODS'),
+ (@co3, N'چک',           'Check',          'CHECK'),
+ (@co3, N'اعتبارات اسنادی','LetterOfCredit','LC'),
+ (@co3, N'سایر',         'Other',          NULL);
 GO
 
 /* شجرهٔ حساب‌ها — حالت ۲ مطابق accdef (گروه ۲/کل ۴/معین ۶) */
