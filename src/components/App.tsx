@@ -53,6 +53,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [years, setYears] = useState<CtxYear[]>([]);
   const [companyId, setCompanyId] = useState(0);
   const [yearId, setYearId] = useState(0);
+  const [fatal, setFatal] = useState<string>("");
   /* v2.4.1 — ریشه‌کنی باگ «انتخاب شرکت انجام نمی‌شود»: پس از ورود با ناوبری نرم،
      AppProvider دوباره remount نمی‌شود و اگر فقط در mount فچ می‌زدیم، لیست شرکت‌ها
      هرگز پس از لاگین بارگذاری نمی‌شد. حالا با هر تغییر مسیر (به‌ویژه خروج از
@@ -75,8 +76,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCompanyId(cId); setYearId(yId);
       /* اگر سرور سالی را خودکار انتخاب کرده، کوکی را همگام کن — کلاینت و سرور یکی می‌شوند */
       if (cId && yId) writeCtxCookie(cId, yId);
-    } catch {
-      /* شبکه — دوباره تلاش در رندر بعدی */
+    } catch (err) {
+      /* شبکه — دوباره تلاش در رندر بعدی؛ اما این‌بار بی‌صدا نیست:
+         خطا در کنسول + پنجرهٔ دیباگ + پیام قابل مشاهده در نوار بالا ثبت می‌شود */
+      console.error("[AppProvider] load() failed:", err);
+      try {
+        const r2 = await fetch("/api/context", { cache: "no-store" });
+        const t2 = await r2.text();
+        console.error("[AppProvider] retry status:", r2.status, "body:", t2.slice(0, 220));
+        (window as unknown as { __ctxDebug?: string }).__ctxDebug = `status=${r2.status} body=${t2.slice(0, 220)}`;
+      } catch (e2) {
+        console.error("[AppProvider] retry also failed:", e2);
+        (window as unknown as { __ctxDebug?: string }).__ctxDebug = `retry-failed: ${String(e2)}`;
+      }
+      setFatal(`بارگذاری اطلاعات پایه (شرکت‌ها/سال مالی) ناموفق بود — ${String((err as Error)?.message || err)}`);
     }
     setReady(true);
   }, []);
@@ -89,6 +102,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [path, load]);
 
   const pickCompany = useCallback(async (cId: number) => {
+    /* v2.4.1 — به‌روزرسانی خوش‌بینانه: انتخاب بلافاصله در UI دیده می‌شود؛
+       سال پس از تعیین خودکار در یک لحظه بعد پر می‌شود */
+    setCompanyId(cId); setYearId(0);
     /* تغییر شرکت → سال صفر می‌شود؛ سپس اولین سال بازِ همان شرکت خودکار انتخاب می‌شود */
     let yId = 0;
     try {
@@ -114,6 +130,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [years]);
 
   const pickYear = useCallback(async (yId: number) => {
+    setYearId(yId); /* خوش‌بینانه */
     try {
       const j = await fetch("/api/context", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -138,7 +155,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ? "برای این شرکت سال مالی انتخاب نشده — از نوار بالا سال مالی را انتخاب کنید."
         : "",
   };
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      {fatal && (
+        <div className="msg err" style={{ margin: "10px 14px 0", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span>{fatal}</span>
+          <button className="btn ghost" onClick={() => { setFatal(""); load(); }}>تلاش دوباره</button>
+        </div>
+      )}
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useApp(): AppState {
