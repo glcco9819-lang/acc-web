@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/ui";
 
+/* صفحهٔ ورود (v2.4.0) — سبک هیرو سایت YFG: پس‌زمینهٔ شب‌رنگ + شبکه + هالهٔ سبز
+   کارت شیشه‌ای روشن + دکمهٔ زمردی برند */
 export default function LoginPage() {
   const [u, setU] = useState("");
   const [p, setP] = useState("");
@@ -21,10 +23,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#3d5a73,#2b3f52)" }}>
-      <form onSubmit={submit} style={{ background: "#f6f4f1", border: "1px solid #c9c2b8", padding: 28, width: 360, boxShadow: "0 8px 30px rgba(0,0,0,.35)" }}>
-        <h1 style={{ fontSize: 17, color: "#3d5a73", marginBottom: 2 }}>YFG ACC-WEB</h1>
-        <p style={{ fontSize: 12, color: "#6b6b6b", marginBottom: 18 }}>ماژول حسابداری — مطابق فایل‌های اصلی</p>
+    <div className="login-hero">
+      <span className="login-glow-a" />
+      <span className="login-glow-b" />
+      <form onSubmit={submit} className="login-card">
+        <div className="login-brand">
+          <span className="brand-mark" style={{ fontSize: 11.5, padding: "3px 10px" }}>YFG</span>
+          <span className="login-title">ACC-WEB</span>
+        </div>
+        <p className="login-sub">ماژول حسابداری — گروه فن‌آوران یستا</p>
         <div className="field" style={{ marginBottom: 10 }}>
           <label>نام کاربری</label>
           <input value={u} onChange={(e) => setU(e.target.value)} autoFocus style={{ width: "100%" }} />
@@ -34,15 +41,15 @@ export default function LoginPage() {
           <input type="password" value={p} onChange={(e) => setP(e.target.value)} style={{ width: "100%" }} />
         </div>
         {err && <div className="msg err">{err}</div>}
-        <button className="btn primary" disabled={busy} style={{ width: "100%", padding: 8 }}>
-          {busy ? "…" : "ورود"}
+        <button className="btn primary" disabled={busy} style={{ width: "100%", padding: 9 }}>
+          {busy ? "…" : "ورود به سامانه"}
         </button>
-        <p className="muted" style={{ marginTop: 12, lineHeight: 1.8 }}>
-          کاربران نمونه (رمز همه: 1234):<br />
+        <div className="login-users">
+          کاربران نمونه (رمز همه: <b>1234</b>):<br />
           admin — مدیر سامانه<br />
           karbar1 — ثبت‌کنندهٔ اسناد<br />
           karbar2 — بررسی‌کننده (بررسی/قطعی/برگشت)
-        </p>
+        </div>
       </form>
     </div>
   );

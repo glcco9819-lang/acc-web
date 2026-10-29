@@ -563,7 +563,7 @@ export default function Page() {
                       <tr><td>گردش تا پايان دوره (بعد از «تا»)</td><td className="num">{fa(bal.after.D)}</td><td className="num">{fa(bal.after.C)}</td></tr>
                       <tr><td>مانده ابتدای دوره (جدول افتتاحیه — تا قبل از قطعی سند افتتاحیه)</td>
                         <td className="num">{fa(bal.opening.D)}</td><td className="num">{fa(bal.opening.C)}</td></tr>
-                      <tr style={{ background: "#f2f6fa" }}>
+                      <tr style={{ background: "#f0fdf9" }}>
                         <td><b>مانده</b></td>
                         <td className="num"><b>{fa(bal.balD)}</b> بدهكار</td>
                         <td className="num"><b>{fa(bal.balC)}</b> بستانكار</td>
