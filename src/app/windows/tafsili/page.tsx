@@ -19,12 +19,6 @@ const CLS_FA: Record<string, string> = {
   CASH: "صندوق‌ها", COSTCENTER: "مراکز هزینه", EMPLOYEE: "کارمندها",
   GOODS: "کالاها", CHECK: "چک‌ها", LC: "اعتبارات اسنادی",
 };
-/* برچسب مفرد برای دکمهٔ تعریف درجا */
-const CLS_ONE: Record<string, string> = {
-  PARTY: "شخص", BANK: "بانک", BRANCH: "شعبه", PROJECT: "پروژه",
-  CASH: "صندوق", COSTCENTER: "مرکز هزینه", EMPLOYEE: "کارمند",
-  GOODS: "کالا", CHECK: "چک", LC: "اعتبار اسنادی",
-};
 /* انواع متصل به pob.CodeList — مکانیزم عمومی فهرست + تعریف درجا */
 const LIST_TYPES = ["BANK", "CASH", "COSTCENTER", "PROJECT", "EMPLOYEE", "GOODS", "CHECK", "LC"];
 
@@ -32,7 +26,8 @@ const partyLabel = (p: any) =>
   p?.Title || [p?.FName, p?.LName].filter(Boolean).join(" ") || `شخص #${p?.Serial ?? ""}`;
 
 /* شکل مفرد برچسب نوع (برای «تعریف … جدید» و پیام‌ها) — «صندوق‌ها» ← «صندوق» */
-const oneOf = (lbl: string) => lbl.replace(/\u200c?ها$/u, "");
+const ONE_FIX: Record<string, string> = { "مراکز هزینه": "مرکز هزینه", "اعتبارات اسنادی": "اعتبار اسنادی" };
+const oneOf = (lbl: string) => ONE_FIX[lbl] || lbl.replace(/\u200c?ها$/u, "");
 
 export default function Page() {
   const [types, setTypes] = useState<any[]>([]);
