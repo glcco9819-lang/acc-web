@@ -12,6 +12,30 @@ export async function register() {
   console.log("[instrumentation] register() — runtime:", process.env.NEXT_RUNTIME);
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  /* v2.4.0 — خودترمیمی نصب‌کننده: جایگزینی update.ps1 قدیمی پوشهٔ ریشه با نسخهٔ مقاوم
+     همراه همین بسته (app/update-latest.ps1). اسکریپت قدیمی هنگام قفل لحظه‌ای فایل
+     شکست می‌خورد و نصب نیمه‌کاره می‌گذاشت؛ نسخهٔ جدید ۵ بار تلاش می‌کند.
+     هر بار برنامه بالا می‌آید، اگر نسخهٔ ریشه قدیمی/خراب باشد به‌روز می‌شود. */
+  try {
+    const fs = await import("fs");
+    const path = await import("path");
+    const cwd = process.cwd();
+    for (const [srcName, dstName] of [["update-latest.ps1", "update.ps1"], ["fix-update-latest.ps1", "fix-update.ps1"]] as const) {
+      const src = path.join(cwd, "app", srcName);
+      const dst = path.join(cwd, dstName);
+      if (!fs.existsSync(src)) continue;
+      const buf = fs.readFileSync(src);
+      let need = true;
+      try { need = !fs.readFileSync(dst).equals(buf); } catch { need = true; }
+      if (need) {
+        fs.writeFileSync(dst, buf);
+        console.log(`[self-heal] ${dstName} به نسخهٔ همراه بسته به‌روز شد`);
+      }
+    }
+  } catch (e: any) {
+    console.log(`[self-heal] رد شد: ${String(e.message || e).slice(0, 100)}`);
+  }
+
   /* مهاجرت‌های دیتابیس هنگام بوت — v2.1.0
      تا پیش از این، آپدیت آنلاین فقط بستهٔ برنامه را عوض می‌کرد و فایل‌های sql/
      هرگز روی دیتابیس مشتری اجرا نمی‌شدند. اکنون پس از هر آپدیت/راه‌اندازی،

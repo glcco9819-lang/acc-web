@@ -28,11 +28,14 @@ cp "$REPO"/sql/*.sql "$STAGE/app/sql/"
 if [ ! -f "$OLD_ZIP" ]; then echo "بستهٔ مرجع برای node پرتابل یافت نشد: $OLD_ZIP"; exit 1; fi
 unzip -o -q "$OLD_ZIP" "node/*" -d "$STAGE/"
 
-# 3) sql + docs + راه‌اندازها + README
+# 3) sql + docs + راه‌اندازها + README — v2.4.0: نسخهٔ مقاوم update.ps1 داخل app
+#    هم کپی می‌شود (update-latest.ps1) تا هنگام بوت، اسکریپت قدیمی ریشه خودترمیم شود
 mkdir -p "$STAGE/sql" "$STAGE/docs"
 cp "$REPO"/sql/*.sql "$STAGE/sql/"
 cp "$REPO"/docs/*.md "$STAGE/docs/"
-cp "$REPO"/pkg/setup.js "$REPO"/pkg/SETUP-ACC.cmd "$REPO"/pkg/START-ACC.bat "$REPO"/pkg/update.ps1 "$REPO"/pkg/README-FA.txt "$STAGE/"
+cp "$REPO"/pkg/setup.js "$REPO"/pkg/SETUP-ACC.cmd "$REPO"/pkg/START-ACC.bat "$REPO"/pkg/update.ps1 "$REPO"/pkg/fix-update.ps1 "$REPO"/pkg/README-FA.txt "$STAGE/"
+cp "$REPO"/pkg/update.ps1 "$STAGE/app/update-latest.ps1"
+cp "$REPO"/pkg/fix-update.ps1 "$STAGE/app/fix-update-latest.ps1"
 
 # 4) zip
 rm -f "$OUT"
