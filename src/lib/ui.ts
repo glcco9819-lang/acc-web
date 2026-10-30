@@ -18,6 +18,12 @@ export async function api(path: string, init?: RequestInit): Promise<any> {
   const m = init?.method;
   if (m && m !== "GET") {
     try { window.dispatchEvent(new CustomEvent("acc:data", { detail: { method: m, path } })); } catch { /* - */ }
+    /* v2.5.0 — میزکار چندپنجره‌ای: در حالت جاسازی‌شده (iframe /desktop) میزبان
+       باخبر می‌شود تا «سایر پنجره‌های باز» را هم تازه کند */
+    try {
+      if (window.parent && window.parent !== window)
+        window.parent.postMessage({ source: "acc-win", type: "acc:data", path }, window.location.origin);
+    } catch { /* - */ }
   }
   return j;
 }

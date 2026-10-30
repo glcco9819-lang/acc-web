@@ -63,6 +63,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("acc:data", onData);
     return () => window.removeEventListener("acc:data", onData);
   }, []);
+  /* v2.5.0 — میزکار چندپنجره‌ای: پیام‌های میزبان (پنجرهٔ /desktop)
+     ① acc:data → هر ثبت/اصلاح/حذف در «پنجرهٔ دیگر» این پنجره را هم تازه می‌کند
+     ② acc:ctx  → تغییر شرکت/سال مالی در میزکار، کانتکست این پنجره را دوباره می‌خواند */
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      try {
+        if (e.origin !== window.location.origin) return;
+        const d = e.data as { source?: string; type?: string } | null;
+        if (!d || d.source !== "acc-host") return;
+        if (d.type === "acc:data") setRev((r) => r + 1);
+        else if (d.type === "acc:ctx") load();
+      } catch { /* - */ }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
   /* v2.4.1 — ریشه‌کنی باگ «انتخاب شرکت انجام نمی‌شود»: پس از ورود با ناوبری نرم،
      AppProvider دوباره remount نمی‌شود و اگر فقط در mount فچ می‌زدیم، لیست شرکت‌ها
      هرگز پس از لاگین بارگذاری نمی‌شد. حالا با هر تغییر مسیر (به‌ویژه خروج از

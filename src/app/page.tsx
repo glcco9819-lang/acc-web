@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  redirect("/windows/chart");
+  /* v2.5.0 — ورود به میزکار چندپنجره‌ای (فهرست پنجره‌های باز در ساید بار پایین) */
+  redirect("/desktop");
 }

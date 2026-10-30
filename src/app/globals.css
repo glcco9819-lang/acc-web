@@ -357,3 +357,137 @@ tr.row-open td { background: #f4fdf9; }
   margin-top: 14px; padding: 9px 12px; border-radius: 10px;
   background: #f8fafc; border: 1px dashed var(--line); font-size: 11.5px; color: var(--muted); line-height: 1.9;
 }
+
+/* ============================================================================
+   v2.5.0 — میزکار چندپنجره‌ای (الهام از سامانهٔ نمونهٔ «یسطا»)
+   منوی اصلی + نوار زمینه + پنجره‌های شناور MDI + ساید بار پایین (نوار وظیفه)
+   ============================================================================ */
+.ws { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* ---------- میزکار (محل شناور بودن پنجره‌ها) ---------- */
+.desktop {
+  position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  background:
+    radial-gradient(900px 420px at 85% -10%, rgba(0,187,127,.10), transparent 60%),
+    radial-gradient(700px 380px at 10% 115%, rgba(20,184,166,.08), transparent 60%),
+    #e9edf0;
+}
+/* هنگام درگ/تغییر اندازه، iframe نباید رویدادهای موس را بلعاید کند */
+.desktop.busy iframe { pointer-events: none !important; }
+.desktop.busy { cursor: inherit; }
+.desktop-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); text-align: center; pointer-events: none;
+}
+.desktop-empty b { font-size: 15px; color: #64748b; }
+.desktop-empty p { margin-top: 8px; font-size: 12.5px; line-height: 2; }
+
+/* ---------- پنجرهٔ شناور ---------- */
+.m-window {
+  position: absolute; display: flex; flex-direction: column;
+  background: var(--panel2); border: 1px solid var(--line2); border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, .16); overflow: hidden;
+}
+.m-window.focused {
+  border-color: var(--accent);
+  box-shadow: 0 18px 48px rgba(2, 6, 23, .30), 0 0 0 1px var(--accent);
+}
+.m-window.max { border-radius: 0; }
+
+/* نوار عنوان پنجره — درگ از اینجا؛ پنجرهٔ غیرفعال تیره‌تر است (مطابق نمونه) */
+.m-title {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(180deg, var(--head2), var(--head));
+  color: #fff; padding: 8px 14px; font-weight: 700; font-size: 13px;
+  border-bottom: 2px solid var(--accent);
+  cursor: move; user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.m-window:not(.focused) .m-title {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+  border-bottom-color: transparent;
+}
+.m-title-txt { display: flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; }
+.m-title-txt svg { flex: none; opacity: .95; }
+.m-title-btns { display: flex; gap: 4px; direction: ltr; flex: none; }
+.m-title-btns button {
+  width: 26px; height: 22px; border-radius: 6px; cursor: pointer; font-size: 12px; line-height: 1;
+  border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.12); color: #fff;
+  transition: background .15s ease, border-color .15s ease;
+}
+.m-title-btns button:hover { background: rgba(0,187,127,.45); border-color: rgba(0,187,127,.7); }
+
+/* بدنهٔ پنجره — iframe همان صفحهٔ /windows/* با ?embed=1 */
+.m-body { flex: 1 1 auto; min-height: 0; background: #fff; }
+.m-body iframe { width: 100%; height: 100%; border: none; display: block; }
+
+/* دستگیره‌های تغییر اندازهٔ ۸جهته (هم‌سبک نمونه) */
+.mw-rz { position: absolute; z-index: 6; touch-action: none; }
+.mw-rz-n  { top: -3px; left: 12px; right: 12px; height: 7px; cursor: n-resize; }
+.mw-rz-s  { bottom: -3px; left: 12px; right: 12px; height: 7px; cursor: s-resize; }
+.mw-rz-e  { right: -3px; top: 12px; bottom: 12px; width: 7px; cursor: e-resize; }
+.mw-rz-w  { left: -3px; top: 12px; bottom: 12px; width: 7px; cursor: w-resize; }
+.mw-rz-ne { top: -3px; right: -3px; width: 16px; height: 16px; cursor: ne-resize; }
+.mw-rz-nw { top: -3px; left: -3px; width: 16px; height: 16px; cursor: nw-resize; }
+.mw-rz-se { bottom: -3px; right: -3px; width: 16px; height: 16px; cursor: se-resize; }
+.mw-rz-sw { bottom: -3px; left: -3px; width: 16px; height: 16px; cursor: sw-resize; }
+.mw-rz:hover { background: rgba(0,187,127,.25); border-radius: 6px; }
+
+/* ---------- ساید بار پایین — فهرست پنجره‌های باز ---------- */
+.taskbar {
+  flex: none; display: flex; align-items: center; gap: 6px; padding: 5px 12px;
+  background: rgba(255,255,255,.96); border-top: 1px solid var(--line2);
+  overflow-x: auto; box-shadow: 0 -6px 16px rgba(2,6,23,.06); z-index: 50;
+}
+.tb-label {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap;
+  margin-inline-end: 2px;
+}
+.tb-label svg { color: var(--accent); }
+.tb-none { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.tb-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: #f8fafc; color: var(--muted);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.tb-chip:hover { background: #f1f5f4; color: #334155; }
+.tb-chip.active {
+  background: #ecfdf5; border-color: var(--accent); color: #067a5b; font-weight: 700;
+  box-shadow: 0 1px 6px rgba(0,187,127,.25);
+}
+.tb-chip.min { opacity: .65; }
+.tb-txt { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-min {
+  font-style: normal; font-size: 9.5px; background: #e2e8f0; color: #475569;
+  padding: 1px 6px; border-radius: 999px; flex: none;
+}
+
+/* آیتم‌های منوی میزکار — دکمه به‌جای لینک (بازکردن پنجره به‌جای ناوبری) */
+.menu-drop .mi {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: right;
+  padding: 7px 12px; background: none; border: none; cursor: pointer;
+  color: var(--text); font-size: 13px; font-family: inherit;
+  border-radius: 8px; transition: background .12s ease, color .12s ease;
+}
+.menu-drop .mi:hover { background: #ecfdf5; color: var(--accent2); }
+.menu-drop .mi.active { background: #ecfdf5; color: #067a5b; font-weight: 700; }
+.menu-drop .mi svg { flex: none; color: #94a3b8; }
+.menu-drop .mi:hover svg, .menu-drop .mi.active svg { color: var(--accent); }
+.menu-drop .mi .dot {
+  flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--accent);
+  margin-inline-start: auto; opacity: .8;
+}
+
+/* ---------- حالت جاسازی‌شده در میزکار (iframe بدون قاب) ---------- */
+.embed-root { height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+.embed-root .window-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/* چاپ در حالت میزکار: نوارها و پنجره‌های شناور چاپ نمی‌شوند */
+@media print {
+  .taskbar, .m-window, .desktop-empty { display: none !important; }
+  /* v2.5.0 — چاپ از درون پنجرهٔ iframe (حالت embed): بدنه باید آزاد و چندصفحه‌ای شود */
+  .embed-root { height: auto !important; overflow: visible !important; }
+  .embed-root .window-body { overflow: visible !important; }
+  .embed-root .scrollbox { max-height: none !important; overflow: visible !important; border: none; }
+}

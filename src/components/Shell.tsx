@@ -4,10 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/components/App";
+import { MENUS } from "@/components/menus";
 
 /* ============================================================================
    پوستهٔ برنامه (v2.0.0) — منوی اصلی + نوار کانتکست + قاب پنجره
    منبع شرکت/سال: AppContext سراسری (نه کوکی محلی هر پنجره)
+
+   v2.5.0 — حالت میزکار چندپنجره‌ای: همین صفحات /windows/* درون پنجره‌های
+   شناور میزکار (/desktop) با ?embed=1 باز می‌شوند؛ در این حالت منو/نوار زمینه
+   و قاب پنجره حذف می‌شود (میزکار خودش قاب و نوار عنوان را می‌کشد) و فقط
+   بدنهٔ محتوا رندر می‌شود.
    ============================================================================ */
 
 /* v2.4.4 — هندسهٔ پنجره: حداقل اندازه و کلید ذخیره‌سازی به‌ازای هر مسیر */
@@ -21,6 +27,16 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
   const path = usePathname();
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
+  /* v2.5.0 — تشخیص حالت جاسازی‌شده (iframe میزکار): بعد از mount بررسی می‌شود
+     تا اختلاف رندر سرور/کلاینت (hydration) پیش نیاید */
+  const [embedded, setEmbedded] = useState(false);
+  useEffect(() => {
+    try {
+      setEmbedded(
+        new URLSearchParams(window.location.search).get("embed") === "1" || window.self !== window.top
+      );
+    } catch { setEmbedded(false); }
+  }, []);
   /* v2.2.0 — پنجرهٔ تمام‌صفحه یا پنجره‌ای قابل تغییر اندازه (درخواست: پنجره‌ها کل صفحه را پر کنند و قابل بزرگ/کوچک شوند) */
   const [big, setBig] = useState(true);
   /* v2.4.4 — تغییر اندازهٔ پنجره با موس (دستگیرهٔ لبهٔ پایین و گوشه‌ها) + همگام‌سازی خودکار هندسه:
@@ -100,6 +116,14 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
 
   if (!app.ready) return <div className="boot">در حال بارگذاری…</div>;
 
+  /* v2.5.0 — حالت جاسازی‌شده در میزکار: فقط بدنهٔ محتوا (قاب و نوار عنوان را میزکار می‌کشد) */
+  if (embedded)
+    return (
+      <div className="embed-root">
+        <div className="window-body embed-body">{children}</div>
+      </div>
+    );
+
   const menus = MENUS.map((g) =>
     g.title === "عملیات پایه" && app.can?.logview
       ? { ...g, items: [...g.items, ["/windows/log", "لاگ سیستم"] as [string, string]] }
@@ -174,70 +198,4 @@ export default function Shell({ children, title, sub }: { children: React.ReactN
   );
 }
 
-const MENUS: { title: string; items: [string, string][] }[] = [
-  {
-    title: "اطلاعات پایه",
-    items: [
-      ["/windows/parties", "اشخاص و شرکت‌های طرف مکاتبه"],
-      ["/windows/party-categories", "تعریف طبقه‌بندی اشخاص"],
-      ["/windows/geo-places", "موقعیت‌های جغرافیایی"],
-      ["/windows/app-settings", "تنظیمات عمومی"],
-      ["/windows/holidays", "تعطیلات و تقویم"],
-    ],
-  },
-  {
-    title: "حساب‌ها",
-    items: [
-      ["/windows/groups", "معرفی گروه حساب‌ها"],
-      ["/windows/kol", "معرفی حساب‌های کل"],
-      ["/windows/moein", "معرفی حساب‌های معین"],
-      ["/windows/tafsili-types", "انواع تفصیل"],
-      ["/windows/tafsili", "معرفی حساب‌های تفصیلی"],
-      ["/windows/tafsili-categories", "طبقه‌بندی تفصیلی"],
-      ["/windows/std-narrations", "شرح‌های استاندارد"],
-      ["/windows/chart", "گزارش مجموعه حساب‌ها (شجره)"],
-    ],
-  },
-  {
-    title: "اسناد حسابداری",
-    items: [
-      ["/windows/vch-types", "تعریف انواع سند"],
-      ["/windows/branch", "تعریف شعبه"],
-      ["/windows/fx", "تعریف ارزها"],
-      ["/windows/vch-issue", "صدور سند حسابداری"],
-      ["/windows/vch-list", "لیست اسناد"],
-      ["/windows/vch-review", "بررسی اسناد"],
-      ["/windows/vch-finalize", "قطعی کردن اسناد"],
-      ["/windows/vch-reverse", "برگشت اسناد قطعی"],
-    ],
-  },
-  {
-    title: "مرور و دفاتر",
-    items: [
-      ["/windows/review", "مرور حساب‌ها (کامل — AcVwDef)"],
-      ["/windows/notes", "نمایش اعلامیه‌ها"],
-      ["/windows/book-journal", "دفتر روزنامه"],
-      ["/windows/book-kol", "دفتر کل"],
-      ["/windows/book-moein", "دفتر معین"],
-      ["/windows/book-tafsili", "دفتر تفصیلی"],
-    ],
-  },
-  {
-    title: "گزارش‌های تراز",
-    items: [
-      ["/windows/taraz", "گزارش تراز"],
-      ["/windows/taraz-monthly", "گزارش تراز ماهانه"],
-      ["/windows/taraz-six", "گزارش تراز اسناد شش‌سطحی"],
-    ],
-  },
-  {
-    title: "عملیات پایه",
-    items: [
-      ["/windows/companies", "معرفی شرکت‌ها"],
-      ["/windows/fiscal-year", "سال مالی"],
-      ["/windows/opening", "ماندهٔ ابتدای دوره و سند افتتاحیه"],
-      ["/windows/dictionary", "واژه‌نامهٔ داده"],
-      ["/windows/update", "آپدیت آنلاین"],
-    ],
-  },
-];
+/* v2.5.0 — فهرست منوها به src/components/menus.tsx منتقل شد (مشترک با میزکار) */
