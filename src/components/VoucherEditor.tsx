@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { api, fa } from "@/lib/ui";
-import { isValidJalali } from "@/lib/jalali";
+import { isValidJalali, todayJalali } from "@/lib/jalali";
 import { fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { useColResize, ColGrip } from "@/lib/colresize";
 
@@ -12,6 +12,8 @@ import { useColResize, ColGrip } from "@/lib/colresize";
    همان ساختار فرم «صدور سند»: سرسند + ردیف‌ها + ارز/پیگیری/لاتین + جمع و تراز
    ذخیره → POST /api/vch/update (فقط موقت/بررسی‌شده — قطعی و برگشتی مجاز نیست)
    ستون‌ها با موس قابل بزرگ/کوچک شدن‌اند (مطابق صدور سند)
+   v2.4.5 — حالت «سند جدید» (id=0) — درخواست کارفرما: کلید «سند جدید» در لیست اسناد؛
+   ذخیره → POST /api/vch/issue (شمارهٔ سند/عطف/روزانه خودکار) — تاریخ پیش‌فرض امروز
    ============================================================================ */
 
 interface Row {
@@ -43,6 +45,7 @@ const COLS: [string, number, string, "l" | "n" | ""][] = [
 export function VoucherEditor({ id, onClose, onSaved }: {
   id: number; onClose: () => void; onSaved?: (voucher: any) => void;
 }) {
+  const isNew = !id; /* v2.4.5 — id=0 یعنی صدور سند جدید */
   const [d, setD] = useState<VchDetail | null>(null);
   const [loadErr, setLoadErr] = useState("");
   const [types, setTypes] = useState<any[]>([]);
@@ -65,26 +68,31 @@ export function VoucherEditor({ id, onClose, onSaved }: {
 
   useEffect(() => {
     (async () => {
-      try {
-        const v = await fetchVoucher(id);
-        setD(v);
-        const h = v.hdr;
-        setVchDate(h.VchDate || ""); setDescr(h.Descr || ""); setTypeId(String(h.VoucherTypeId || ""));
-        setBranchId(h.BranchId ? String(h.BranchId) : ""); setDayNo(h.DayNo === null || h.DayNo === undefined ? "" : String(h.DayNo));
-        setSubNo(String(h.SubNo ?? 0)); setLatin(h.LatinDescr || "");
-        setRows(v.items.length ? v.items.map((it: any) => ({
-          KolCode: String(it.KolCode || ""), MoeinCode: String(it.MoeinCode || ""),
-          Taf1Id: it.Taf1Id ? String(it.Taf1Id) : "", Taf2Id: it.Taf2Id ? String(it.Taf2Id) : "", Taf3Id: it.Taf3Id ? String(it.Taf3Id) : "",
-          Descr: it.Descr || "", Dbt: Number(it.Dbt) ? String(Number(it.Dbt)) : "", Crt: Number(it.Crt) ? String(Number(it.Crt)) : "",
-          FxId: it.FxId ? String(it.FxId) : "", FxAmount: it.FxAmount ? String(it.FxAmount) : "", FxRate: it.FxRate ? String(it.FxRate) : "",
-          TrackNo: it.TrackNo || "", TrackDate: it.TrackDate || "", LatinDescr: it.LatinDescr || "",
-        })) : [emptyRow()]);
-      } catch (e: any) { setLoadErr(e.message); }
-      try { const j = await api("/api/vch/types"); setTypes(j.rows || []); setBranches(j.branches || []); setFxList(j.fx || []); } catch { /* - */ }
+      if (isNew) {
+        /* v2.4.5 — سند جدید: تاریخ پیش‌فرض امروز، یک ردیف خالی */
+        setVchDate(todayJalali()); setRows([emptyRow()]);
+      } else {
+        try {
+          const v = await fetchVoucher(id);
+          setD(v);
+          const h = v.hdr;
+          setVchDate(h.VchDate || ""); setDescr(h.Descr || ""); setTypeId(String(h.VoucherTypeId || ""));
+          setBranchId(h.BranchId ? String(h.BranchId) : ""); setDayNo(h.DayNo === null || h.DayNo === undefined ? "" : String(h.DayNo));
+          setSubNo(String(h.SubNo ?? 0)); setLatin(h.LatinDescr || "");
+          setRows(v.items.length ? v.items.map((it: any) => ({
+            KolCode: String(it.KolCode || ""), MoeinCode: String(it.MoeinCode || ""),
+            Taf1Id: it.Taf1Id ? String(it.Taf1Id) : "", Taf2Id: it.Taf2Id ? String(it.Taf2Id) : "", Taf3Id: it.Taf3Id ? String(it.Taf3Id) : "",
+            Descr: it.Descr || "", Dbt: Number(it.Dbt) ? String(Number(it.Dbt)) : "", Crt: Number(it.Crt) ? String(Number(it.Crt)) : "",
+            FxId: it.FxId ? String(it.FxId) : "", FxAmount: it.FxAmount ? String(it.FxAmount) : "", FxRate: it.FxRate ? String(it.FxRate) : "",
+            TrackNo: it.TrackNo || "", TrackDate: it.TrackDate || "", LatinDescr: it.LatinDescr || "",
+          })) : [emptyRow()]);
+        } catch (e: any) { setLoadErr(e.message); }
+      }
+      try { const j = await api("/api/vch/types"); setTypes(j.rows || []); setBranches(j.branches || []); setFxList(j.fx || []); if (isNew && !typeId && (j.rows || []).length) setTypeId(String(j.rows[0].VoucherTypeId)); } catch { /* - */ }
       try { const m = await api("/api/acc/moein"); setMoeins((m.rows || []).filter((x: any) => x.IsActive !== 0)); } catch { /* - */ }
       try { const dd = await api("/api/acc/tafsili"); setDls((dd.rows || []).filter((x: any) => x.IsActive !== 0)); } catch { /* - */ }
     })();
-  }, [id]);
+  }, [id]); /* eslint-disable-line react-hooks/exhaustive-deps */
 
   const moeinMap = useMemo(() => new Map(moeins.map((m) => [m.Code, m])), [moeins]);
   const kolMap = useMemo(() => {
@@ -107,16 +115,17 @@ export function VoucherEditor({ id, onClose, onSaved }: {
   const totals = rows.reduce((a, r) => ({ D: a.D + (Number(r.Dbt) || 0), C: a.C + (Number(r.Crt) || 0) }), { D: 0, C: 0 });
   const balanced = totals.D === totals.C && totals.D > 0;
 
-  /* شرایط ویرایش — هم‌راستا با سرور */
+  /* شرایط ویرایش — هم‌راستا با سرور (در حالت سند جدید اعمال نمی‌شود) */
   const h = d?.hdr;
-  const forbidden = h && (h.State === 3 ? "سند قطعی قابل ویرایش نیست — ابتدا سند را برگشت دهید."
+  const forbidden = !isNew && h && (h.State === 3 ? "سند قطعی قابل ویرایش نیست — ابتدا سند را برگشت دهید."
     : h.ReversalOf ? "سند برگشتی قابل ویرایش نیست." : "");
 
   const dateBad = !!vchDate && !isValidJalali(vchDate);
 
   const save = async () => {
-    if (!d) return;
+    if (!isNew && !d) return;
     if (!isValidJalali(vchDate)) { setMsg({ t: "err", s: "تاریخ سند نامعتبر است — قالب جلالی: 1405/01/01" }); return; }
+    if (!typeId) { setMsg({ t: "err", s: "نوع سند انتخاب نشده است" }); return; }
     setBusy(true); setMsg(null);
     try {
       const items = rows
@@ -128,15 +137,17 @@ export function VoucherEditor({ id, onClose, onSaved }: {
           FxId: r.FxId ? Number(r.FxId) : null, FxAmount: r.FxAmount || null, FxRate: r.FxRate || null,
           TrackNo: r.TrackNo || "", TrackDate: r.TrackDate || "", LatinDescr: r.LatinDescr || "",
         }));
-      const j = await api("/api/vch/update", { method: "POST", body: JSON.stringify({
-        id: d.hdr.VoucherId,
+      const payload: any = {
         VchDate: vchDate, Descr: descr, VoucherTypeId: Number(typeId),
         BranchId: branchId ? Number(branchId) : null,
         DayNo: dayNo === "" ? null : Number(dayNo),
         SubNo: subNo === "" ? 0 : Number(subNo),
         LatinDescr: latin, items,
-      }) });
-      setMsg({ t: "ok", s: `سند ${fa(j.voucher.VchNo)} با موفقیت ویرایش شد` });
+      };
+      const j = isNew
+        ? await api("/api/vch/issue", { method: "POST", body: JSON.stringify(payload) })
+        : await api("/api/vch/update", { method: "POST", body: JSON.stringify({ ...payload, id: d!.hdr.VoucherId }) });
+      setMsg({ t: "ok", s: isNew ? `سند ${fa(j.voucher.VchNo)} با موفقیت صادر شد` : `سند ${fa(j.voucher.VchNo)} با موفقیت ویرایش شد` });
       onSaved?.(j.voucher);
     } catch (e: any) { setMsg({ t: "err", s: e.message }); }
     setBusy(false);
@@ -149,17 +160,17 @@ export function VoucherEditor({ id, onClose, onSaved }: {
         onClick={(e) => e.stopPropagation()}>
         <div className="window" style={{ marginTop: 0, border: "none" }}>
           <div className="window-title">
-            <span>ویرایش سند {d ? `${fa(h!.VchNo)} — ${h!.TypeTitle}` : `#${id}`}{h?.State === 2 ? " (بررسی‌شده)" : ""}</span>
+            <span>{isNew ? "صدور سند جدید" : `ویرایش سند ${d ? `${fa(h!.VchNo)} — ${h!.TypeTitle}` : `#${id}`}`}{h?.State === 2 ? " (بررسی‌شده)" : ""}</span>
             <button className="btn" onClick={onClose} style={{ padding: "1px 10px" }}>بستن</button>
           </div>
           <div className="window-body">
             {loadErr && <div className="msg err">{loadErr}</div>}
             {forbidden && <div className="msg err">{forbidden}</div>}
-            {d && !forbidden && (
+            {(isNew || d) && !forbidden && (
               <>
                 {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
                 <div className="card">
-                  <div className="card-title">سرسند — ویرایش</div>
+                  <div className="card-title">سرسند — {isNew ? "سند جدید" : "ویرایش"}</div>
                   <div className="form-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
                     <div className="field">
                       <label>تاریخ سند (جلالی)</label>
@@ -310,12 +321,12 @@ export function VoucherEditor({ id, onClose, onSaved }: {
                 </div>
                 <div className="btnrow">
                   <button className="btn" onClick={() => setRows([...rows, emptyRow()])}>افزودن ردیف</button>
-                  <button className="btn primary" onClick={save} disabled={busy || !balanced}>ذخیرهٔ تغییرها</button>
+                  <button className="btn primary" onClick={save} disabled={busy || !balanced}>{isNew ? "صدور سند" : "ذخیرهٔ تغییرها"}</button>
                   <button className="btn" onClick={onClose}>انصراف</button>
                 </div>
               </>
             )}
-            {!d && !loadErr && <div className="boot">در حال بارگذاری سند…</div>}
+            {!isNew && !d && !loadErr && <div className="boot">در حال بارگذاری سند…</div>}
           </div>
         </div>
       </div>

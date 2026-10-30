@@ -7,6 +7,7 @@ import { api, fa, STATE_FA } from "@/lib/ui";
    کد کل/کد معین/کد تفصیلی ۴-۶ همگی صریح و قابل مشاهده‌اند (رفع باگ ①)
    v2.2.0: دکمهٔ «ویرایش سند» — درخواست کارفرما: ویرایش سند در همان پنجرهٔ مرور حساب‌ها
    زمان‌های ردپای عملیات شمسی هستند (API تبدیل می‌کند)
+   v2.4.5 — اکشن‌های جدید ردپا: ۸ یادداشت، ۹ کپی سند + نمایش یادداشتِ هر رکورد
    ============================================================================ */
 
 export interface VchDetail { hdr: any; items: any[]; log: any[]; reversalOf?: any }
@@ -15,7 +16,7 @@ export async function fetchVoucher(id: number): Promise<VchDetail> {
   return api(`/api/vch/get?id=${id}`);
 }
 
-const ACTION_FA = ["", "صدور", "بررسی", "لغو بررسی", "قطعی", "لغو قطعی", "برگشت", "ویرایش"];
+const ACTION_FA = ["", "صدور", "بررسی", "لغو بررسی", "قطعی", "لغو قطعی", "برگشت", "ویرایش", "یادداشت", "کپی سند"];
 
 export function VoucherDetailCard({ d, onClose, onEdit, canEdit }: { d: VchDetail; onClose?: () => void; onEdit?: () => void; canEdit?: boolean }) {
   const h = d.hdr;
@@ -70,7 +71,7 @@ export function VoucherDetailCard({ d, onClose, onEdit, canEdit }: { d: VchDetai
           </tbody>
         </table>
         <p className="muted" style={{ marginTop: 8 }}>
-          ردپای عملیات: {d.log.map((l: any) => `${ACTION_FA[l.Action] || l.Action} (${l.ByUser} — ${l.AtFa})`).join(" ← ")}
+          ردپای عملیات: {d.log.map((l: any) => `${ACTION_FA[l.Action] || l.Action}${l.Note ? ` — ${l.Note}` : ""} (${l.ByUser} — ${l.AtFa})`).join(" ← ")}
         </p>
         {d.reversalOf && <p className="muted">برگشتِ سند شماره {fa(d.reversalOf.VchNo)} مورخ {d.reversalOf.VchDate}</p>}
       </div>

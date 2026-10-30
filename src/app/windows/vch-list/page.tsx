@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import { CtxGate, useApp, useSync } from "@/components/App";
 import { api, fa, exportCsv, STATE_FA, STATE_CLS } from "@/lib/ui";
+import { isValidJalali, todayJalali } from "@/lib/jalali";
 import { VoucherDetailCard, fetchVoucher, VchDetail } from "@/components/VoucherDetail";
 import { VoucherEditor } from "@/components/VoucherEditor";
 import { useColResize, ColGrip } from "@/lib/colresize";
@@ -14,6 +15,12 @@ import { useColResize, ColGrip } from "@/lib/colresize";
    بازهٔ شماره سند، نوع سند، جست‌وجوی شرح — مشاهده و ویرایش هر سند
    v2.3.0 — صفحه‌بندی (۵۰ سند در صفحه) + تعداد و جمع بدهکارِ کل اسناد فیلترشده
    + ستون‌های قابل تغییر اندازه با موس (اندازه‌ها به‌خاطر سپرده می‌شود)
+   v2.4.5 — درخواست کارفرما:
+   • کلید «سند جدید» — صدور سند در همین پنجره (ویرایشگر مشترک)
+   • با انتخاب سند، کلیدهای تغییر وضعیت طبق دسترسی کاربر فعال می‌شوند:
+     «بررسی» (موقت→بررسی‌شده) · «موقت» (بررسی‌شده→موقت) · «یادداشت»
+   • کلید «کپی سند» برای سند(های) انتخاب‌شده با گزینه‌های:
+     کپی تکی / ترکیبی + جابه‌جایی بدهکار و بستانکار («بده و بس») + تاریخ سند
    ============================================================================ */
 
 const PAGE_SIZE = 50;
@@ -36,6 +43,15 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const can = app.can || ({} as any);
   const rs = useColResize({}, "acc-cols-list");
+
+  /* v2.4.5 — انتخاب سندها + پنجره‌های کپی/یادداشت */
+  const [sel, setSel] = useState<Set<number>>(new Set());
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copyMode, setCopyMode] = useState<"single" | "merged">("single");
+  const [copySwap, setCopySwap] = useState(false);
+  const [copyDate, setCopyDate] = useState(todayJalali());
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteText, setNoteText] = useState("");
 
   useEffect(() => {
     if (app.ctxMissing) return;
@@ -73,9 +89,9 @@ export default function Page() {
   const editable = (r: any) => r.State !== 3 && !r.ReversalOf && String(r.SourceModule || "ACC") === "ACC";
 
   const onEdited = async (v: any) => {
-    setMsg({ t: "ok", s: `سند ${fa(v.VchNo)} ویرایش شد` });
+    setMsg({ t: "ok", s: v && v.VchNo ? `سند ${fa(v.VchNo)} با موفقیت ثبت شد` : "سند ثبت شد" });
     await load();
-    if (detail && detail.hdr.VoucherId === v.VoucherId) {
+    if (detail && detail.hdr.VoucherId === v?.VoucherId) {
       try { setDetail(await fetchVoucher(v.VoucherId)); } catch { setDetail(null); }
     }
   };
@@ -91,10 +107,101 @@ export default function Page() {
 
   const grip = (key: string, w: number) => <ColGrip onDown={rs.onDown(key, rs.widths[key] ?? w)} />;
 
+  /* ===================== v2.4.5 — انتخاب و عملیات دسته‌ای ===================== */
+  const selRows = useMemo(() => rows.filter((r) => sel.has(Number(r.VoucherId))), [rows, sel]);
+  const allPageSel = rows.length > 0 && rows.every((r) => sel.has(Number(r.VoucherId)));
+  const somePageSel = selRows.length > 0 && !allPageSel;
+  const allSelState1 = selRows.length > 0 && selRows.every((r) => Number(r.State) === 1);
+  const allSelState2 = selRows.length > 0 && selRows.every((r) => Number(r.State) === 2);
+
+  const toggleRow = (id: number) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => setSel((s) => {
+    const n = new Set(s);
+    if (rows.every((r) => n.has(Number(r.VoucherId)))) rows.forEach((r) => n.delete(Number(r.VoucherId)));
+    else rows.forEach((r) => n.add(Number(r.VoucherId)));
+    return n;
+  });
+
+  /* اجرای دسته‌ای روی سندهای انتخاب‌شده — گزارش موفق/ناموفق با دلیل */
+  const batch = async (ids: number[], run: (id: number) => Promise<void>, label: string) => {
+    let ok = 0; const errs: string[] = [];
+    for (const id of ids) {
+      try { await run(id); ok++; } catch (e: any) { errs.push(e.message || String(e)); }
+    }
+    const failed = ids.length - ok;
+    setMsg(failed === 0
+      ? { t: "ok", s: `${label}: ${fa(ok)} سند با موفقیت انجام شد` }
+      : { t: errs.length && ok === 0 ? "err" : "ok", s: `${label}: ${fa(ok)} موفق، ${fa(failed)} ناموفق${errs.length ? ` — ${errs[0]}${errs.length > 1 ? ` (+${fa(errs.length - 1)} مورد دیگر)` : ""}` : ""}` });
+    if (ok > 0) setSel(new Set());
+    await load();
+  };
+
+  const doTransition = (action: "review" | "unreview") => {
+    if (!selRows.length || busy) return;
+    batch(selRows.map((r) => Number(r.VoucherId)),
+      async (id) => { await api("/api/vch/transition", { method: "POST", body: JSON.stringify({ id, action }) }); },
+      action === "review" ? "بررسی" : "بازگشت به موقت");
+  };
+
+  const doNote = async () => {
+    const note = noteText.trim();
+    if (!note || !selRows.length || busy) return;
+    setNoteOpen(false);
+    await batch(selRows.map((r) => Number(r.VoucherId)),
+      async (id) => { await api("/api/vch/transition", { method: "POST", body: JSON.stringify({ id, action: "note", note }) }); },
+      "یادداشت");
+    setNoteText("");
+  };
+
+  const doCopy = async () => {
+    if (!selRows.length || busy) return;
+    if (!isValidJalali(copyDate)) { setMsg({ t: "err", s: "تاریخ سند جدید نامعتبر است — قالب جلالی: 1405/01/01" }); return; }
+    setBusy(true); setMsg(null);
+    try {
+      const j = await api("/api/vch/copy", { method: "POST", body: JSON.stringify({
+        ids: selRows.map((r) => Number(r.VoucherId)), mode: copyMode, swap: copySwap, vchDate: copyDate,
+      }) });
+      const nos = (j.vouchers || []).map((v: any) => fa(v.VchNo)).join("، ");
+      setMsg({ t: "ok", s: `کپی انجام شد — سند جدید: ${nos}${copySwap ? " (با جابه‌جایی بدهکار/بستانکار)" : ""}` });
+      setCopyOpen(false); setSel(new Set());
+      await load();
+    } catch (e: any) { setMsg({ t: "err", s: e.message }); }
+    setBusy(false);
+  };
+
   return (
-    <Shell title="لیست اسناد" sub="فهرست کامل اسناد با فیلتر تاریخ/شماره/نوع — مشاهده و ویرایش هر سند">
+    <Shell title="لیست اسناد" sub="فهرست کامل اسناد با فیلتر تاریخ/شماره/نوع — صدور، انتخاب، تغییر وضعیت و کپی">
       <CtxGate>
         {msg && <div className={`msg ${msg.t}`}>{msg.s}</div>}
+
+        {/* v2.4.5 — نوار کلیدها: سند جدید + کلیدهای وضعیت با انتخاب سند (طبق دسترسی) */}
+        <div className="btnrow" style={{ margin: "0 0 10px", flexWrap: "wrap" }}>
+          {can.issue && (
+            <button className="btn primary" onClick={() => setEditing(0)}>سند جدید</button>
+          )}
+          {can.review && (
+            <button className="btn" disabled={!allSelState1 || busy} title="بررسی‌شده کردن سندهای موقتِ انتخاب‌شده"
+              onClick={() => doTransition("review")}>بررسی</button>
+          )}
+          {can.review && (
+            <button className="btn" disabled={!allSelState2 || busy} title="بازگرداندن سندهای بررسی‌شده به وضعیت موقت"
+              onClick={() => doTransition("unreview")}>موقت</button>
+          )}
+          {can.master && (
+            <button className="btn" disabled={!selRows.length || busy} title="ثبت یادداشت روی سندهای انتخاب‌شده"
+              onClick={() => setNoteOpen(true)}>یادداشت</button>
+          )}
+          {can.issue && (
+            <button className="btn" disabled={!selRows.length || busy} title="کپی سند(های) انتخاب‌شده — تکی/ترکیبی، جابه‌جایی بدهکار/بستانکار، تاریخ سند"
+              onClick={() => setCopyOpen(true)}>کپی سند…</button>
+          )}
+          {selRows.length > 0 && (
+            <span className="badge src" style={{ padding: "3px 10px" }}>
+              {fa(selRows.length)} سند انتخاب شده
+              <button className="btn ghost" onClick={() => setSel(new Set())} style={{ padding: "0 6px", marginInlineStart: 6 }}>لغو انتخاب</button>
+            </span>
+          )}
+        </div>
 
         <div className="card">
           <div className="card-title">فیلترها</div>
@@ -141,6 +248,10 @@ export default function Page() {
         <div className="scrollbox">
           <table className="grid">
             <thead><tr>
+              <th style={{ width: 38, minWidth: 38 }}>
+                <input type="checkbox" checked={allPageSel} ref={(el) => { if (el) el.indeterminate = somePageSel; }}
+                  onChange={toggleAll} title="انتخاب/لغو انتخاب همهٔ سندهای این صفحه" />
+              </th>
               <th style={rs.thStyle("folio", 90)}>{grip("folio", 90)}عطف</th>
               <th style={rs.thStyle("no", 100)}>{grip("no", 100)}شماره سند</th>
               <th style={rs.thStyle("date", 100)}>{grip("date", 100)}تاریخ</th>
@@ -156,6 +267,9 @@ export default function Page() {
               {rows.map((r) => (
                 <tr key={r.VoucherId} onDoubleClick={() => openDetail(r.VoucherId)} style={{ cursor: "pointer" }}
                   title="دوبار کلیک = مشاهدهٔ سند">
+                  <td onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" checked={sel.has(Number(r.VoucherId))} onChange={() => toggleRow(Number(r.VoucherId))} />
+                  </td>
                   <td className="num">{fa(r.FolioNo)}</td>
                   <td className="num"><b>{fa(r.VchNo)}</b>{Number(r.SubNo) ? `-${fa(r.SubNo)}` : ""}{r.ReversalOf ? <span className="badge src" style={{ marginInlineStart: 4 }}>برگشتی</span> : null}</td>
                   <td className="num">{r.VchDate}</td>
@@ -173,7 +287,7 @@ export default function Page() {
                   </td>
                 </tr>
               ))}
-              {!rows.length && <tr><td colSpan={10} className="muted" style={{ textAlign: "center", padding: 18 }}>سندی با این فیلترها نیست</td></tr>}
+              {!rows.length && <tr><td colSpan={11} className="muted" style={{ textAlign: "center", padding: 18 }}>سندی با این فیلترها نیست</td></tr>}
             </tbody>
           </table>
         </div>
@@ -207,6 +321,75 @@ export default function Page() {
 
         {editing !== null && (
           <VoucherEditor id={editing} onClose={() => setEditing(null)} onSaved={onEdited} />
+        )}
+
+        {/* v2.4.5 — پنجرهٔ کپی سند: تکی/ترکیبی + جابه‌جایی بده و بس + تاریخ سند */}
+        {copyOpen && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(15,35,55,.5)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}
+            onClick={() => !busy && setCopyOpen(false)}>
+            <div className="window" style={{ width: "min(560px, 96vw)" }} onClick={(e) => e.stopPropagation()}>
+              <div className="window-title">
+                <span>کپی سند — {fa(selRows.length)} سند انتخاب شده</span>
+                <button className="btn" onClick={() => setCopyOpen(false)} style={{ padding: "1px 10px" }}>بستن</button>
+              </div>
+              <div className="window-body">
+                <div className="card">
+                  <div className="card-title">روش کپی</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <label style={{ display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer" }}>
+                      <input type="radio" checked={copyMode === "single"} onChange={() => setCopyMode("single")} style={{ marginTop: 4 }} />
+                      <span><b>کپی تکی</b> — از هر سند انتخاب‌شده یک سند جدید مستقل ساخته می‌شود (شرح، نوع، شعبه و ش فرعی همان سند حفظ می‌شود)</span>
+                    </label>
+                    <label style={{ display: "flex", gap: 8, alignItems: "flex-start", cursor: "pointer" }}>
+                      <input type="radio" checked={copyMode === "merged"} onChange={() => setCopyMode("merged")} style={{ marginTop: 4 }} />
+                      <span><b>ترکیبی</b> — ردیف‌های همهٔ سندهای انتخاب‌شده در «یک» سند جدید ادغام می‌شوند</span>
+                    </label>
+                    <label style={{ display: "flex", gap: 8, alignItems: "center", cursor: "pointer", borderTop: "1px dashed var(--border)", paddingTop: 8 }}>
+                      <input type="checkbox" checked={copySwap} onChange={(e) => setCopySwap(e.target.checked)} />
+                      <span><b>جابه‌جایی بدهکار و بستانکار</b> («بده و بس») — در ردیف‌های سند(های) کپی‌شده</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="field" style={{ marginTop: 10 }}>
+                  <label>تاریخ سند جدید (جلالی)</label>
+                  <input value={copyDate} onChange={(e) => setCopyDate(e.target.value)} placeholder="1405/01/01"
+                    style={{ direction: "ltr", textAlign: "left", width: "50%", borderColor: copyDate && !isValidJalali(copyDate) ? "var(--accent)" : undefined }} />
+                  {copyDate && !isValidJalali(copyDate) && <span style={{ color: "var(--accent)", fontSize: 11 }}>قالب جلالی نیست</span>}
+                </div>
+                <p className="muted" style={{ fontSize: 12 }}>سند(های) جدید همیشه با وضعیت «موقت» صادر می‌شوند — شمارهٔ سند و عطف خودکار گرفته می‌شود.</p>
+                <div className="btnrow">
+                  <button className="btn primary" disabled={busy || !copyDate || !isValidJalali(copyDate)} onClick={doCopy}>
+                    {busy ? "در حال کپی…" : "انجام کپی"}
+                  </button>
+                  <button className="btn" onClick={() => setCopyOpen(false)} disabled={busy}>انصراف</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* v2.4.5 — پنجرهٔ یادداشت سند */}
+        {noteOpen && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(15,35,55,.5)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}
+            onClick={() => !busy && setNoteOpen(false)}>
+            <div className="window" style={{ width: "min(520px, 96vw)" }} onClick={(e) => e.stopPropagation()}>
+              <div className="window-title">
+                <span>یادداشت سند — {fa(selRows.length)} سند انتخاب شده</span>
+                <button className="btn" onClick={() => setNoteOpen(false)} style={{ padding: "1px 10px" }}>بستن</button>
+              </div>
+              <div className="window-body">
+                <div className="field">
+                  <label>متن یادداشت (در ردپای عملیات هر سند ثبت می‌شود)</label>
+                  <textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} rows={4}
+                    placeholder="مثلاً: در انتظار دریافت فاکتور رسمی" style={{ width: "100%", resize: "vertical" }} />
+                </div>
+                <div className="btnrow">
+                  <button className="btn primary" disabled={busy || !noteText.trim()} onClick={doNote}>ثبت یادداشت</button>
+                  <button className="btn" onClick={() => setNoteOpen(false)}>انصراف</button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </CtxGate>
     </Shell>
