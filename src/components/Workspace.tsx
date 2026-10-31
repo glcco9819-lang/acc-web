@@ -4,16 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/App";
-import { MENUS, WinIcon, type MenuIcon } from "@/components/menus";
+import { MODULES, WinIcon, ModIcon, type MenuIcon } from "@/components/menus";
 
 /* ============================================================================
-   میزکار چندپنجره‌ای (v2.5.0) — الهام‌گرفته از سامانهٔ نمونهٔ «یسطا»
-   ① هر آیتم منو یک پنجرهٔ شناور داخل همان صفحه باز می‌کند (MDI چندپنجره‌ای)؛
+   میزکار چندپنجره‌ای (v2.6.0) — الهام‌گرفته از سامانهٔ نمونهٔ «یسطا»
+   ① «ساید بار بالا»: نوار ماژول‌ها — فقط آیکون ماژول‌ها به ترتیب اعلام‌شده؛
+      حسابداری کامل و آماده، سایر ماژول‌ها فعلاً فقط آیکون (در دست ساخت)
+   ② «ساید بار سمت راست»: تب‌های ماژول فعال + فیلدهای (آیتم‌های) هر تب —
+      کلیک روی هر فیلد، پنجرهٔ آن را در میزکار باز می‌کند
+   ③ هر آیتم یک پنجرهٔ شناور داخل همان صفحه باز می‌کند (MDI چندپنجره‌ای همزمان)؛
       بازکردن دوبارهٔ همان پنجره فقط آن را «فعال» می‌کند (بدون نسخهٔ تکراری)
-   ② پنجره‌ها: جابه‌جایی با نوار عنوان، تغییر اندازه از ۸ جهت،
+   ④ پنجره‌ها: جابه‌جایی با نوار عنوان، تغییر اندازه از ۸ جهت،
       کوچک‌نمایی/بزرگ‌نمایی/بستن — پنجرهٔ فعال با z-index بالاتر همیشه رو است
-   ③ «ساید بار پایین»: چیپ پنجره‌های باز — کلیک = فعال‌سازی/بازگردانی از حالت کمینه
-   ④ همگام‌سازی خودکار بین پنجره‌ها: هر ثبت/اصلاح/حذف در یک پنجره (رویداد
+   ⑤ «ساید بار پایین»: چیپ پنجره‌های باز — کلیک = فعال‌سازی/بازگردانی از حالت کمینه
+   ⑥ همگام‌سازی خودکار بین پنجره‌ها: هر ثبت/اصلاح/حذف در یک پنجره (رویداد
       acc:data → postMessage به میزبان) بقیهٔ پنجره‌های باز را تازه می‌کند؛
       تغییر شرکت/سال مالی هم به همهٔ پنجره‌ها broadcast می‌شود (acc:ctx)
    ============================================================================ */
@@ -39,11 +43,11 @@ export default function Workspace() {
   const [wins, setWins] = useState<WinState[]>([]);
   const [focused, setFocused] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);            /* درگ/ری‌سایز → iframe بی‌اثر */
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [modId, setModId] = useState<string>("acc");  /* ماژول فعال در ساید بار راست */
+  const [openTab, setOpenTab] = useState<number>(0);  /* تب بازِ ساید بار راست */
   const winsRef = useRef<WinState[]>([]);
   const zTop = useRef(20);
   const deskRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const setAll = useCallback((next: WinState[]) => { winsRef.current = next; setWins(next); }, []);
 
@@ -189,13 +193,6 @@ export default function Workspace() {
     window.addEventListener("pointerup", up);
   };
 
-  /* کلیک بیرون منو → بستن منوی باز */
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null); };
-    document.addEventListener("click", h);
-    return () => document.removeEventListener("click", h);
-  }, []);
-
   /* تغییر اندازهٔ مرورگر → همگام‌سازی خودکار هندسهٔ پنجره‌ها */
   useEffect(() => {
     const h = () => {
@@ -244,37 +241,37 @@ export default function Workspace() {
 
   if (!app.ready) return <div className="boot">در حال بارگذاری…</div>;
 
-  const menus = MENUS.map((g) =>
-    g.title === "عملیات پایه" && app.can?.logview
-      ? { ...g, items: [...g.items, ["/windows/log", "لاگ سیستم"] as [string, string]] }
-      : g
+  const mod = MODULES.find((m) => m.id === modId) || MODULES[0];
+  /* دسترسی لاگ سیستم — همان قاعدهٔ قبلی (app.can.logview) به تب «عملیات پایه» */
+  const modTabs = mod.tabs.map((t) =>
+    t.title === "عملیات پایه" && app.can?.logview
+      ? { ...t, items: [...t.items, ["/windows/log", "لاگ سیستم"] as [string, string]] }
+      : t
   );
   const yearsOf = app.years.filter((y) => y.CompanyId === app.companyId);
   const focusedWin = wins.find((w) => w.path === focused && w.state !== "min");
 
   return (
     <div className="ws">
-      {/* نوار منو — کلیک روی هر آیتم، پنجرهٔ آن را در میزکار باز می‌کند */}
-      <div className="menubar" ref={menuRef}>
+      {/* ساید بار بالا — نوار ماژول‌ها: فقط آیکون ماژول‌ها به ترتیب اعلام‌شده */}
+      <div className="modulebar">
         <Link href="/desktop" className="brand">
           <span className="brand-mark">YFG</span>
-          <span>حسابداری</span>
+          <span>YFG ERP</span>
         </Link>
-        {menus.map((g) => (
-          <div key={g.title} className={`menu-group ${openMenu === g.title ? "open" : ""}`}>
-            <button onClick={() => setOpenMenu(openMenu === g.title ? null : g.title)}>{g.title}</button>
-            <div className="menu-drop">
-              {g.items.map(([href, label]) => (
-                <button key={href} className={`mi ${focused === href ? "active" : ""}`}
-                  onClick={() => { setOpenMenu(null); openWin(href, label, g.icon); }}>
-                  <WinIcon k={g.icon} size={13} />
-                  <span>{label}</span>
-                  {wins.some((w) => w.path === href) && <i className="dot" title="باز است" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        <div className="mod-list">
+          {MODULES.map((m) => (
+            <button
+              key={m.id}
+              className={`mod-btn ${modId === m.id ? "active" : ""} ${m.ready ? "" : "soon"}`}
+              onClick={() => { setModId(m.id); setOpenTab(0); }}
+              title={m.ready ? m.title : `${m.title} — در دست ساخت`}
+            >
+              <ModIcon k={m.icon} size={19} />
+              <span>{m.title}</span>
+            </button>
+          ))}
+        </div>
         <div className="menubar-user">
           <span className="user-chip" title={app.user?.username}>
             <b>{app.user?.display}</b>
@@ -284,61 +281,107 @@ export default function Workspace() {
         </div>
       </div>
 
-      {/* نوار زمینه (شرکت/سال مالی) — تغییر آن به همهٔ پنجره‌های باز broadcast می‌شود */}
-      <div className="ctxbar">
-        <label>شرکت</label>
-        <select value={app.companyId || ""} onChange={(e) => onPickCompany(Number(e.target.value))}>
-          <option value="">— انتخاب —</option>
-          {app.companies.map((c) => <option key={c.CompanyId} value={c.CompanyId}>{c.CompanyCode} — {c.TitleFa}</option>)}
-        </select>
-        <label>سال مالی</label>
-        <select value={app.yearId || ""} onChange={(e) => onPickYear(Number(e.target.value))} disabled={!app.companyId}>
-          <option value="">— انتخاب —</option>
-          {yearsOf.map((y) => <option key={y.YearId} value={y.YearId}>{y.Title}{y.IsClosed ? " (بسته)" : ""}</option>)}
-        </select>
-        {app.company && (
-          <span className="ctx-badge">کدینگ: {app.company.CodingMode === 2 ? "گروه/کل/معین" : "پلکانی"}</span>
-        )}
-        {app.year && <span className="ctx-badge">از {app.year.Title}</span>}
-        {focusedWin && <span className="ctx-badge ws-current">پنجرهٔ فعال: {focusedWin.title}</span>}
-      </div>
+      <div className="ws-main">
+        {/* ساید بار سمت راست — تب‌ها و فیلدهای ماژول فعال */}
+        <aside className="side-right">
+          <div className="side-head">
+            <ModIcon k={mod.icon} size={16} />
+            <b>{mod.title}</b>
+            {!mod.ready && <span className="side-soon">در دست ساخت</span>}
+          </div>
+          {mod.ready ? (
+            <nav className="side-tabs">
+              {modTabs.map((t, i) => (
+                <div key={t.title} className={`side-group ${openTab === i ? "open" : ""}`}>
+                  <button className="side-tab" onClick={() => setOpenTab(openTab === i ? -1 : i)}>
+                    <WinIcon k={t.icon} size={14} />
+                    <span>{t.title}</span>
+                    <i className="chev">▾</i>
+                  </button>
+                  {openTab === i && (
+                    <div className="side-items">
+                      {t.items.map(([href, label]) => (
+                        <button key={href}
+                          className={`side-item ${focused === href ? "active" : ""}`}
+                          onClick={() => openWin(href, label, t.icon)}
+                          title={label}>
+                          <span>{label}</span>
+                          {wins.some((w) => w.path === href) && <i className="dot" title="باز است" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </nav>
+          ) : (
+            <div className="side-empty">
+              <ModIcon k={mod.icon} size={36} />
+              <b>{mod.title}</b>
+              <p>این ماژول در دست ساخت است؛ تب‌ها و پنجره‌های آن به‌زودی همین‌جا اضافه می‌شود.</p>
+            </div>
+          )}
+        </aside>
 
-      {/* میزکار — پنجره‌های شناور */}
-      <div className={`desktop ${busy ? "busy" : ""}`} ref={deskRef}>
-        {wins.filter((w) => w.state !== "min").map((w) => (
-          <div
-            key={w.path}
-            className={`m-window ${focused === w.path ? "focused" : ""} ${w.state === "max" ? "max" : ""}`}
-            style={{ left: w.x, top: w.y, width: w.w, height: w.h, zIndex: w.z }}
-            onPointerDown={() => focusWin(w.path)}
-          >
-            <div className="m-title" onPointerDown={startDrag(w.path)} onDoubleClick={() => toggleMax(w.path)}>
-              <span className="m-title-txt"><WinIcon k={w.icon} />{w.title}</span>
-              <span className="m-title-btns">
-                <button title="کوچک‌نمایی (حالت کمینه — از نوار پایین بازگردانی می‌شود)"
-                  aria-label="کوچک‌نمایی" onClick={() => minimizeWin(w.path)}>−</button>
-                <button title={w.state === "max" ? "بازگردانی اندازه" : "بزرگ‌نمایی (تمام میزکار)"}
-                  aria-label={w.state === "max" ? "بازگردانی اندازه" : "بزرگ‌نمایی"} onClick={() => toggleMax(w.path)}>❐</button>
-                <button title="بستن پنجره" aria-label="بستن (ضربدر)" onClick={() => closeWin(w.path)}>✕</button>
-              </span>
-            </div>
-            <div className="m-body">
-              <iframe src={`${w.path}${EMBED}`} title={w.title} />
-            </div>
-            {SIDES.map((s) => (
-              <div key={s} className={`mw-rz mw-rz-${s}`} onPointerDown={startResize(w.path, s)}
-                title="تغییر اندازهٔ پنجره" />
+        {/* ستون اصلی: نوار زمینه + میزکار پنجره‌های شناور */}
+        <div className="ws-content">
+          {/* نوار زمینه (شرکت/سال مالی) — تغییر آن به همهٔ پنجره‌های باز broadcast می‌شود */}
+          <div className="ctxbar">
+            <label>شرکت</label>
+            <select value={app.companyId || ""} onChange={(e) => onPickCompany(Number(e.target.value))}>
+              <option value="">— انتخاب —</option>
+              {app.companies.map((c) => <option key={c.CompanyId} value={c.CompanyId}>{c.CompanyCode} — {c.TitleFa}</option>)}
+            </select>
+            <label>سال مالی</label>
+            <select value={app.yearId || ""} onChange={(e) => onPickYear(Number(e.target.value))} disabled={!app.companyId}>
+              <option value="">— انتخاب —</option>
+              {yearsOf.map((y) => <option key={y.YearId} value={y.YearId}>{y.Title}{y.IsClosed ? " (بسته)" : ""}</option>)}
+            </select>
+            {app.company && (
+              <span className="ctx-badge">کدینگ: {app.company.CodingMode === 2 ? "گروه/کل/معین" : "پلکانی"}</span>
+            )}
+            {app.year && <span className="ctx-badge">از {app.year.Title}</span>}
+            {focusedWin && <span className="ctx-badge ws-current">پنجرهٔ فعال: {focusedWin.title}</span>}
+          </div>
+
+          {/* میزکار — پنجره‌های شناور */}
+          <div className={`desktop ${busy ? "busy" : ""}`} ref={deskRef}>
+            {wins.filter((w) => w.state !== "min").map((w) => (
+              <div
+                key={w.path}
+                className={`m-window ${focused === w.path ? "focused" : ""} ${w.state === "max" ? "max" : ""}`}
+                style={{ left: w.x, top: w.y, width: w.w, height: w.h, zIndex: w.z }}
+                onPointerDown={() => focusWin(w.path)}
+              >
+                <div className="m-title" onPointerDown={startDrag(w.path)} onDoubleClick={() => toggleMax(w.path)}>
+                  <span className="m-title-txt"><WinIcon k={w.icon} />{w.title}</span>
+                  <span className="m-title-btns">
+                    <button title="کوچک‌نمایی (حالت کمینه — از نوار پایین بازگردانی می‌شود)"
+                      aria-label="کوچک‌نمایی" onClick={() => minimizeWin(w.path)}>−</button>
+                    <button title={w.state === "max" ? "بازگردانی اندازه" : "بزرگ‌نمایی (تمام میزکار)"}
+                      aria-label={w.state === "max" ? "بازگردانی اندازه" : "بزرگ‌نمایی"} onClick={() => toggleMax(w.path)}>❐</button>
+                    <button title="بستن پنجره" aria-label="بستن (ضربدر)" onClick={() => closeWin(w.path)}>✕</button>
+                  </span>
+                </div>
+                <div className="m-body">
+                  <iframe src={`${w.path}${EMBED}`} title={w.title} />
+                </div>
+                {SIDES.map((s) => (
+                  <div key={s} className={`mw-rz mw-rz-${s}`} onPointerDown={startResize(w.path, s)}
+                    title="تغییر اندازهٔ پنجره" />
+                ))}
+              </div>
             ))}
+            {wins.length === 0 && (
+              <div className="desktop-empty">
+                <div>
+                  <b>میزکار چندپنجره‌ای YFG</b>
+                  <p>برای شروع، از ساید بار سمت راست پنجرهٔ موردنظر را باز کنید.<br />چند پنجره می‌توانند همزمان باز باشند؛ فهرست پنجره‌های باز در نوار پایین می‌آید.</p>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-        {wins.length === 0 && (
-          <div className="desktop-empty">
-            <div>
-              <b>میزکار چندپنجره‌ای YFG</b>
-              <p>برای شروع، پنجرهٔ موردنظر را از منوی بالا باز کنید.<br />چند پنجره می‌توانند همزمان باز باشند؛ فهرست پنجره‌های باز در نوار پایین می‌آید.</p>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* ساید بار پایین — فهرست پنجره‌های باز (مطابق سامانهٔ نمونه) */}

@@ -364,6 +364,129 @@ tr.row-open td { background: #f4fdf9; }
    ============================================================================ */
 .ws { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
+/* ============================================================================
+   v2.6.0 — ساید بار بالا (نوار ماژول‌ها) + ساید بار سمت راست (تب‌ها/فیلدها)
+   ============================================================================ */
+
+/* ---------- ساید بار بالا — نوار تیرهٔ شیشه‌ای با آیکون ماژول‌ها ---------- */
+.modulebar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(11, 18, 26, .94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff; display: flex; align-items: stretch; gap: 2px;
+  padding: 0 10px; min-height: 54px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 4px 16px rgba(2, 6, 23, .25);
+}
+.modulebar .brand {
+  display: inline-flex; align-items: center; font-weight: 700; font-size: 13px;
+  padding: 0 14px 0 16px; border-left: 1px solid rgba(255,255,255,.12);
+  white-space: nowrap; letter-spacing: .2px; text-decoration: none; color: #fff;
+}
+.mod-list {
+  display: flex; align-items: stretch; gap: 2px;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
+  padding: 4px 2px;
+}
+.mod-list::-webkit-scrollbar { height: 5px; }
+.mod-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; }
+.mod-btn {
+  flex: none; display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-width: 74px; padding: 4px 10px; margin: 0 1px;
+  background: none; border: 1px solid transparent; border-radius: 9px; cursor: pointer;
+  color: #cbd5e1; font-family: inherit;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.mod-btn .mod-ic { display: inline-flex; color: #7dd3ae; opacity: .85; transition: opacity .15s ease, color .15s ease; }
+.mod-btn .mod-lbl { font-size: 10px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.mod-btn:hover { background: rgba(0, 187, 127, .14); color: #fff; }
+.mod-btn:hover .mod-ic { opacity: 1; }
+.mod-btn:focus-visible { outline: none; box-shadow: var(--ring); }
+.mod-btn.active {
+  background: rgba(0, 187, 127, .22); border-color: rgba(0, 187, 127, .55);
+  color: #fff; font-weight: 700;
+}
+.mod-btn.active .mod-ic { color: #34d399; opacity: 1; }
+.mod-btn.soon { opacity: .58; }
+.mod-btn.soon:hover, .mod-btn.soon.active { opacity: .9; }
+.modulebar .menubar-user { padding: 6px 0; }
+
+/* ---------- بدنهٔ اصلی: ساید بار راست + میزکار ---------- */
+.ws-main { flex: 1 1 auto; min-height: 0; display: flex; }
+/* در RTL اولین فرزند در سمت راست می‌نشیند → ساید بار ماژول در راست است */
+.ws-desk {
+  flex: 1 1 auto; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+}
+
+/* ---------- ساید بار سمت راست — تب‌ها و فیلدهای ماژول فعال ---------- */
+.mod-side {
+  flex: none; width: 252px; display: flex; flex-direction: column;
+  background: #ffffff; border-inline-end: 1px solid var(--line2);
+  box-shadow: -6px 0 16px rgba(2, 6, 23, .05);
+  overflow: hidden; z-index: 40;
+}
+.ms-head {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  border-bottom: 2px solid var(--accent); font-size: 13px; color: var(--head);
+}
+.ms-head-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(0, 187, 127, .14); color: var(--accent2); flex: none;
+}
+.ms-tabs { flex: 1 1 auto; overflow-y: auto; padding: 6px 6px 14px; }
+.ms-tab { border-bottom: 1px solid var(--line2); }
+.ms-tab:last-child { border-bottom: none; }
+.ms-tab-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 8px; background: none; border: none; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 700; color: #334155;
+  text-align: right; border-radius: 8px;
+  transition: background .13s ease, color .13s ease;
+}
+.ms-tab-btn:hover { background: #f0fdf9; color: var(--accent2); }
+.ms-tab-btn:focus-visible { outline: none; box-shadow: var(--ring); }
+.ms-tab-btn svg:first-child { flex: none; color: var(--accent); }
+.ms-chev { flex: none; margin-inline-start: auto; color: #94a3b8; transform: rotate(0deg); transition: transform .18s ease; }
+.ms-tab.open .ms-chev { transform: rotate(90deg); }
+.ms-items { display: none; padding: 2px 6px 8px 4px; }
+.ms-tab.open .ms-items { display: block; }
+.ms-item {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  padding: 6px 10px 6px 8px; margin: 1px 0;
+  background: none; border: none; cursor: pointer; text-align: right;
+  font: inherit; font-size: 12px; color: var(--text);
+  border-radius: 7px; border-inline-start: 2px solid transparent;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.ms-item::before { content: ""; flex: none; width: 4px; height: 4px; border-radius: 999px; background: #cbd5e1; transition: background .12s ease; }
+.ms-item:hover { background: #ecfdf5; color: var(--accent2); }
+.ms-item:hover::before { background: var(--accent); }
+.ms-item:focus-visible { outline: none; box-shadow: var(--ring); }
+.ms-item.active { background: #ecfdf5; color: #067a5b; font-weight: 700; border-inline-start-color: var(--accent); }
+.ms-item.active::before { background: var(--accent2); }
+.ms-item .dot {
+  flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--accent);
+  margin-inline-start: auto; opacity: .8;
+}
+.ms-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ماژول‌های در دست ساخت */
+.ms-soon {
+  flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px; text-align: center; color: var(--muted);
+}
+.ms-soon svg { color: #cbd5e1; }
+.ms-soon b { font-size: 14px; color: #475569; }
+.ms-soon p { font-size: 11.5px; line-height: 1.9; max-width: 190px; }
+
+@media (max-width: 900px) {
+  .mod-side { width: 208px; }
+  .mod-btn { min-width: 58px; padding: 4px 7px; }
+}
+
 /* ---------- میزکار (محل شناور بودن پنجره‌ها) ---------- */
 .desktop {
   position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
@@ -485,7 +608,7 @@ tr.row-open td { background: #f4fdf9; }
 
 /* چاپ در حالت میزکار: نوارها و پنجره‌های شناور چاپ نمی‌شوند */
 @media print {
-  .taskbar, .m-window, .desktop-empty { display: none !important; }
+  .taskbar, .m-window, .desktop-empty, .modulebar, .mod-side, .side-right, .ctxbar { display: none !important; }
   /* v2.5.0 — چاپ از درون پنجرهٔ iframe (حالت embed): بدنه باید آزاد و چندصفحه‌ای شود */
   .embed-root { height: auto !important; overflow: visible !important; }
   .embed-root .window-body { overflow: visible !important; }
